@@ -1,14 +1,14 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+#[allow(non_snake_case)]
+#[allow(non_camel_case_types)]
+#[allow(unused_assignments)]
+#[allow(unused_parens)]
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(unreachable_patterns)]
+#[allow(dead_code)]
+mod disassembler;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    //dummy architecture, just try to compile it
 }
