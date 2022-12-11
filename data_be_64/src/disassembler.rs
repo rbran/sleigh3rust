@@ -205,16 +205,16 @@ impl<const LEN: usize> TokenParser<LEN> {
 }
 #[derive(Clone, Copy, Debug)]
 pub enum Register {
+    sp,
     r0,
     contextreg,
-    sp,
 }
 impl core::fmt::Display for Register {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::sp => write!(f, "sp"),
             Self::r0 => write!(f, "r0"),
             Self::contextreg => write!(f, "contextreg"),
-            Self::sp => write!(f, "sp"),
         }
     }
 }
@@ -229,13 +229,11 @@ impl core::fmt::Display for DisplayElement {
         match self {
             Self::Literal(lit) => lit.fmt(f),
             Self::Register(reg) => reg.fmt(f),
-            Self::Number(hex, value) => {
-                if *hex {
-                    write!(f, "0x{:x}", value)
-                } else {
-                    value.fmt(f)
-                }
-            }
+            Self::Number(hex, value) => match (*hex, value.is_negative()) {
+                (true, true) => write!(f, "-0x{:x}", value.abs()),
+                (true, false) => write!(f, "0x{:x}", value),
+                (false, _) => value.fmt(f),
+            },
         }
     }
 }

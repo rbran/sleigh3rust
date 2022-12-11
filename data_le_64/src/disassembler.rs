@@ -229,13 +229,11 @@ impl core::fmt::Display for DisplayElement {
         match self {
             Self::Literal(lit) => lit.fmt(f),
             Self::Register(reg) => reg.fmt(f),
-            Self::Number(hex, value) => {
-                if *hex {
-                    write!(f, "0x{:x}", value)
-                } else {
-                    value.fmt(f)
-                }
-            }
+            Self::Number(hex, value) => match (*hex, value.is_negative()) {
+                (true, true) => write!(f, "-0x{:x}", value.abs()),
+                (true, false) => write!(f, "0x{:x}", value),
+                (false, _) => value.fmt(f),
+            },
         }
     }
 }

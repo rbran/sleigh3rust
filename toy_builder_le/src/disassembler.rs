@@ -89,9 +89,9 @@ impl_read_to_type!(
 );
 pub trait GlobalSetTrait {
     fn set_fctx(&mut self, address: Option<u32>, value: i64);
+    fn set_nfctx(&mut self, address: Option<u32>, value: i64);
     fn set_phase(&mut self, address: Option<u32>, value: i64);
     fn set_counter(&mut self, address: Option<u32>, value: i64);
-    fn set_nfctx(&mut self, address: Option<u32>, value: i64);
 }
 pub trait MemoryRead {
     type AddressType;
@@ -104,6 +104,35 @@ pub trait MemoryWrite {
 pub trait ContextregisterTrait:
     MemoryRead<AddressType = u16> + MemoryWrite<AddressType = u16>
 {
+    fn read_fctx_raw(&self) -> u8 {
+        let mut work_value = [0u8; 1u64 as usize];
+        self.read(0u64 as u16, &mut work_value[0..1]);
+        let value = read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+        u8::try_from(value).unwrap()
+    }
+    fn write_fctx_raw(&mut self, param: u8) {
+        let mut mem = [0u8; 1];
+        self.read(0u64 as u16, &mut mem[0..1]);
+        let mem = u8::from_le_bytes(mem);
+        let mem =
+            write_u8::<false>(param as u8, mem, 0u64 as usize, 4u64 as usize);
+        self.write(0u64 as u16, &mem[0..1]);
+    }
+    fn read_fctx_disassembly(&self) -> i64 {
+        i64::try_from(self.read_fctx_raw()).unwrap()
+    }
+    fn write_fctx_disassembly(&mut self, param: i64) {
+        self.write_fctx_raw(u8::try_from(param).unwrap())
+    }
+    fn read_fctx_execution(&self) -> u8 {
+        self.read_fctx_raw()
+    }
+    fn write_fctx_execution(&mut self, param: u8) {
+        self.write_fctx_raw(param)
+    }
+    fn fctx_display(&self) -> DisplayElement {
+        meaning_number(true, self.read_fctx_raw())
+    }
     fn read_nfctx_raw(&self) -> u8 {
         let mut work_value = [0u8; 1u64 as usize];
         self.read(0u64 as u16, &mut work_value[0..1]);
@@ -132,35 +161,6 @@ pub trait ContextregisterTrait:
     }
     fn nfctx_display(&self) -> DisplayElement {
         meaning_number(true, self.read_nfctx_raw())
-    }
-    fn read_counter_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(1u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<false>(work_value, 2u64 as usize, 4u64 as usize);
-        u8::try_from(value).unwrap()
-    }
-    fn write_counter_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(1u64 as u16, &mut mem[0..1]);
-        let mem = u8::from_le_bytes(mem);
-        let mem =
-            write_u8::<false>(param as u8, mem, 2u64 as usize, 4u64 as usize);
-        self.write(1u64 as u16, &mem[0..1]);
-    }
-    fn read_counter_disassembly(&self) -> i64 {
-        i64::try_from(self.read_counter_raw()).unwrap()
-    }
-    fn write_counter_disassembly(&mut self, param: i64) {
-        self.write_counter_raw(u8::try_from(param).unwrap())
-    }
-    fn read_counter_execution(&self) -> u8 {
-        self.read_counter_raw()
-    }
-    fn write_counter_execution(&mut self, param: u8) {
-        self.write_counter_raw(param)
-    }
-    fn counter_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_counter_raw())
     }
     fn read_phase_raw(&self) -> u8 {
         let mut work_value = [0u8; 1u64 as usize];
@@ -191,34 +191,34 @@ pub trait ContextregisterTrait:
     fn phase_display(&self) -> DisplayElement {
         meaning_number(true, self.read_phase_raw())
     }
-    fn read_fctx_raw(&self) -> u8 {
+    fn read_counter_raw(&self) -> u8 {
         let mut work_value = [0u8; 1u64 as usize];
-        self.read(0u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+        self.read(1u64 as u16, &mut work_value[0..1]);
+        let value = read_u8::<false>(work_value, 2u64 as usize, 4u64 as usize);
         u8::try_from(value).unwrap()
     }
-    fn write_fctx_raw(&mut self, param: u8) {
+    fn write_counter_raw(&mut self, param: u8) {
         let mut mem = [0u8; 1];
-        self.read(0u64 as u16, &mut mem[0..1]);
+        self.read(1u64 as u16, &mut mem[0..1]);
         let mem = u8::from_le_bytes(mem);
         let mem =
-            write_u8::<false>(param as u8, mem, 0u64 as usize, 4u64 as usize);
-        self.write(0u64 as u16, &mem[0..1]);
+            write_u8::<false>(param as u8, mem, 2u64 as usize, 4u64 as usize);
+        self.write(1u64 as u16, &mem[0..1]);
     }
-    fn read_fctx_disassembly(&self) -> i64 {
-        i64::try_from(self.read_fctx_raw()).unwrap()
+    fn read_counter_disassembly(&self) -> i64 {
+        i64::try_from(self.read_counter_raw()).unwrap()
     }
-    fn write_fctx_disassembly(&mut self, param: i64) {
-        self.write_fctx_raw(u8::try_from(param).unwrap())
+    fn write_counter_disassembly(&mut self, param: i64) {
+        self.write_counter_raw(u8::try_from(param).unwrap())
     }
-    fn read_fctx_execution(&self) -> u8 {
-        self.read_fctx_raw()
+    fn read_counter_execution(&self) -> u8 {
+        self.read_counter_raw()
     }
-    fn write_fctx_execution(&mut self, param: u8) {
-        self.write_fctx_raw(param)
+    fn write_counter_execution(&mut self, param: u8) {
+        self.write_counter_raw(param)
     }
-    fn fctx_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_fctx_raw())
+    fn counter_display(&self) -> DisplayElement {
+        meaning_number(true, self.read_counter_raw())
     }
 }
 pub trait ContextTrait {
@@ -319,268 +319,8 @@ where
     }
 }
 #[derive(Clone, Copy, Debug)]
-struct TokenField_op1111(u8);
-impl TokenField_op1111 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_nnnn(u8);
-impl TokenField_nnnn {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op0007(u8);
-impl TokenField_op0007 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op1215(u8);
-impl TokenField_op1215 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op0003(u8);
-impl TokenField_op0003 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
 struct TokenField_op8(u8);
 impl TokenField_op8 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_cc0911(u8);
-impl TokenField_cc0911 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_simm0003(i8);
-impl TokenField_simm0003 {
-    fn execution(&self) -> i8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_rt(u8);
-impl TokenField_rt {
-    fn execution(&self) -> Register {
-        meaning_0_value(self.0)
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_0_display(self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_simm0007(i8);
-impl TokenField_simm0007 {
-    fn execution(&self) -> i8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_imm1214(u8);
-impl TokenField_imm1214 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_rs(u8);
-impl TokenField_rs {
-    fn execution(&self) -> Register {
-        meaning_0_value(self.0)
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_0_display(self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_cc0002(u8);
-impl TokenField_cc0002 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_simm0411(i8);
-impl TokenField_simm0411 {
-    fn execution(&self) -> i8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op1515(u8);
-impl TokenField_op1515 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_simm1213(i8);
-impl TokenField_simm1213 {
-    fn execution(&self) -> i8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_imm0003(u8);
-impl TokenField_imm0003 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_rd(u8);
-impl TokenField_rd {
-    fn execution(&self) -> Register {
-        meaning_0_value(self.0)
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_0_display(self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op1415(u8);
-impl TokenField_op1415 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op0303(u8);
-impl TokenField_op0303 {
-    fn execution(&self) -> u8 {
-        self.0
-    }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
-    }
-    fn display(&self) -> DisplayElement {
-        meaning_number(true, self.0)
-    }
-}
-#[derive(Clone, Copy, Debug)]
-struct TokenField_op0811(u8);
-impl TokenField_op0811 {
     fn execution(&self) -> u8 {
         self.0
     }
@@ -605,9 +345,165 @@ impl TokenField_xsimm8 {
     }
 }
 #[derive(Clone, Copy, Debug)]
-struct TokenField_simm0010(i16);
-impl TokenField_simm0010 {
-    fn execution(&self) -> i16 {
+struct TokenField_nnnn(u8);
+impl TokenField_nnnn {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op1515(u8);
+impl TokenField_op1515 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op1415(u8);
+impl TokenField_op1415 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op1215(u8);
+impl TokenField_op1215 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op1111(u8);
+impl TokenField_op1111 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op0811(u8);
+impl TokenField_op0811 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op0007(u8);
+impl TokenField_op0007 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op0003(u8);
+impl TokenField_op0003 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_op0303(u8);
+impl TokenField_op0303 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_rd(u8);
+impl TokenField_rd {
+    fn execution(&self) -> Register {
+        meaning_0_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_0_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_rs(u8);
+impl TokenField_rs {
+    fn execution(&self) -> Register {
+        meaning_0_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_0_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_rt(u8);
+impl TokenField_rt {
+    fn execution(&self) -> Register {
+        meaning_0_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_0_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_imm1214(u8);
+impl TokenField_imm1214 {
+    fn execution(&self) -> u8 {
         self.0
     }
     fn disassembly(&self) -> i64 {
@@ -630,87 +526,116 @@ impl TokenField_imm0007 {
         meaning_number(true, self.0)
     }
 }
+#[derive(Clone, Copy, Debug)]
+struct TokenField_imm0003(u8);
+impl TokenField_imm0003 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_simm1213(i8);
+impl TokenField_simm1213 {
+    fn execution(&self) -> i8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_simm0010(i16);
+impl TokenField_simm0010 {
+    fn execution(&self) -> i16 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_simm0411(i8);
+impl TokenField_simm0411 {
+    fn execution(&self) -> i8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_simm0007(i8);
+impl TokenField_simm0007 {
+    fn execution(&self) -> i8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_simm0003(i8);
+impl TokenField_simm0003 {
+    fn execution(&self) -> i8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_cc0911(u8);
+impl TokenField_cc0911 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_cc0002(u8);
+impl TokenField_cc0002 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
 struct TokenParser<const LEN: usize>([u8; LEN]);
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
         let token_data = <[u8; LEN]>::try_from(token_slice).unwrap();
         Some(Self(token_data))
-    }
-    fn op1111(&self) -> TokenField_op1111 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1111(inner_value)
-    }
-    fn nnnn(&self) -> TokenField_nnnn {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_nnnn(inner_value)
-    }
-    fn op0007(&self) -> TokenField_op0007 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0007(inner_value)
-    }
-    fn op1215(&self) -> TokenField_op1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1215(inner_value)
-    }
-    fn op0003(&self) -> TokenField_op0003 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0003(inner_value)
     }
     fn op8(&self) -> TokenField_op8 {
         let inner_value = {
@@ -727,52 +652,7 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_op8(inner_value)
     }
-    fn cc0911(&self) -> TokenField_cc0911 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 1u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_cc0911(inner_value)
-    }
-    fn simm0003(&self) -> TokenField_simm0003 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_simm0003(inner_value)
-    }
-    fn rt(&self) -> TokenField_rt {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rt(inner_value)
-    }
-    fn simm0007(&self) -> TokenField_simm0007 {
+    fn xsimm8(&self) -> TokenField_xsimm8 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
@@ -785,24 +665,9 @@ impl<const LEN: usize> TokenParser<LEN> {
                 read_i8::<false>(work_value, 0u64 as usize, 8u64 as usize);
             i8::try_from(value).unwrap()
         };
-        TokenField_simm0007(inner_value)
+        TokenField_xsimm8(inner_value)
     }
-    fn imm1214(&self) -> TokenField_imm1214 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_imm1214(inner_value)
-    }
-    fn rs(&self) -> TokenField_rs {
+    fn nnnn(&self) -> TokenField_nnnn {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
@@ -812,40 +677,10 @@ impl<const LEN: usize> TokenParser<LEN> {
             work_value[work_start..work_end]
                 .copy_from_slice(&self.0[token_start..token_end]);
             let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
+                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
             u8::try_from(value).unwrap()
         };
-        TokenField_rs(inner_value)
-    }
-    fn cc0002(&self) -> TokenField_cc0002 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_cc0002(inner_value)
-    }
-    fn simm0411(&self) -> TokenField_simm0411 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<false>(work_value, 4u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_simm0411(inner_value)
+        TokenField_nnnn(inner_value)
     }
     fn op1515(&self) -> TokenField_op1515 {
         let inner_value = {
@@ -862,51 +697,6 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_op1515(inner_value)
     }
-    fn simm1213(&self) -> TokenField_simm1213 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 4u64 as usize, 2u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_simm1213(inner_value)
-    }
-    fn imm0003(&self) -> TokenField_imm0003 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_imm0003(inner_value)
-    }
-    fn rd(&self) -> TokenField_rd {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rd(inner_value)
-    }
     fn op1415(&self) -> TokenField_op1415 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
@@ -922,20 +712,35 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_op1415(inner_value)
     }
-    fn op0303(&self) -> TokenField_op0303 {
+    fn op1215(&self) -> TokenField_op1215 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
             let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_op1215(inner_value)
+    }
+    fn op1111(&self) -> TokenField_op1111 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
+            let token_end = 2u64 as usize;
             work_value[work_start..work_end]
                 .copy_from_slice(&self.0[token_start..token_end]);
             let value =
                 read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
             u8::try_from(value).unwrap()
         };
-        TokenField_op0303(inner_value)
+        TokenField_op1111(inner_value)
     }
     fn op0811(&self) -> TokenField_op0811 {
         let inner_value = {
@@ -952,7 +757,7 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_op0811(inner_value)
     }
-    fn xsimm8(&self) -> TokenField_xsimm8 {
+    fn op0007(&self) -> TokenField_op0007 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
@@ -962,25 +767,100 @@ impl<const LEN: usize> TokenParser<LEN> {
             work_value[work_start..work_end]
                 .copy_from_slice(&self.0[token_start..token_end]);
             let value =
-                read_i8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
+                read_u8::<false>(work_value, 0u64 as usize, 8u64 as usize);
+            u8::try_from(value).unwrap()
         };
-        TokenField_xsimm8(inner_value)
+        TokenField_op0007(inner_value)
     }
-    fn simm0010(&self) -> TokenField_simm0010 {
+    fn op0003(&self) -> TokenField_op0003 {
         let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
+            let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
+            let work_end = 1u64 as usize;
             let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_op0003(inner_value)
+    }
+    fn op0303(&self) -> TokenField_op0303 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_op0303(inner_value)
+    }
+    fn rd(&self) -> TokenField_rd {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
             let token_end = 2u64 as usize;
             work_value[work_start..work_end]
                 .copy_from_slice(&self.0[token_start..token_end]);
             let value =
-                read_i16::<false>(work_value, 0u64 as usize, 11u64 as usize);
-            i16::try_from(value).unwrap()
+                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
         };
-        TokenField_simm0010(inner_value)
+        TokenField_rd(inner_value)
+    }
+    fn rs(&self) -> TokenField_rs {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_rs(inner_value)
+    }
+    fn rt(&self) -> TokenField_rt {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_rt(inner_value)
+    }
+    fn imm1214(&self) -> TokenField_imm1214 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 4u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_imm1214(inner_value)
     }
     fn imm0007(&self) -> TokenField_imm0007 {
         let inner_value = {
@@ -997,119 +877,239 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_imm0007(inner_value)
     }
+    fn imm0003(&self) -> TokenField_imm0003 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_imm0003(inner_value)
+    }
+    fn simm1213(&self) -> TokenField_simm1213 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_i8::<false>(work_value, 4u64 as usize, 2u64 as usize);
+            i8::try_from(value).unwrap()
+        };
+        TokenField_simm1213(inner_value)
+    }
+    fn simm0010(&self) -> TokenField_simm0010 {
+        let inner_value = {
+            let mut work_value = [0u8; 2u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 2u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_i16::<false>(work_value, 0u64 as usize, 11u64 as usize);
+            i16::try_from(value).unwrap()
+        };
+        TokenField_simm0010(inner_value)
+    }
+    fn simm0411(&self) -> TokenField_simm0411 {
+        let inner_value = {
+            let mut work_value = [0u8; 2u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 2u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_i16::<false>(work_value, 4u64 as usize, 8u64 as usize);
+            i8::try_from(value).unwrap()
+        };
+        TokenField_simm0411(inner_value)
+    }
+    fn simm0007(&self) -> TokenField_simm0007 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_i8::<false>(work_value, 0u64 as usize, 8u64 as usize);
+            i8::try_from(value).unwrap()
+        };
+        TokenField_simm0007(inner_value)
+    }
+    fn simm0003(&self) -> TokenField_simm0003 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_i8::<false>(work_value, 0u64 as usize, 4u64 as usize);
+            i8::try_from(value).unwrap()
+        };
+        TokenField_simm0003(inner_value)
+    }
+    fn cc0911(&self) -> TokenField_cc0911 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 1u64 as usize;
+            let token_end = 2u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 1u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_cc0911(inner_value)
+    }
+    fn cc0002(&self) -> TokenField_cc0002 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_cc0002(inner_value)
+    }
 }
 #[derive(Clone, Copy, Debug)]
 pub enum Register {
-    r9,
-    r8h,
-    sp,
-    sph,
-    r3h,
-    r5l,
-    pcl,
-    r8l,
-    r2,
-    r5h,
-    pc,
-    r0l,
-    r1,
-    r4l,
-    r12h,
-    r10l,
-    r11,
-    r1l,
-    r10,
-    r12l,
-    r2h,
-    r6h,
-    lr,
-    r4h,
-    r0h,
-    lrh,
-    C,
-    r2l,
-    r7l,
-    contextreg,
-    V,
-    r6l,
-    r12,
-    r4,
-    pch,
-    r3l,
-    r9l,
-    r6,
     r0,
+    r1,
+    r2,
     r3,
-    r11l,
-    N,
-    r1h,
-    Z,
-    r10h,
+    r4,
     r5,
+    r6,
     r7,
-    r9h,
-    r11h,
-    lrl,
-    r7h,
     r8,
+    r9,
+    r10,
+    r11,
+    r12,
+    sp,
+    lr,
+    pc,
+    C,
+    Z,
+    N,
+    V,
+    r0l,
+    r0h,
+    r1l,
+    r1h,
+    r2l,
+    r2h,
+    r3l,
+    r3h,
+    r4l,
+    r4h,
+    r5l,
+    r5h,
+    r6l,
+    r6h,
+    r7l,
+    r7h,
+    r8l,
+    r8h,
+    r9l,
+    r9h,
+    r10l,
+    r10h,
+    r11l,
+    r11h,
+    r12l,
+    r12h,
     spl,
+    sph,
+    lrl,
+    lrh,
+    pcl,
+    pch,
+    contextreg,
 }
 impl core::fmt::Display for Register {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::r9 => write!(f, "r9"),
-            Self::r8h => write!(f, "r8h"),
-            Self::sp => write!(f, "sp"),
-            Self::sph => write!(f, "sph"),
-            Self::r3h => write!(f, "r3h"),
-            Self::r5l => write!(f, "r5l"),
-            Self::pcl => write!(f, "pcl"),
-            Self::r8l => write!(f, "r8l"),
-            Self::r2 => write!(f, "r2"),
-            Self::r5h => write!(f, "r5h"),
-            Self::pc => write!(f, "pc"),
-            Self::r0l => write!(f, "r0l"),
-            Self::r1 => write!(f, "r1"),
-            Self::r4l => write!(f, "r4l"),
-            Self::r12h => write!(f, "r12h"),
-            Self::r10l => write!(f, "r10l"),
-            Self::r11 => write!(f, "r11"),
-            Self::r1l => write!(f, "r1l"),
-            Self::r10 => write!(f, "r10"),
-            Self::r12l => write!(f, "r12l"),
-            Self::r2h => write!(f, "r2h"),
-            Self::r6h => write!(f, "r6h"),
-            Self::lr => write!(f, "lr"),
-            Self::r4h => write!(f, "r4h"),
-            Self::r0h => write!(f, "r0h"),
-            Self::lrh => write!(f, "lrh"),
-            Self::C => write!(f, "C"),
-            Self::r2l => write!(f, "r2l"),
-            Self::r7l => write!(f, "r7l"),
-            Self::contextreg => write!(f, "contextreg"),
-            Self::V => write!(f, "V"),
-            Self::r6l => write!(f, "r6l"),
-            Self::r12 => write!(f, "r12"),
-            Self::r4 => write!(f, "r4"),
-            Self::pch => write!(f, "pch"),
-            Self::r3l => write!(f, "r3l"),
-            Self::r9l => write!(f, "r9l"),
-            Self::r6 => write!(f, "r6"),
             Self::r0 => write!(f, "r0"),
+            Self::r1 => write!(f, "r1"),
+            Self::r2 => write!(f, "r2"),
             Self::r3 => write!(f, "r3"),
-            Self::r11l => write!(f, "r11l"),
-            Self::N => write!(f, "N"),
-            Self::r1h => write!(f, "r1h"),
-            Self::Z => write!(f, "Z"),
-            Self::r10h => write!(f, "r10h"),
+            Self::r4 => write!(f, "r4"),
             Self::r5 => write!(f, "r5"),
+            Self::r6 => write!(f, "r6"),
             Self::r7 => write!(f, "r7"),
-            Self::r9h => write!(f, "r9h"),
-            Self::r11h => write!(f, "r11h"),
-            Self::lrl => write!(f, "lrl"),
-            Self::r7h => write!(f, "r7h"),
             Self::r8 => write!(f, "r8"),
+            Self::r9 => write!(f, "r9"),
+            Self::r10 => write!(f, "r10"),
+            Self::r11 => write!(f, "r11"),
+            Self::r12 => write!(f, "r12"),
+            Self::sp => write!(f, "sp"),
+            Self::lr => write!(f, "lr"),
+            Self::pc => write!(f, "pc"),
+            Self::C => write!(f, "C"),
+            Self::Z => write!(f, "Z"),
+            Self::N => write!(f, "N"),
+            Self::V => write!(f, "V"),
+            Self::r0l => write!(f, "r0l"),
+            Self::r0h => write!(f, "r0h"),
+            Self::r1l => write!(f, "r1l"),
+            Self::r1h => write!(f, "r1h"),
+            Self::r2l => write!(f, "r2l"),
+            Self::r2h => write!(f, "r2h"),
+            Self::r3l => write!(f, "r3l"),
+            Self::r3h => write!(f, "r3h"),
+            Self::r4l => write!(f, "r4l"),
+            Self::r4h => write!(f, "r4h"),
+            Self::r5l => write!(f, "r5l"),
+            Self::r5h => write!(f, "r5h"),
+            Self::r6l => write!(f, "r6l"),
+            Self::r6h => write!(f, "r6h"),
+            Self::r7l => write!(f, "r7l"),
+            Self::r7h => write!(f, "r7h"),
+            Self::r8l => write!(f, "r8l"),
+            Self::r8h => write!(f, "r8h"),
+            Self::r9l => write!(f, "r9l"),
+            Self::r9h => write!(f, "r9h"),
+            Self::r10l => write!(f, "r10l"),
+            Self::r10h => write!(f, "r10h"),
+            Self::r11l => write!(f, "r11l"),
+            Self::r11h => write!(f, "r11h"),
+            Self::r12l => write!(f, "r12l"),
+            Self::r12h => write!(f, "r12h"),
             Self::spl => write!(f, "spl"),
+            Self::sph => write!(f, "sph"),
+            Self::lrl => write!(f, "lrl"),
+            Self::lrh => write!(f, "lrh"),
+            Self::pcl => write!(f, "pcl"),
+            Self::pch => write!(f, "pch"),
+            Self::contextreg => write!(f, "contextreg"),
         }
     }
 }
@@ -1124,762 +1124,12 @@ impl core::fmt::Display for DisplayElement {
         match self {
             Self::Literal(lit) => lit.fmt(f),
             Self::Register(reg) => reg.fmt(f),
-            Self::Number(hex, value) => {
-                if *hex {
-                    write!(f, "0x{:x}", value)
-                } else {
-                    value.fmt(f)
-                }
-            }
-        }
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:56:1"]
-#[derive(Clone, Debug)]
-struct nfctxSetAddrVar0 {
-    xsimm8: TokenField_xsimm8,
-    imm0003: TokenField_imm0003,
-    Imm4: Imm4,
-}
-impl nfctxSetAddrVar0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut addr: i64 = 0;
-        addr = (i64::try_from(inst_start).unwrap() + self.xsimm8.disassembly());
-        global_set.set_nfctx(
-            Some(u32::try_from(addr).unwrap()),
-            context.register().read_nfctx_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, addr)];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut addr: i64 = 0;
-        addr = (i64::try_from(inst_start).unwrap()
-            + token_parser.xsimm8().disassembly());
-        let tmp = token_parser.imm0003().disassembly();
-        context_instance.register_mut().write_nfctx_disassembly(tmp);
-        let Imm4 = if let Some((len, table)) =
-            Imm4::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let imm0003 = token_parser.imm0003();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let xsimm8 = token_parser.xsimm8();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                Imm4,
-                imm0003,
-                xsimm8,
+            Self::Number(hex, value) => match (*hex, value.is_negative()) {
+                (true, true) => write!(f, "-0x{:x}", value.abs()),
+                (true, false) => write!(f, "0x{:x}", value),
+                (false, _) => value.fmt(f),
             },
-        ))
-    }
-}
-#[derive(Clone, Debug)]
-enum nfctxSetAddr {
-    Var0(nfctxSetAddrVar0),
-}
-impl nfctxSetAddr {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
         }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) = nfctxSetAddrVar0::parse(
-            tokens_param,
-            &mut context_current,
-            inst_start,
-        ) {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        None
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:113:1"]
-#[derive(Clone, Debug)]
-struct RSVar0 {
-    rs: TokenField_rs,
-}
-impl RSVar0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("["),
-            self.rs.display(),
-            DisplayElement::Literal("]"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let rs = token_parser.rs();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { rs }))
-    }
-}
-#[derive(Clone, Debug)]
-enum RS {
-    Var0(RSVar0),
-}
-impl RS {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-        }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) =
-            RSVar0::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        None
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:116:1"]
-#[derive(Clone, Debug)]
-struct CCVar0 {}
-impl CCVar0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("eq")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 0 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:117:1"]
-#[derive(Clone, Debug)]
-struct CCVar1 {}
-impl CCVar1 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ne")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 1 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:118:1"]
-#[derive(Clone, Debug)]
-struct CCVar2 {}
-impl CCVar2 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lt")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 2 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:119:1"]
-#[derive(Clone, Debug)]
-struct CCVar3 {}
-impl CCVar3 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("le")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 3 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:120:1"]
-#[derive(Clone, Debug)]
-struct CCVar4 {}
-impl CCVar4 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lo")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 4 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:121:1"]
-#[derive(Clone, Debug)]
-struct CCVar5 {}
-impl CCVar5 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mi")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 5 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:122:1"]
-#[derive(Clone, Debug)]
-struct CCVar6 {}
-impl CCVar6 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("vs")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 6 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:123:1"]
-#[derive(Clone, Debug)]
-struct CCVar7 {}
-impl CCVar7 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal(""), DisplayElement::Literal("")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.cc0002().disassembly() != 7 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[derive(Clone, Debug)]
-enum CC {
-    Var0(CCVar0),
-    Var1(CCVar1),
-    Var2(CCVar2),
-    Var3(CCVar3),
-    Var4(CCVar4),
-    Var5(CCVar5),
-    Var6(CCVar6),
-    Var7(CCVar7),
-}
-impl CC {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var1(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var2(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var3(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var4(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var5(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var6(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-            Self::Var7(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-        }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) =
-            CCVar0::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar1::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var1(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar2::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var2(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar3::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var3(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar4::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var4(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar5::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var5(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar6::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var6(parsed)));
-        }
-        if let Some((inst_len, parsed)) =
-            CCVar7::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var7(parsed)));
-        }
-        None
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:109:1"]
-#[derive(Clone, Debug)]
-struct Rel8Var0 {
-    simm0007: TokenField_simm0007,
-}
-impl Rel8Var0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut addr: i64 = 0;
-        addr =
-            (i64::try_from(inst_start).unwrap() + self.simm0007.disassembly());
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, addr)];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut addr: i64 = 0;
-        addr = (i64::try_from(inst_start).unwrap()
-            + token_parser.simm0007().disassembly());
-        let simm0007 = token_parser.simm0007();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { simm0007 }))
-    }
-}
-#[derive(Clone, Debug)]
-enum Rel8 {
-    Var0(Rel8Var0),
-}
-impl Rel8 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-        }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) =
-            Rel8Var0::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        None
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:31:1"]
@@ -2970,8 +2220,8 @@ impl instructionVar18 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:58:1"]
 #[derive(Clone, Debug)]
 struct instructionVar19 {
-    nfctxSetAddr: nfctxSetAddr,
     Imm4: Imm4,
+    nfctxSetAddr: nfctxSetAddr,
 }
 impl instructionVar19 {
     fn display_extend<T>(
@@ -3057,7 +2307,7 @@ impl instructionVar19 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { nfctxSetAddr, Imm4 }))
+        Some((pattern_len, Self { Imm4, nfctxSetAddr }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:59:1"]
@@ -3279,8 +2529,8 @@ impl instructionVar22 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:155:1"]
 #[derive(Clone, Debug)]
 struct instructionVar23 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar23 {
     fn display_extend<T>(
@@ -3335,8 +2585,8 @@ impl instructionVar23 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:156:1"]
 #[derive(Clone, Debug)]
 struct instructionVar24 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar24 {
     fn display_extend<T>(
@@ -3385,7 +2635,7 @@ impl instructionVar24 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:157:1"]
@@ -3503,8 +2753,8 @@ impl instructionVar26 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:159:1"]
 #[derive(Clone, Debug)]
 struct instructionVar27 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar27 {
     fn display_extend<T>(
@@ -3547,13 +2797,13 @@ impl instructionVar27 {
         if token_parser.op0811().disassembly() != 5 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:160:1"]
@@ -3609,14 +2859,14 @@ impl instructionVar28 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:161:1"]
 #[derive(Clone, Debug)]
 struct instructionVar29 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar29 {
     fn display_extend<T>(
@@ -3659,13 +2909,13 @@ impl instructionVar29 {
         if token_parser.op0811().disassembly() != 7 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:163:1"]
@@ -4191,8 +3441,8 @@ impl instructionVar37 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:172:1"]
 #[derive(Clone, Debug)]
 struct instructionVar38 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar38 {
     fn display_extend<T>(
@@ -4235,13 +3485,13 @@ impl instructionVar38 {
         if token_parser.op0811().disassembly() != 0 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:173:1"]
@@ -4347,8 +3597,8 @@ impl instructionVar40 {
         if token_parser.op0811().disassembly() != 2 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
@@ -4359,8 +3609,8 @@ impl instructionVar40 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:175:1"]
 #[derive(Clone, Debug)]
 struct instructionVar41 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar41 {
     fn display_extend<T>(
@@ -4403,13 +3653,13 @@ impl instructionVar41 {
         if token_parser.op0811().disassembly() != 3 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:176:1"]
@@ -4465,14 +3715,14 @@ impl instructionVar42 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:177:1"]
 #[derive(Clone, Debug)]
 struct instructionVar43 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar43 {
     fn display_extend<T>(
@@ -4521,7 +3771,7 @@ impl instructionVar43 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:188:1"]
@@ -4571,13 +3821,13 @@ impl instructionVar44 {
         if token_parser.op0811().disassembly() != 8 {
             return None;
         }
-        let rt = token_parser.rt();
         let rs = token_parser.rs();
+        let rt = token_parser.rt();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { rt, rs }))
+        Some((pattern_len, Self { rs, rt }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:190:1"]
@@ -4909,8 +4159,8 @@ impl instructionVar49 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:198:1"]
 #[derive(Clone, Debug)]
 struct instructionVar50 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar50 {
     fn display_extend<T>(
@@ -4965,8 +4215,8 @@ impl instructionVar50 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:200:1"]
 #[derive(Clone, Debug)]
 struct instructionVar51 {
-    Rel82: Rel82,
     COND: COND,
+    Rel82: Rel82,
 }
 impl instructionVar51 {
     fn display_extend<T>(
@@ -5031,7 +4281,7 @@ impl instructionVar51 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { Rel82, COND }))
+        Some((pattern_len, Self { COND, Rel82 }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:201:1"]
@@ -5171,8 +4421,8 @@ impl instructionVar53 {
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:222:1"]
 #[derive(Clone, Debug)]
 struct instructionVar54 {
-    rt: TokenField_rt,
     rs: TokenField_rs,
+    rt: TokenField_rt,
 }
 impl instructionVar54 {
     fn display_extend<T>(
@@ -6515,95 +5765,6 @@ impl instruction {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:69:1"]
-#[derive(Clone, Debug)]
-struct NopCntVar0 {
-    imm0003: TokenField_imm0003,
-}
-impl NopCntVar0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut cnt: i64 = 0;
-        cnt = (self.imm0003.disassembly() + (2u64 as i64));
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, cnt),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut cnt: i64 = 0;
-        cnt = (token_parser.imm0003().disassembly() + (2u64 as i64));
-        let imm0003 = token_parser.imm0003();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { imm0003 }))
-    }
-}
-#[derive(Clone, Debug)]
-enum NopCnt {
-    Var0(NopCntVar0),
-}
-impl NopCnt {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-        }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) =
-            NopCntVar0::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        None
-    }
-}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:103:1"]
 #[derive(Clone, Debug)]
 struct Simm4Var0 {
@@ -6687,6 +5848,99 @@ impl Simm4 {
         None
     }
 }
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:104:1"]
+#[derive(Clone, Debug)]
+struct Simm10Var0 {
+    simm1213: TokenField_simm1213,
+    imm0007: TokenField_imm0007,
+}
+impl Simm10Var0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut computed: i64 = 0;
+        computed = ((self.simm1213.disassembly() << (8u64 as i64))
+            | self.imm0007.disassembly());
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, computed),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let mut computed: i64 = 0;
+        computed = ((token_parser.simm1213().disassembly() << (8u64 as i64))
+            | token_parser.imm0007().disassembly());
+        let simm1213 = token_parser.simm1213();
+        let imm0007 = token_parser.imm0007();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { simm1213, imm0007 }))
+    }
+}
+#[derive(Clone, Debug)]
+enum Simm10 {
+    Var0(Simm10Var0),
+}
+impl Simm10 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) =
+            Simm10Var0::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:106:1"]
 #[derive(Clone, Debug)]
 struct Imm4Var0 {
@@ -6763,6 +6017,188 @@ impl Imm4 {
         let mut context_current = context_param.clone();
         if let Some((inst_len, parsed)) =
             Imm4Var0::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:107:1"]
+#[derive(Clone, Debug)]
+struct Imm11Var0 {
+    imm1214: TokenField_imm1214,
+    imm0007: TokenField_imm0007,
+}
+impl Imm11Var0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut computed: i64 = 0;
+        computed = ((self.imm1214.disassembly() << (8u64 as i64))
+            | self.imm0007.disassembly());
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, computed),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let mut computed: i64 = 0;
+        computed = ((token_parser.imm1214().disassembly() << (8u64 as i64))
+            | token_parser.imm0007().disassembly());
+        let imm1214 = token_parser.imm1214();
+        let imm0007 = token_parser.imm0007();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { imm1214, imm0007 }))
+    }
+}
+#[derive(Clone, Debug)]
+enum Imm11 {
+    Var0(Imm11Var0),
+}
+impl Imm11 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) =
+            Imm11Var0::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:109:1"]
+#[derive(Clone, Debug)]
+struct Rel8Var0 {
+    simm0007: TokenField_simm0007,
+}
+impl Rel8Var0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut addr: i64 = 0;
+        addr =
+            (i64::try_from(inst_start).unwrap() + self.simm0007.disassembly());
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Number(true, addr)];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let mut addr: i64 = 0;
+        addr = (i64::try_from(inst_start).unwrap()
+            + token_parser.simm0007().disassembly());
+        let simm0007 = token_parser.simm0007();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { simm0007 }))
+    }
+}
+#[derive(Clone, Debug)]
+enum Rel8 {
+    Var0(Rel8Var0),
+}
+impl Rel8 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) =
+            Rel8Var0::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
@@ -6859,13 +6295,12 @@ impl Rel82 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:107:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:111:1"]
 #[derive(Clone, Debug)]
-struct Imm11Var0 {
-    imm1214: TokenField_imm1214,
-    imm0007: TokenField_imm0007,
+struct Rel11Var0 {
+    simm0010: TokenField_simm0010,
 }
-impl Imm11Var0 {
+impl Rel11Var0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6876,13 +6311,11 @@ impl Imm11Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut computed: i64 = 0;
-        computed = ((self.imm1214.disassembly() << (8u64 as i64))
-            | self.imm0007.disassembly());
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, computed),
-        ];
+        let mut addr: i64 = 0;
+        addr =
+            (i64::try_from(inst_start).unwrap() + self.simm0010.disassembly());
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Number(true, addr)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -6897,23 +6330,22 @@ impl Imm11Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut computed: i64 = 0;
-        computed = ((token_parser.imm1214().disassembly() << (8u64 as i64))
-            | token_parser.imm0007().disassembly());
-        let imm0007 = token_parser.imm0007();
-        let imm1214 = token_parser.imm1214();
+        let mut addr: i64 = 0;
+        addr = (i64::try_from(inst_start).unwrap()
+            + token_parser.simm0010().disassembly());
+        let simm0010 = token_parser.simm0010();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { imm0007, imm1214 }))
+        Some((pattern_len, Self { simm0010 }))
     }
 }
 #[derive(Clone, Debug)]
-enum Imm11 {
-    Var0(Imm11Var0),
+enum Rel11 {
+    Var0(Rel11Var0),
 }
-impl Imm11 {
+impl Rel11 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6944,7 +6376,93 @@ impl Imm11 {
     {
         let mut context_current = context_param.clone();
         if let Some((inst_len, parsed)) =
-            Imm11Var0::parse(tokens_param, &mut context_current, inst_start)
+            Rel11Var0::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:113:1"]
+#[derive(Clone, Debug)]
+struct RSVar0 {
+    rs: TokenField_rs,
+}
+impl RSVar0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("["),
+            self.rs.display(),
+            DisplayElement::Literal("]"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let rs = token_parser.rs();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { rs }))
+    }
+}
+#[derive(Clone, Debug)]
+enum RS {
+    Var0(RSVar0),
+}
+impl RS {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) =
+            RSVar0::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
@@ -7038,10 +6556,10 @@ impl RT {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:71:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:116:1"]
 #[derive(Clone, Debug)]
-struct NopByteVar0 {}
-impl NopByteVar0 {
+struct CCVar0 {}
+impl CCVar0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7052,6 +6570,8 @@ impl NopByteVar0 {
     ) where
         T: ContextTrait + Clone,
     {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("eq")];
+        display.extend_from_slice(&extend);
     }
     fn parse<T>(
         mut tokens_current: &[u8],
@@ -7063,8 +6583,9 @@ impl NopByteVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
-        let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_counter_disassembly() != 0 {
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 0 {
             return None;
         }
         pattern_len += block_0_len;
@@ -7074,12 +6595,10 @@ impl NopByteVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:72:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:117:1"]
 #[derive(Clone, Debug)]
-struct NopByteVar1 {
-    NopByte: Box<NopByte>,
-}
-impl NopByteVar1 {
+struct CCVar1 {}
+impl CCVar1 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7090,6 +6609,8 @@ impl NopByteVar1 {
     ) where
         T: ContextTrait + Clone,
     {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ne")];
+        display.extend_from_slice(&extend);
     }
     fn parse<T>(
         mut tokens_current: &[u8],
@@ -7101,43 +6622,265 @@ impl NopByteVar1 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
-        let mut block_0_len = 0u64 as u32;
-        let tmp = (context_instance.register().read_counter_disassembly()
-            - (1u64 as i64));
-        context_instance
-            .register_mut()
-            .write_counter_disassembly(tmp);
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 1 {
+            return None;
+        }
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u32;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        let nnnn = token_parser.nnnn();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        let mut block_2_len = 0u64 as u32;
-        let NopByte = if let Some((len, table)) =
-            NopByte::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_2_len = block_2_len.max(len as u32);
-            Box::new(table)
-        } else {
-            return None;
-        };
-        pattern_len += block_2_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_2_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { NopByte }))
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:118:1"]
+#[derive(Clone, Debug)]
+struct CCVar2 {}
+impl CCVar2 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lt")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 2 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:119:1"]
+#[derive(Clone, Debug)]
+struct CCVar3 {}
+impl CCVar3 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("le")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 3 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:120:1"]
+#[derive(Clone, Debug)]
+struct CCVar4 {}
+impl CCVar4 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lo")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 4 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:121:1"]
+#[derive(Clone, Debug)]
+struct CCVar5 {}
+impl CCVar5 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mi")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 5 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:122:1"]
+#[derive(Clone, Debug)]
+struct CCVar6 {}
+impl CCVar6 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("vs")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 6 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:123:1"]
+#[derive(Clone, Debug)]
+struct CCVar7 {}
+impl CCVar7 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal(""), DisplayElement::Literal("")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.cc0002().disassembly() != 7 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
     }
 }
 #[derive(Clone, Debug)]
-enum NopByte {
-    Var0(NopByteVar0),
-    Var1(NopByteVar1),
+enum CC {
+    Var0(CCVar0),
+    Var1(CCVar1),
+    Var2(CCVar2),
+    Var3(CCVar3),
+    Var4(CCVar4),
+    Var5(CCVar5),
+    Var6(CCVar6),
+    Var7(CCVar7),
 }
-impl NopByte {
+impl CC {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7163,6 +6906,48 @@ impl NopByte {
                 inst_next,
                 global_set_param,
             ),
+            Self::Var2(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var3(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var4(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var5(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var6(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var7(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
         }
     }
     fn parse<T>(
@@ -7175,16 +6960,52 @@ impl NopByte {
     {
         let mut context_current = context_param.clone();
         if let Some((inst_len, parsed)) =
-            NopByteVar0::parse(tokens_param, &mut context_current, inst_start)
+            CCVar0::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
         }
         if let Some((inst_len, parsed)) =
-            NopByteVar1::parse(tokens_param, &mut context_current, inst_start)
+            CCVar1::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var1(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar2::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var2(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar3::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var3(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar4::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var4(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar5::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var5(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar6::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var6(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            CCVar7::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var7(parsed)));
         }
         None
     }
@@ -7342,105 +7163,14 @@ impl COND {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:104:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:56:1"]
 #[derive(Clone, Debug)]
-struct Simm10Var0 {
-    imm0007: TokenField_imm0007,
-    simm1213: TokenField_simm1213,
+struct nfctxSetAddrVar0 {
+    xsimm8: TokenField_xsimm8,
+    imm0003: TokenField_imm0003,
+    Imm4: Imm4,
 }
-impl Simm10Var0 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut computed: i64 = 0;
-        computed = ((self.simm1213.disassembly() << (8u64 as i64))
-            | self.imm0007.disassembly());
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, computed),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut computed: i64 = 0;
-        computed = ((token_parser.simm1213().disassembly() << (8u64 as i64))
-            | token_parser.imm0007().disassembly());
-        let simm1213 = token_parser.simm1213();
-        let imm0007 = token_parser.imm0007();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { simm1213, imm0007 }))
-    }
-}
-#[derive(Clone, Debug)]
-enum Simm10 {
-    Var0(Simm10Var0),
-}
-impl Simm10 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set_param: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        match self {
-            Self::Var0(x) => x.display_extend(
-                display,
-                context,
-                inst_start,
-                inst_next,
-                global_set_param,
-            ),
-        }
-    }
-    fn parse<T>(
-        tokens_param: &[u8],
-        context_param: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) =
-            Simm10Var0::parse(tokens_param, &mut context_current, inst_start)
-        {
-            *context_param = context_current;
-            return Some((inst_len, Self::Var0(parsed)));
-        }
-        None
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:111:1"]
-#[derive(Clone, Debug)]
-struct Rel11Var0 {
-    simm0010: TokenField_simm0010,
-}
-impl Rel11Var0 {
+impl nfctxSetAddrVar0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7452,8 +7182,11 @@ impl Rel11Var0 {
         T: ContextTrait + Clone,
     {
         let mut addr: i64 = 0;
-        addr =
-            (i64::try_from(inst_start).unwrap() + self.simm0010.disassembly());
+        addr = (i64::try_from(inst_start).unwrap() + self.xsimm8.disassembly());
+        global_set.set_nfctx(
+            Some(u32::try_from(addr).unwrap()),
+            context.register().read_nfctx_disassembly(),
+        );
         let extend: [DisplayElement; 1usize] =
             [DisplayElement::Number(true, addr)];
         display.extend_from_slice(&extend);
@@ -7472,20 +7205,134 @@ impl Rel11Var0 {
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         let mut addr: i64 = 0;
         addr = (i64::try_from(inst_start).unwrap()
-            + token_parser.simm0010().disassembly());
-        let simm0010 = token_parser.simm0010();
+            + token_parser.xsimm8().disassembly());
+        let tmp = token_parser.imm0003().disassembly();
+        context_instance.register_mut().write_nfctx_disassembly(tmp);
+        let Imm4 = if let Some((len, table)) =
+            Imm4::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let imm0003 = token_parser.imm0003();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let xsimm8 = token_parser.xsimm8();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                Imm4,
+                imm0003,
+                xsimm8,
+            },
+        ))
+    }
+}
+#[derive(Clone, Debug)]
+enum nfctxSetAddr {
+    Var0(nfctxSetAddrVar0),
+}
+impl nfctxSetAddr {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) = nfctxSetAddrVar0::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:69:1"]
+#[derive(Clone, Debug)]
+struct NopCntVar0 {
+    imm0003: TokenField_imm0003,
+}
+impl NopCntVar0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut cnt: i64 = 0;
+        cnt = (self.imm0003.disassembly() + (2u64 as i64));
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, cnt),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        let mut cnt: i64 = 0;
+        cnt = (token_parser.imm0003().disassembly() + (2u64 as i64));
+        let imm0003 = token_parser.imm0003();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { simm0010 }))
+        Some((pattern_len, Self { imm0003 }))
     }
 }
 #[derive(Clone, Debug)]
-enum Rel11 {
-    Var0(Rel11Var0),
+enum NopCnt {
+    Var0(NopCntVar0),
 }
-impl Rel11 {
+impl NopCnt {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7516,10 +7363,161 @@ impl Rel11 {
     {
         let mut context_current = context_param.clone();
         if let Some((inst_len, parsed)) =
-            Rel11Var0::parse(tokens_param, &mut context_current, inst_start)
+            NopCntVar0::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
+        }
+        None
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:71:1"]
+#[derive(Clone, Debug)]
+struct NopByteVar0 {}
+impl NopByteVar0 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 0u64 as u32;
+        if context_instance.register().read_counter_disassembly() != 0 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toy_builder.sinc:72:1"]
+#[derive(Clone, Debug)]
+struct NopByteVar1 {
+    NopByte: Box<NopByte>,
+}
+impl NopByteVar1 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 0u64 as u32;
+        let tmp = (context_instance.register().read_counter_disassembly()
+            - (1u64 as i64));
+        context_instance
+            .register_mut()
+            .write_counter_disassembly(tmp);
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u32;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        let nnnn = token_parser.nnnn();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        let mut block_2_len = 0u64 as u32;
+        let NopByte = if let Some((len, table)) =
+            NopByte::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_2_len = block_2_len.max(len as u32);
+            Box::new(table)
+        } else {
+            return None;
+        };
+        pattern_len += block_2_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_2_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { NopByte }))
+    }
+}
+#[derive(Clone, Debug)]
+enum NopByte {
+    Var0(NopByteVar0),
+    Var1(NopByteVar1),
+}
+impl NopByte {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set_param: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        match self {
+            Self::Var0(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var1(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+        }
+    }
+    fn parse<T>(
+        tokens_param: &[u8],
+        context_param: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut context_current = context_param.clone();
+        if let Some((inst_len, parsed)) =
+            NopByteVar0::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var0(parsed)));
+        }
+        if let Some((inst_len, parsed)) =
+            NopByteVar1::parse(tokens_param, &mut context_current, inst_start)
+        {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var1(parsed)));
         }
         None
     }
