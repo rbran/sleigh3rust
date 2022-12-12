@@ -17,91 +17,91 @@ mod test {
     #[allow(unused_variables)]
     impl GlobalSetTrait for GlobalSetDummy {
         fn set_reg2Num(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_regNum(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_cond_base(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_regInc(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_ISA_MODE(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_REToverride(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_T(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_counter(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_cond_mask(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_cond_shft(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_cond_true(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_itmode(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_TEEMode(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_ARMcond(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_CALLoverride(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_LowBitCodeMode(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_TMode(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_ARMcondCk(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_counter2(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_LRset(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_condit(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_cond_full(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
     }
 

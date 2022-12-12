@@ -17,16 +17,16 @@ mod tests {
     #[allow(unused_variables)]
     impl GlobalSetTrait for GlobalSetDummy {
         fn set_nfctx(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
         fn set_phase(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
         fn set_counter(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
         fn set_fctx(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
     }
 

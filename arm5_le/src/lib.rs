@@ -17,43 +17,43 @@ mod test {
     #[allow(unused_variables)]
     impl GlobalSetTrait for GlobalSetDummy {
         fn set_regInc(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_LRset(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_REToverride(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_reg2Num(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_ARMcondCk(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_counter2(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_regNum(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_counter(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_ARMcond(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
 
         fn set_CALLoverride(&mut self, address: Option<u32>, value: i64) {
-            todo!()
+            ()
         }
     }
 

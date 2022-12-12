@@ -51,7 +51,6 @@ macro_rules! impl_read_to_type {
             let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let mask = value_max << start_bit;
             let mut value = value;
-            assert!(value <= value_max);
             value <<= start_bit;
             value = (mem & !mask) | value;
             if BIG_ENDIAN {
@@ -71,8 +70,6 @@ macro_rules! impl_read_to_type {
             assert!(len_bits + start_bit <= TYPE_BITS);
             let value_max = <$signed_type>::MAX >> (TYPE_BITS - len_bits);
             let value_min = <$signed_type>::MIN >> (TYPE_BITS - len_bits);
-            assert!(value <= value_max);
-            assert!(value >= value_min);
             let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let value = value as $unsigned_type & mask;
             let mem = mem as $unsigned_type;
@@ -299,6 +296,81 @@ where
         1 => Register::fv4,
         2 => Register::fv8,
         3 => Register::fv12,
+        _ => unreachable!("Invalid Attach Value"),
+    }
+}
+fn meaning_7_display<T>(num: T) -> DisplayElement
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    let value = meaning_7_value(num.try_into().unwrap());
+    DisplayElement::Register(value)
+}
+fn meaning_7_value<T>(num: T) -> Register
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    match u8::try_from(num).unwrap() {
+        0 => Register::fr0,
+        1 => Register::fr2,
+        2 => Register::fr4,
+        3 => Register::fr6,
+        4 => Register::fr8,
+        5 => Register::fr10,
+        6 => Register::fr12,
+        7 => Register::fr14,
+        _ => unreachable!("Invalid Attach Value"),
+    }
+}
+fn meaning_8_display<T>(num: T) -> DisplayElement
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    let value = meaning_8_value(num.try_into().unwrap());
+    DisplayElement::Register(value)
+}
+fn meaning_8_value<T>(num: T) -> Register
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    match u8::try_from(num).unwrap() {
+        0 => Register::fr1,
+        1 => Register::fr3,
+        2 => Register::fr5,
+        3 => Register::fr7,
+        4 => Register::fr9,
+        5 => Register::fr11,
+        6 => Register::fr13,
+        7 => Register::fr15,
+        _ => unreachable!("Invalid Attach Value"),
+    }
+}
+fn meaning_9_display<T>(num: T) -> DisplayElement
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    let value = meaning_9_value(num.try_into().unwrap());
+    DisplayElement::Register(value)
+}
+fn meaning_9_value<T>(num: T) -> Register
+where
+    u8: TryFrom<T>,
+    <u8 as TryFrom<T>>::Error: core::fmt::Debug,
+{
+    match u8::try_from(num).unwrap() {
+        0 => Register::dr0,
+        1 => Register::dr2,
+        2 => Register::dr4,
+        3 => Register::dr6,
+        4 => Register::dr8,
+        5 => Register::dr10,
+        6 => Register::dr12,
+        7 => Register::dr14,
         _ => unreachable!("Invalid Attach Value"),
     }
 }
@@ -612,6 +684,45 @@ impl TokenField_FRN_0 {
     }
     fn display(&self) -> DisplayElement {
         meaning_2_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_FRN_1(u8);
+impl TokenField_FRN_1 {
+    fn execution(&self) -> Register {
+        meaning_7_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_7_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_FRN_2(u8);
+impl TokenField_FRN_2 {
+    fn execution(&self) -> Register {
+        meaning_8_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_8_display(self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_DRN_0(u8);
+impl TokenField_DRN_0 {
+    fn execution(&self) -> Register {
+        meaning_9_value(self.0)
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_9_display(self.0)
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -1111,6 +1222,51 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_FRN_0(inner_value)
     }
+    fn FRN_1(&self) -> TokenField_FRN_1 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_FRN_1(inner_value)
+    }
+    fn FRN_2(&self) -> TokenField_FRN_2 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_FRN_2(inner_value)
+    }
+    fn DRN_0(&self) -> TokenField_DRN_0 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_DRN_0(inner_value)
+    }
     fn DRN_1(&self) -> TokenField_DRN_1 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
@@ -1502,7 +1658,7 @@ impl core::fmt::Display for DisplayElement {
         }
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:780:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:796:1"]
 #[derive(Clone, Debug)]
 struct instructionVar0 {}
 impl instructionVar0 {
@@ -1542,7 +1698,7 @@ impl instructionVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:791:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:807:1"]
 #[derive(Clone, Debug)]
 struct instructionVar1 {}
 impl instructionVar1 {
@@ -1582,7 +1738,7 @@ impl instructionVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:801:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:817:1"]
 #[derive(Clone, Debug)]
 struct instructionVar2 {}
 impl instructionVar2 {
@@ -1622,7 +1778,7 @@ impl instructionVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:917:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:933:1"]
 #[derive(Clone, Debug)]
 struct instructionVar3 {}
 impl instructionVar3 {
@@ -1662,7 +1818,7 @@ impl instructionVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1443:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1459:1"]
 #[derive(Clone, Debug)]
 struct instructionVar4 {}
 impl instructionVar4 {
@@ -1702,7 +1858,7 @@ impl instructionVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1457:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1473:1"]
 #[derive(Clone, Debug)]
 struct instructionVar5 {}
 impl instructionVar5 {
@@ -1742,7 +1898,7 @@ impl instructionVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1469:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1485:1"]
 #[derive(Clone, Debug)]
 struct instructionVar6 {}
 impl instructionVar6 {
@@ -1782,7 +1938,7 @@ impl instructionVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1856:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1909:1"]
 #[derive(Clone, Debug)]
 struct instructionVar7 {}
 impl instructionVar7 {
@@ -1822,10 +1978,76 @@ impl instructionVar7 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2334:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2346:1"]
 #[derive(Clone, Debug)]
-struct instructionVar8 {}
+struct instructionVar8 {
+    N_0t_at: N_0t_at,
+}
 impl instructionVar8 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("movua.l"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.N_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Register(Register::r0),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 4 {
+            return None;
+        }
+        if token_parser.N_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP_4().disassembly() != 233 {
+            return None;
+        }
+        let N_0t_at = if let Some((len, table)) =
+            N_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2407:1"]
+#[derive(Clone, Debug)]
+struct instructionVar9 {}
+impl instructionVar9 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1861,10 +2083,10 @@ impl instructionVar8 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2458:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2531:1"]
 #[derive(Clone, Debug)]
-struct instructionVar9 {}
-impl instructionVar9 {
+struct instructionVar10 {}
+impl instructionVar10 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1900,10 +2122,10 @@ impl instructionVar9 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2472:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2545:1"]
 #[derive(Clone, Debug)]
-struct instructionVar10 {}
-impl instructionVar10 {
+struct instructionVar11 {}
+impl instructionVar11 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1939,10 +2161,10 @@ impl instructionVar10 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2484:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2557:1"]
 #[derive(Clone, Debug)]
-struct instructionVar11 {}
-impl instructionVar11 {
+struct instructionVar12 {}
+impl instructionVar12 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1979,10 +2201,10 @@ impl instructionVar11 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2494:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2567:1"]
 #[derive(Clone, Debug)]
-struct instructionVar12 {}
-impl instructionVar12 {
+struct instructionVar13 {}
+impl instructionVar13 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2019,10 +2241,10 @@ impl instructionVar12 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2636:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2709:1"]
 #[derive(Clone, Debug)]
-struct instructionVar13 {}
-impl instructionVar13 {
+struct instructionVar14 {}
+impl instructionVar14 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2059,10 +2281,10 @@ impl instructionVar13 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2967:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3040:1"]
 #[derive(Clone, Debug)]
-struct instructionVar14 {}
-impl instructionVar14 {
+struct instructionVar15 {}
+impl instructionVar15 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2099,13 +2321,13 @@ impl instructionVar14 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1533:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1586:1"]
 #[derive(Clone, Debug)]
-struct instructionVar15 {
+struct instructionVar16 {
     FVN_2t: FVN_2t,
     XMTRX_t: XMTRX_t,
 }
-impl instructionVar15 {
+impl instructionVar16 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2171,12 +2393,12 @@ impl instructionVar15 {
         Some((pattern_len, Self { FVN_2t, XMTRX_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1176:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1192:1"]
 #[derive(Clone, Debug)]
-struct instructionVar16 {
+struct instructionVar17 {
     DRN_1t: DRN_1t,
 }
-impl instructionVar16 {
+impl instructionVar17 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2234,12 +2456,12 @@ impl instructionVar16 {
         Some((pattern_len, Self { DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1189:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1205:1"]
 #[derive(Clone, Debug)]
-struct instructionVar17 {
+struct instructionVar18 {
     DRN_1t: DRN_1t,
 }
-impl instructionVar17 {
+impl instructionVar18 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2294,12 +2516,12 @@ impl instructionVar17 {
         Some((pattern_len, Self { DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:723:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:739:1"]
 #[derive(Clone, Debug)]
-struct instructionVar18 {
+struct instructionVar19 {
     N_0: TokenField_N_0,
 }
-impl instructionVar18 {
+impl instructionVar19 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2343,12 +2565,12 @@ impl instructionVar18 {
         Some((pattern_len, Self { N_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:746:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:762:1"]
 #[derive(Clone, Debug)]
-struct instructionVar19 {
+struct instructionVar20 {
     N_0: TokenField_N_0,
 }
-impl instructionVar19 {
+impl instructionVar20 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2392,12 +2614,12 @@ impl instructionVar19 {
         Some((pattern_len, Self { N_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:860:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:876:1"]
 #[derive(Clone, Debug)]
-struct instructionVar20 {
+struct instructionVar21 {
     N_0t: N_0t,
 }
-impl instructionVar20 {
+impl instructionVar21 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2451,12 +2673,12 @@ impl instructionVar20 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:869:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:885:1"]
 #[derive(Clone, Debug)]
-struct instructionVar21 {
+struct instructionVar22 {
     N_0t: N_0t,
 }
-impl instructionVar21 {
+impl instructionVar22 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2510,12 +2732,12 @@ impl instructionVar21 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1064:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1080:1"]
 #[derive(Clone, Debug)]
-struct instructionVar22 {
+struct instructionVar23 {
     N_0t: N_0t,
 }
-impl instructionVar22 {
+impl instructionVar23 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2566,12 +2788,12 @@ impl instructionVar22 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1114:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1130:1"]
 #[derive(Clone, Debug)]
-struct instructionVar23 {
+struct instructionVar24 {
     FRN_0: TokenField_FRN_0,
 }
-impl instructionVar23 {
+impl instructionVar24 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2616,13 +2838,13 @@ impl instructionVar23 {
         Some((pattern_len, Self { FRN_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1217:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1233:1"]
 #[derive(Clone, Debug)]
-struct instructionVar24 {
+struct instructionVar25 {
     FVN_2t: FVN_2t,
     FVM_2t: FVM_2t,
 }
-impl instructionVar24 {
+impl instructionVar25 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2688,13 +2910,13 @@ impl instructionVar24 {
         Some((pattern_len, Self { FVN_2t, FVM_2t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1239:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1255:1"]
 #[derive(Clone, Debug)]
-struct instructionVar25 {
+struct instructionVar26 {
     DRN_1t: DRN_1t,
     FRN_0t: FRN_0t,
 }
-impl instructionVar25 {
+impl instructionVar26 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2755,13 +2977,13 @@ impl instructionVar25 {
         Some((pattern_len, Self { DRN_1t, FRN_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1252:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1268:1"]
 #[derive(Clone, Debug)]
-struct instructionVar26 {
+struct instructionVar27 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar26 {
+impl instructionVar27 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2822,12 +3044,12 @@ impl instructionVar26 {
         Some((pattern_len, Self { FRN_0t, DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1262:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1278:1"]
 #[derive(Clone, Debug)]
-struct instructionVar27 {
+struct instructionVar28 {
     FRN_0t: FRN_0t,
 }
-impl instructionVar27 {
+impl instructionVar28 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2885,13 +3107,13 @@ impl instructionVar27 {
         Some((pattern_len, Self { FRN_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1271:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1287:1"]
 #[derive(Clone, Debug)]
-struct instructionVar28 {
+struct instructionVar29 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar28 {
+impl instructionVar29 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2955,13 +3177,13 @@ impl instructionVar28 {
         Some((pattern_len, Self { FRN_0t, DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1428:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1444:1"]
 #[derive(Clone, Debug)]
-struct instructionVar29 {
+struct instructionVar30 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar29 {
+impl instructionVar30 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3023,13 +3245,13 @@ impl instructionVar29 {
         Some((pattern_len, Self { FRN_0t, DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1478:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1494:1"]
 #[derive(Clone, Debug)]
-struct instructionVar30 {
+struct instructionVar31 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar30 {
+impl instructionVar31 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3090,12 +3312,114 @@ impl instructionVar30 {
         Some((pattern_len, Self { FRN_0t, DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1493:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1509:1"]
 #[derive(Clone, Debug)]
-struct instructionVar31 {
+struct instructionVar32 {
+    FRN_0: TokenField_FRN_0,
+}
+impl instructionVar32 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("fsrra"),
+            DisplayElement::Literal(" "),
+            self.FRN_0.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 15 {
+            return None;
+        }
+        if token_parser.OP_4().disassembly() != 125 {
+            return None;
+        }
+        let FRN_0 = token_parser.FRN_0();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { FRN_0 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1522:1"]
+#[derive(Clone, Debug)]
+struct instructionVar33 {
+    DRN_0: TokenField_DRN_0,
+}
+impl instructionVar33 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("fsca"),
+            DisplayElement::Literal(" "),
+            DisplayElement::Register(Register::FPUL),
+            DisplayElement::Literal(","),
+            self.DRN_0.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 15 {
+            return None;
+        }
+        if token_parser.OP_4().disassembly() != 253 {
+            return None;
+        }
+        let DRN_0 = token_parser.DRN_0();
+        let FRN_1 = token_parser.FRN_1();
+        let FRN_2 = token_parser.FRN_2();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { DRN_0 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1546:1"]
+#[derive(Clone, Debug)]
+struct instructionVar34 {
     FRN_0t: FRN_0t,
 }
-impl instructionVar31 {
+impl instructionVar34 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3150,13 +3474,13 @@ impl instructionVar31 {
         Some((pattern_len, Self { FRN_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1518:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1571:1"]
 #[derive(Clone, Debug)]
-struct instructionVar32 {
+struct instructionVar35 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar32 {
+impl instructionVar35 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3222,12 +3546,12 @@ impl instructionVar32 {
         Some((pattern_len, Self { FRN_0t, DRN_1t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1570:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1623:1"]
 #[derive(Clone, Debug)]
-struct instructionVar33 {
+struct instructionVar36 {
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar33 {
+impl instructionVar36 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3280,12 +3604,12 @@ impl instructionVar33 {
         Some((pattern_len, Self { N_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1579:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1632:1"]
 #[derive(Clone, Debug)]
-struct instructionVar34 {
+struct instructionVar37 {
     N_0tjmp: N_0tjmp,
 }
-impl instructionVar34 {
+impl instructionVar37 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3336,12 +3660,12 @@ impl instructionVar34 {
         Some((pattern_len, Self { N_0tjmp }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1592:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1645:1"]
 #[derive(Clone, Debug)]
-struct instructionVar35 {
+struct instructionVar38 {
     N_0tjmp: N_0tjmp,
 }
-impl instructionVar35 {
+impl instructionVar38 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3392,12 +3716,12 @@ impl instructionVar35 {
         Some((pattern_len, Self { N_0tjmp }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1606:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1659:1"]
 #[derive(Clone, Debug)]
-struct instructionVar36 {
+struct instructionVar39 {
     N_0t_sr: N_0t_sr,
 }
-impl instructionVar36 {
+impl instructionVar39 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3448,12 +3772,12 @@ impl instructionVar36 {
         Some((pattern_len, Self { N_0t_sr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1617:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1670:1"]
 #[derive(Clone, Debug)]
-struct instructionVar37 {
+struct instructionVar40 {
     N_0t_gbr: N_0t_gbr,
 }
-impl instructionVar37 {
+impl instructionVar40 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3504,12 +3828,12 @@ impl instructionVar37 {
         Some((pattern_len, Self { N_0t_gbr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1627:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1680:1"]
 #[derive(Clone, Debug)]
-struct instructionVar38 {
+struct instructionVar41 {
     N_0t_vbr: N_0t_vbr,
 }
-impl instructionVar38 {
+impl instructionVar41 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3560,12 +3884,12 @@ impl instructionVar38 {
         Some((pattern_len, Self { N_0t_vbr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1636:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1689:1"]
 #[derive(Clone, Debug)]
-struct instructionVar39 {
+struct instructionVar42 {
     N_0t_ssr: N_0t_ssr,
 }
-impl instructionVar39 {
+impl instructionVar42 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3616,12 +3940,12 @@ impl instructionVar39 {
         Some((pattern_len, Self { N_0t_ssr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1645:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1698:1"]
 #[derive(Clone, Debug)]
-struct instructionVar40 {
+struct instructionVar43 {
     N_0t_spc: N_0t_spc,
 }
-impl instructionVar40 {
+impl instructionVar43 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3672,12 +3996,12 @@ impl instructionVar40 {
         Some((pattern_len, Self { N_0t_spc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1654:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1707:1"]
 #[derive(Clone, Debug)]
-struct instructionVar41 {
+struct instructionVar44 {
     N_0t_dbr: N_0t_dbr,
 }
-impl instructionVar41 {
+impl instructionVar44 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3728,12 +4052,12 @@ impl instructionVar41 {
         Some((pattern_len, Self { N_0t_dbr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1672:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1725:1"]
 #[derive(Clone, Debug)]
-struct instructionVar42 {
+struct instructionVar45 {
     N_0t_sr1: N_0t_sr1,
 }
-impl instructionVar42 {
+impl instructionVar45 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3786,12 +4110,12 @@ impl instructionVar42 {
         Some((pattern_len, Self { N_0t_sr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1684:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1737:1"]
 #[derive(Clone, Debug)]
-struct instructionVar43 {
+struct instructionVar46 {
     N_0t_gbr1: N_0t_gbr1,
 }
-impl instructionVar43 {
+impl instructionVar46 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3844,12 +4168,12 @@ impl instructionVar43 {
         Some((pattern_len, Self { N_0t_gbr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1695:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1748:1"]
 #[derive(Clone, Debug)]
-struct instructionVar44 {
+struct instructionVar47 {
     N_0t_vbr1: N_0t_vbr1,
 }
-impl instructionVar44 {
+impl instructionVar47 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3902,12 +4226,12 @@ impl instructionVar44 {
         Some((pattern_len, Self { N_0t_vbr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1705:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1758:1"]
 #[derive(Clone, Debug)]
-struct instructionVar45 {
+struct instructionVar48 {
     N_0t_ssr1: N_0t_ssr1,
 }
-impl instructionVar45 {
+impl instructionVar48 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3960,12 +4284,12 @@ impl instructionVar45 {
         Some((pattern_len, Self { N_0t_ssr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1715:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1768:1"]
 #[derive(Clone, Debug)]
-struct instructionVar46 {
+struct instructionVar49 {
     N_0t_spc1: N_0t_spc1,
 }
-impl instructionVar46 {
+impl instructionVar49 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4018,12 +4342,12 @@ impl instructionVar46 {
         Some((pattern_len, Self { N_0t_spc1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1725:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1778:1"]
 #[derive(Clone, Debug)]
-struct instructionVar47 {
+struct instructionVar50 {
     N_0t_dbr1: N_0t_dbr1,
 }
-impl instructionVar47 {
+impl instructionVar50 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4076,12 +4400,12 @@ impl instructionVar47 {
         Some((pattern_len, Self { N_0t_dbr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1746:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1799:1"]
 #[derive(Clone, Debug)]
-struct instructionVar48 {
+struct instructionVar51 {
     N_0t_fpul: N_0t_fpul,
 }
-impl instructionVar48 {
+impl instructionVar51 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4132,12 +4456,12 @@ impl instructionVar48 {
         Some((pattern_len, Self { N_0t_fpul }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1756:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1809:1"]
 #[derive(Clone, Debug)]
-struct instructionVar49 {
+struct instructionVar52 {
     N_0t_fpul1: N_0t_fpul1,
 }
-impl instructionVar49 {
+impl instructionVar52 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4190,12 +4514,12 @@ impl instructionVar49 {
         Some((pattern_len, Self { N_0t_fpul1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1768:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1821:1"]
 #[derive(Clone, Debug)]
-struct instructionVar50 {
+struct instructionVar53 {
     N_0t_fpscr: N_0t_fpscr,
 }
-impl instructionVar50 {
+impl instructionVar53 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4246,12 +4570,12 @@ impl instructionVar50 {
         Some((pattern_len, Self { N_0t_fpscr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1780:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1833:1"]
 #[derive(Clone, Debug)]
-struct instructionVar51 {
+struct instructionVar54 {
     N_0t_fpscr1: N_0t_fpscr1,
 }
-impl instructionVar51 {
+impl instructionVar54 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4306,12 +4630,12 @@ impl instructionVar51 {
         Some((pattern_len, Self { N_0t_fpscr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1792:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1845:1"]
 #[derive(Clone, Debug)]
-struct instructionVar52 {
+struct instructionVar55 {
     N_0t_mach: N_0t_mach,
 }
-impl instructionVar52 {
+impl instructionVar55 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4362,12 +4686,12 @@ impl instructionVar52 {
         Some((pattern_len, Self { N_0t_mach }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1802:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1855:1"]
 #[derive(Clone, Debug)]
-struct instructionVar53 {
+struct instructionVar56 {
     N_0t_macl: N_0t_macl,
 }
-impl instructionVar53 {
+impl instructionVar56 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4418,12 +4742,12 @@ impl instructionVar53 {
         Some((pattern_len, Self { N_0t_macl }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1812:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1865:1"]
 #[derive(Clone, Debug)]
-struct instructionVar54 {
+struct instructionVar57 {
     N_0t_pr: N_0t_pr,
 }
-impl instructionVar54 {
+impl instructionVar57 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4474,12 +4798,12 @@ impl instructionVar54 {
         Some((pattern_len, Self { N_0t_pr }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1822:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1875:1"]
 #[derive(Clone, Debug)]
-struct instructionVar55 {
+struct instructionVar58 {
     N_0t_mach1: N_0t_mach1,
 }
-impl instructionVar55 {
+impl instructionVar58 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4532,12 +4856,12 @@ impl instructionVar55 {
         Some((pattern_len, Self { N_0t_mach1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1833:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1886:1"]
 #[derive(Clone, Debug)]
-struct instructionVar56 {
+struct instructionVar59 {
     N_0t_macl1: N_0t_macl1,
 }
-impl instructionVar56 {
+impl instructionVar59 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4590,12 +4914,12 @@ impl instructionVar56 {
         Some((pattern_len, Self { N_0t_macl1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1844:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1897:1"]
 #[derive(Clone, Debug)]
-struct instructionVar57 {
+struct instructionVar60 {
     N_0t_pr1: N_0t_pr1,
 }
-impl instructionVar57 {
+impl instructionVar60 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4648,12 +4972,12 @@ impl instructionVar57 {
         Some((pattern_len, Self { N_0t_pr1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2262:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2315:1"]
 #[derive(Clone, Debug)]
-struct instructionVar58 {
+struct instructionVar61 {
     N_0txx: N_0txx,
 }
-impl instructionVar58 {
+impl instructionVar61 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4706,12 +5030,12 @@ impl instructionVar58 {
         Some((pattern_len, Self { N_0txx }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2271:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2324:1"]
 #[derive(Clone, Debug)]
-struct instructionVar59 {
+struct instructionVar62 {
     N_0t: N_0t,
 }
-impl instructionVar59 {
+impl instructionVar62 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4764,12 +5088,138 @@ impl instructionVar59 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2352:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2333:1"]
 #[derive(Clone, Debug)]
-struct instructionVar60 {
+struct instructionVar63 {
+    N_0t_at: N_0t_at,
+}
+impl instructionVar63 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("movua.l"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.N_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Register(Register::r0),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 4 {
+            return None;
+        }
+        if token_parser.OP_4().disassembly() != 169 {
+            return None;
+        }
+        let N_0t_at = if let Some((len, table)) =
+            N_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2341:1"]
+#[derive(Clone, Debug)]
+struct instructionVar64 {
+    N_0t_at: N_0t_at,
+}
+impl instructionVar64 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("movua.l"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.N_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Register(Register::r0),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 4 {
+            return None;
+        }
+        if token_parser.OP_4().disassembly() != 233 {
+            return None;
+        }
+        let N_0t_at = if let Some((len, table)) =
+            N_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2425:1"]
+#[derive(Clone, Debug)]
+struct instructionVar65 {
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar60 {
+impl instructionVar65 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4822,12 +5272,12 @@ impl instructionVar60 {
         Some((pattern_len, Self { N_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2360:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2433:1"]
 #[derive(Clone, Debug)]
-struct instructionVar61 {
+struct instructionVar66 {
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar61 {
+impl instructionVar66 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4880,12 +5330,12 @@ impl instructionVar61 {
         Some((pattern_len, Self { N_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2369:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2442:1"]
 #[derive(Clone, Debug)]
-struct instructionVar62 {
+struct instructionVar67 {
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar62 {
+impl instructionVar67 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4938,12 +5388,12 @@ impl instructionVar62 {
         Some((pattern_len, Self { N_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2406:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2479:1"]
 #[derive(Clone, Debug)]
-struct instructionVar63 {
+struct instructionVar68 {
     N_0tjmp: N_0tjmp,
 }
-impl instructionVar63 {
+impl instructionVar68 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4996,12 +5446,12 @@ impl instructionVar63 {
         Some((pattern_len, Self { N_0tjmp }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2413:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2486:1"]
 #[derive(Clone, Debug)]
-struct instructionVar64 {
+struct instructionVar69 {
     N_0t: N_0t,
 }
-impl instructionVar64 {
+impl instructionVar69 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5054,12 +5504,12 @@ impl instructionVar64 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2424:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2497:1"]
 #[derive(Clone, Debug)]
-struct instructionVar65 {
+struct instructionVar70 {
     N_0t: N_0t,
 }
-impl instructionVar65 {
+impl instructionVar70 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5112,12 +5562,12 @@ impl instructionVar65 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2436:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2509:1"]
 #[derive(Clone, Debug)]
-struct instructionVar66 {
+struct instructionVar71 {
     N_0t: N_0t,
 }
-impl instructionVar66 {
+impl instructionVar71 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5170,12 +5620,12 @@ impl instructionVar66 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2447:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2520:1"]
 #[derive(Clone, Debug)]
-struct instructionVar67 {
+struct instructionVar72 {
     N_0t: N_0t,
 }
-impl instructionVar67 {
+impl instructionVar72 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5228,12 +5678,12 @@ impl instructionVar67 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2518:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2591:1"]
 #[derive(Clone, Debug)]
-struct instructionVar68 {
+struct instructionVar73 {
     N_0t: N_0t,
 }
-impl instructionVar68 {
+impl instructionVar73 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5286,12 +5736,12 @@ impl instructionVar68 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2529:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2602:1"]
 #[derive(Clone, Debug)]
-struct instructionVar69 {
+struct instructionVar74 {
     N_0t: N_0t,
 }
-impl instructionVar69 {
+impl instructionVar74 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5344,12 +5794,12 @@ impl instructionVar69 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2555:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2628:1"]
 #[derive(Clone, Debug)]
-struct instructionVar70 {
+struct instructionVar75 {
     N_0t: N_0t,
 }
-impl instructionVar70 {
+impl instructionVar75 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5402,12 +5852,12 @@ impl instructionVar70 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2566:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2639:1"]
 #[derive(Clone, Debug)]
-struct instructionVar71 {
+struct instructionVar76 {
     N_0t: N_0t,
 }
-impl instructionVar71 {
+impl instructionVar76 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5460,12 +5910,12 @@ impl instructionVar71 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2576:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2649:1"]
 #[derive(Clone, Debug)]
-struct instructionVar72 {
+struct instructionVar77 {
     N_0t: N_0t,
 }
-impl instructionVar72 {
+impl instructionVar77 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5518,12 +5968,12 @@ impl instructionVar72 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2585:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2658:1"]
 #[derive(Clone, Debug)]
-struct instructionVar73 {
+struct instructionVar78 {
     N_0t: N_0t,
 }
-impl instructionVar73 {
+impl instructionVar78 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5576,12 +6026,12 @@ impl instructionVar73 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2595:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2668:1"]
 #[derive(Clone, Debug)]
-struct instructionVar74 {
+struct instructionVar79 {
     N_0t: N_0t,
 }
-impl instructionVar74 {
+impl instructionVar79 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5634,12 +6084,12 @@ impl instructionVar74 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2606:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2679:1"]
 #[derive(Clone, Debug)]
-struct instructionVar75 {
+struct instructionVar80 {
     N_0t: N_0t,
 }
-impl instructionVar75 {
+impl instructionVar80 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5692,12 +6142,12 @@ impl instructionVar75 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2616:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2689:1"]
 #[derive(Clone, Debug)]
-struct instructionVar76 {
+struct instructionVar81 {
     N_0t: N_0t,
 }
-impl instructionVar76 {
+impl instructionVar81 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5750,12 +6200,12 @@ impl instructionVar76 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2626:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2699:1"]
 #[derive(Clone, Debug)]
-struct instructionVar77 {
+struct instructionVar82 {
     N_0t: N_0t,
 }
-impl instructionVar77 {
+impl instructionVar82 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5808,12 +6258,12 @@ impl instructionVar77 {
         Some((pattern_len, Self { N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2643:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2716:1"]
 #[derive(Clone, Debug)]
-struct instructionVar78 {
+struct instructionVar83 {
     sr_N_0t: sr_N_0t,
 }
-impl instructionVar78 {
+impl instructionVar83 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5864,12 +6314,12 @@ impl instructionVar78 {
         Some((pattern_len, Self { sr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2654:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2727:1"]
 #[derive(Clone, Debug)]
-struct instructionVar79 {
+struct instructionVar84 {
     gbr_N_0t: gbr_N_0t,
 }
-impl instructionVar79 {
+impl instructionVar84 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5920,12 +6370,12 @@ impl instructionVar79 {
         Some((pattern_len, Self { gbr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2664:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2737:1"]
 #[derive(Clone, Debug)]
-struct instructionVar80 {
+struct instructionVar85 {
     vbr_N_0t: vbr_N_0t,
 }
-impl instructionVar80 {
+impl instructionVar85 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5976,12 +6426,12 @@ impl instructionVar80 {
         Some((pattern_len, Self { vbr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2673:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2746:1"]
 #[derive(Clone, Debug)]
-struct instructionVar81 {
+struct instructionVar86 {
     ssr_N_0t: ssr_N_0t,
 }
-impl instructionVar81 {
+impl instructionVar86 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6032,12 +6482,12 @@ impl instructionVar81 {
         Some((pattern_len, Self { ssr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2683:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2756:1"]
 #[derive(Clone, Debug)]
-struct instructionVar82 {
+struct instructionVar87 {
     spc_N_0t: spc_N_0t,
 }
-impl instructionVar82 {
+impl instructionVar87 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6088,12 +6538,12 @@ impl instructionVar82 {
         Some((pattern_len, Self { spc_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2692:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2765:1"]
 #[derive(Clone, Debug)]
-struct instructionVar83 {
+struct instructionVar88 {
     sgr_N_0t: sgr_N_0t,
 }
-impl instructionVar83 {
+impl instructionVar88 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6144,12 +6594,12 @@ impl instructionVar83 {
         Some((pattern_len, Self { sgr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2701:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2774:1"]
 #[derive(Clone, Debug)]
-struct instructionVar84 {
+struct instructionVar89 {
     dbr_N_0t: dbr_N_0t,
 }
-impl instructionVar84 {
+impl instructionVar89 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6200,13 +6650,13 @@ impl instructionVar84 {
         Some((pattern_len, Self { dbr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2720:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2793:1"]
 #[derive(Clone, Debug)]
-struct instructionVar85 {
+struct instructionVar90 {
     N_0t_at_neg: N_0t_at_neg,
     sr_t: sr_t,
 }
-impl instructionVar85 {
+impl instructionVar90 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6274,13 +6724,13 @@ impl instructionVar85 {
         Some((pattern_len, Self { N_0t_at_neg, sr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2732:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2805:1"]
 #[derive(Clone, Debug)]
-struct instructionVar86 {
+struct instructionVar91 {
     N_0t_at_neg: N_0t_at_neg,
     gbr_t: gbr_t,
 }
-impl instructionVar86 {
+impl instructionVar91 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6348,13 +6798,13 @@ impl instructionVar86 {
         Some((pattern_len, Self { N_0t_at_neg, gbr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2743:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2816:1"]
 #[derive(Clone, Debug)]
-struct instructionVar87 {
+struct instructionVar92 {
     N_0t_at_neg: N_0t_at_neg,
     vbr_t: vbr_t,
 }
-impl instructionVar87 {
+impl instructionVar92 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6422,13 +6872,13 @@ impl instructionVar87 {
         Some((pattern_len, Self { N_0t_at_neg, vbr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2753:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2826:1"]
 #[derive(Clone, Debug)]
-struct instructionVar88 {
+struct instructionVar93 {
     N_0t_at_neg: N_0t_at_neg,
     ssr_t: ssr_t,
 }
-impl instructionVar88 {
+impl instructionVar93 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6496,13 +6946,13 @@ impl instructionVar88 {
         Some((pattern_len, Self { N_0t_at_neg, ssr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2763:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2836:1"]
 #[derive(Clone, Debug)]
-struct instructionVar89 {
+struct instructionVar94 {
     N_0t_at_neg: N_0t_at_neg,
     spc_t: spc_t,
 }
-impl instructionVar89 {
+impl instructionVar94 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6570,13 +7020,13 @@ impl instructionVar89 {
         Some((pattern_len, Self { N_0t_at_neg, spc_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2773:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2846:1"]
 #[derive(Clone, Debug)]
-struct instructionVar90 {
+struct instructionVar95 {
     N_0t_at_neg: N_0t_at_neg,
     sgr_t: sgr_t,
 }
-impl instructionVar90 {
+impl instructionVar95 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6644,13 +7094,13 @@ impl instructionVar90 {
         Some((pattern_len, Self { N_0t_at_neg, sgr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2783:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2856:1"]
 #[derive(Clone, Debug)]
-struct instructionVar91 {
+struct instructionVar96 {
     N_0t_at_neg: N_0t_at_neg,
     dbr_t: dbr_t,
 }
-impl instructionVar91 {
+impl instructionVar96 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6718,12 +7168,12 @@ impl instructionVar91 {
         Some((pattern_len, Self { N_0t_at_neg, dbr_t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2804:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2877:1"]
 #[derive(Clone, Debug)]
-struct instructionVar92 {
+struct instructionVar97 {
     mach_N_0t: mach_N_0t,
 }
-impl instructionVar92 {
+impl instructionVar97 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6774,12 +7224,12 @@ impl instructionVar92 {
         Some((pattern_len, Self { mach_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2814:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2887:1"]
 #[derive(Clone, Debug)]
-struct instructionVar93 {
+struct instructionVar98 {
     macl_N_0t: macl_N_0t,
 }
-impl instructionVar93 {
+impl instructionVar98 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6830,12 +7280,12 @@ impl instructionVar93 {
         Some((pattern_len, Self { macl_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2824:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2897:1"]
 #[derive(Clone, Debug)]
-struct instructionVar94 {
+struct instructionVar99 {
     pr_N_0t: pr_N_0t,
 }
-impl instructionVar94 {
+impl instructionVar99 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6886,13 +7336,13 @@ impl instructionVar94 {
         Some((pattern_len, Self { pr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2834:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2907:1"]
 #[derive(Clone, Debug)]
-struct instructionVar95 {
+struct instructionVar100 {
     N_0t_at_neg: N_0t_at_neg,
     mach_t: mach_t,
 }
-impl instructionVar95 {
+impl instructionVar100 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6966,13 +7416,13 @@ impl instructionVar95 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2845:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2918:1"]
 #[derive(Clone, Debug)]
-struct instructionVar96 {
+struct instructionVar101 {
     N_0t_at_neg: N_0t_at_neg,
     macl_t: macl_t,
 }
-impl instructionVar96 {
+impl instructionVar101 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7046,12 +7496,12 @@ impl instructionVar96 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2856:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2929:1"]
 #[derive(Clone, Debug)]
-struct instructionVar97 {
+struct instructionVar102 {
     N_0t_at_neg: N_0t_at_neg,
 }
-impl instructionVar97 {
+impl instructionVar102 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7108,12 +7558,12 @@ impl instructionVar97 {
         Some((pattern_len, Self { N_0t_at_neg }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2867:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2940:1"]
 #[derive(Clone, Debug)]
-struct instructionVar98 {
+struct instructionVar103 {
     fpul_N_0t: fpul_N_0t,
 }
-impl instructionVar98 {
+impl instructionVar103 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7164,12 +7614,12 @@ impl instructionVar98 {
         Some((pattern_len, Self { fpul_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2877:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2950:1"]
 #[derive(Clone, Debug)]
-struct instructionVar99 {
+struct instructionVar104 {
     fpscr_N_0t: fpscr_N_0t,
 }
-impl instructionVar99 {
+impl instructionVar104 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7220,13 +7670,13 @@ impl instructionVar99 {
         Some((pattern_len, Self { fpscr_N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2888:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2961:1"]
 #[derive(Clone, Debug)]
-struct instructionVar100 {
+struct instructionVar105 {
     N_0t_at_neg: N_0t_at_neg,
     fpul_t: fpul_t,
 }
-impl instructionVar100 {
+impl instructionVar105 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7300,13 +7750,13 @@ impl instructionVar100 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2899:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2972:1"]
 #[derive(Clone, Debug)]
-struct instructionVar101 {
+struct instructionVar106 {
     N_0t_at_neg: N_0t_at_neg,
     fpscr_t: fpscr_t,
 }
-impl instructionVar101 {
+impl instructionVar106 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7380,12 +7830,12 @@ impl instructionVar101 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2976:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3049:1"]
 #[derive(Clone, Debug)]
-struct instructionVar102 {
+struct instructionVar107 {
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar102 {
+impl instructionVar107 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7438,13 +7888,13 @@ impl instructionVar102 {
         Some((pattern_len, Self { N_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1662:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1715:1"]
 #[derive(Clone, Debug)]
-struct instructionVar103 {
+struct instructionVar108 {
     N_0t_bank: N_0t_bank,
     BANKt: BANKt,
 }
-impl instructionVar103 {
+impl instructionVar108 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7511,13 +7961,13 @@ impl instructionVar103 {
         Some((pattern_len, Self { N_0t_bank, BANKt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1735:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1788:1"]
 #[derive(Clone, Debug)]
-struct instructionVar104 {
+struct instructionVar109 {
     N_0t_bank1: N_0t_bank1,
     BANKt: BANKt,
 }
-impl instructionVar104 {
+impl instructionVar109 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7586,13 +8036,13 @@ impl instructionVar104 {
         Some((pattern_len, Self { N_0t_bank1, BANKt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2710:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2783:1"]
 #[derive(Clone, Debug)]
-struct instructionVar105 {
+struct instructionVar110 {
     N_0t_bank: N_0t_bank,
     BANKt: BANKt,
 }
-impl instructionVar105 {
+impl instructionVar110 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7659,13 +8109,13 @@ impl instructionVar105 {
         Some((pattern_len, Self { N_0t_bank, BANKt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2793:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2866:1"]
 #[derive(Clone, Debug)]
-struct instructionVar106 {
+struct instructionVar111 {
     N_0t_at_neg: N_0t_at_neg,
     BANKt: BANKt,
 }
-impl instructionVar106 {
+impl instructionVar111 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7736,13 +8186,13 @@ impl instructionVar106 {
         Some((pattern_len, Self { N_0t_at_neg, BANKt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:618:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:634:1"]
 #[derive(Clone, Debug)]
-struct instructionVar107 {
+struct instructionVar112 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar107 {
+impl instructionVar112 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7806,13 +8256,13 @@ impl instructionVar107 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:638:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:654:1"]
 #[derive(Clone, Debug)]
-struct instructionVar108 {
+struct instructionVar113 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar108 {
+impl instructionVar113 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7878,13 +8328,13 @@ impl instructionVar108 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:651:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:667:1"]
 #[derive(Clone, Debug)]
-struct instructionVar109 {
+struct instructionVar114 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar109 {
+impl instructionVar114 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7950,13 +8400,13 @@ impl instructionVar109 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:662:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:678:1"]
 #[derive(Clone, Debug)]
-struct instructionVar110 {
+struct instructionVar115 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar110 {
+impl instructionVar115 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8020,12 +8470,12 @@ impl instructionVar110 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:671:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:687:1"]
 #[derive(Clone, Debug)]
-struct instructionVar111 {
+struct instructionVar116 {
     U_0t_r0: U_0t_r0,
 }
-impl instructionVar111 {
+impl instructionVar116 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8073,12 +8523,12 @@ impl instructionVar111 {
         Some((pattern_len, Self { U_0t_r0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:680:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:696:1"]
 #[derive(Clone, Debug)]
-struct instructionVar112 {
+struct instructionVar117 {
     U_0t1: U_0t1,
 }
-impl instructionVar112 {
+impl instructionVar117 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8128,12 +8578,12 @@ impl instructionVar112 {
         Some((pattern_len, Self { U_0t1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:690:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:706:1"]
 #[derive(Clone, Debug)]
-struct instructionVar113 {
+struct instructionVar118 {
     I_0tbranch: I_0tbranch,
 }
-impl instructionVar113 {
+impl instructionVar118 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8181,12 +8631,12 @@ impl instructionVar113 {
         Some((pattern_len, Self { I_0tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:700:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:716:1"]
 #[derive(Clone, Debug)]
-struct instructionVar114 {
+struct instructionVar119 {
     I_0tbranch: I_0tbranch,
 }
-impl instructionVar114 {
+impl instructionVar119 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8237,12 +8687,12 @@ impl instructionVar114 {
         Some((pattern_len, Self { I_0tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:759:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:775:1"]
 #[derive(Clone, Debug)]
-struct instructionVar115 {
+struct instructionVar120 {
     I_0tbranch: I_0tbranch,
 }
-impl instructionVar115 {
+impl instructionVar120 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8290,12 +8740,12 @@ impl instructionVar115 {
         Some((pattern_len, Self { I_0tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:769:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:785:1"]
 #[derive(Clone, Debug)]
-struct instructionVar116 {
+struct instructionVar121 {
     I_0tbranch: I_0tbranch,
 }
-impl instructionVar116 {
+impl instructionVar121 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8346,13 +8796,13 @@ impl instructionVar116 {
         Some((pattern_len, Self { I_0tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:811:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:827:1"]
 #[derive(Clone, Debug)]
-struct instructionVar117 {
+struct instructionVar122 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar117 {
+impl instructionVar122 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8419,13 +8869,13 @@ impl instructionVar117 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:821:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:837:1"]
 #[derive(Clone, Debug)]
-struct instructionVar118 {
+struct instructionVar123 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar118 {
+impl instructionVar123 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8492,13 +8942,13 @@ impl instructionVar118 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:830:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:846:1"]
 #[derive(Clone, Debug)]
-struct instructionVar119 {
+struct instructionVar124 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar119 {
+impl instructionVar124 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8565,13 +9015,13 @@ impl instructionVar119 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:840:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:856:1"]
 #[derive(Clone, Debug)]
-struct instructionVar120 {
+struct instructionVar125 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar120 {
+impl instructionVar125 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8638,13 +9088,13 @@ impl instructionVar120 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:850:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:866:1"]
 #[derive(Clone, Debug)]
-struct instructionVar121 {
+struct instructionVar126 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar121 {
+impl instructionVar126 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8711,13 +9161,13 @@ impl instructionVar121 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:879:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:895:1"]
 #[derive(Clone, Debug)]
-struct instructionVar122 {
+struct instructionVar127 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar122 {
+impl instructionVar127 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8784,12 +9234,12 @@ impl instructionVar122 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:895:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:911:1"]
 #[derive(Clone, Debug)]
-struct instructionVar123 {
+struct instructionVar128 {
     I_0t_r0: I_0t_r0,
 }
-impl instructionVar123 {
+impl instructionVar128 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8840,13 +9290,13 @@ impl instructionVar123 {
         Some((pattern_len, Self { I_0t_r0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:905:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:921:1"]
 #[derive(Clone, Debug)]
-struct instructionVar124 {
+struct instructionVar129 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar124 {
+impl instructionVar129 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8912,13 +9362,13 @@ impl instructionVar124 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:929:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:945:1"]
 #[derive(Clone, Debug)]
-struct instructionVar125 {
+struct instructionVar130 {
     M_0t: M_0t,
     N_0t: N_0t,
 }
-impl instructionVar125 {
+impl instructionVar130 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8984,13 +9434,13 @@ impl instructionVar125 {
         Some((pattern_len, Self { M_0t, N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1043:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1059:1"]
 #[derive(Clone, Debug)]
-struct instructionVar126 {
+struct instructionVar131 {
     M_0t: M_0t,
     N_0t: N_0t,
 }
-impl instructionVar126 {
+impl instructionVar131 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9056,13 +9506,13 @@ impl instructionVar126 {
         Some((pattern_len, Self { M_0t, N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1054:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1070:1"]
 #[derive(Clone, Debug)]
-struct instructionVar127 {
+struct instructionVar132 {
     M_0t: M_0t,
     N_0t: N_0t,
 }
-impl instructionVar127 {
+impl instructionVar132 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9128,13 +9578,13 @@ impl instructionVar127 {
         Some((pattern_len, Self { M_0t, N_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1075:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1091:1"]
 #[derive(Clone, Debug)]
-struct instructionVar128 {
+struct instructionVar133 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar128 {
+impl instructionVar133 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9200,13 +9650,13 @@ impl instructionVar128 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1084:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1100:1"]
 #[derive(Clone, Debug)]
-struct instructionVar129 {
+struct instructionVar134 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar129 {
+impl instructionVar134 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9272,13 +9722,13 @@ impl instructionVar129 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1094:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1110:1"]
 #[derive(Clone, Debug)]
-struct instructionVar130 {
+struct instructionVar135 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar130 {
+impl instructionVar135 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9344,13 +9794,13 @@ impl instructionVar130 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1104:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1120:1"]
 #[derive(Clone, Debug)]
-struct instructionVar131 {
+struct instructionVar136 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar131 {
+impl instructionVar136 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9416,13 +9866,13 @@ impl instructionVar131 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1129:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1145:1"]
 #[derive(Clone, Debug)]
-struct instructionVar132 {
+struct instructionVar137 {
     FRM_0: TokenField_FRM_0,
     FRN_0: TokenField_FRN_0,
 }
-impl instructionVar132 {
+impl instructionVar137 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9471,15 +9921,15 @@ impl instructionVar132 {
         Some((pattern_len, Self { FRN_0, FRM_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1144:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1160:1"]
 #[derive(Clone, Debug)]
-struct instructionVar133 {
+struct instructionVar138 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
     FRM_0t: FRM_0t,
     DRM_1t: DRM_1t,
 }
-impl instructionVar133 {
+impl instructionVar138 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9572,15 +10022,15 @@ impl instructionVar133 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1158:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1174:1"]
 #[derive(Clone, Debug)]
-struct instructionVar134 {
+struct instructionVar139 {
     FRM_0t: FRM_0t,
     DRM_1t: DRM_1t,
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
 }
-impl instructionVar134 {
+impl instructionVar139 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9671,15 +10121,15 @@ impl instructionVar134 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1200:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1216:1"]
 #[derive(Clone, Debug)]
-struct instructionVar135 {
+struct instructionVar140 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
     FRM_0t: FRM_0t,
     DRM_1t: DRM_1t,
 }
-impl instructionVar135 {
+impl instructionVar140 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9769,14 +10219,14 @@ impl instructionVar135 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1287:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1303:1"]
 #[derive(Clone, Debug)]
-struct instructionVar136 {
+struct instructionVar141 {
     FRN_0t: FRN_0t,
     FRM_0t: FRM_0t,
     FR0_t: FR0_t,
 }
-impl instructionVar136 {
+impl instructionVar141 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9862,13 +10312,13 @@ impl instructionVar136 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1302:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1318:1"]
 #[derive(Clone, Debug)]
-struct instructionVar137 {
+struct instructionVar142 {
     FRM_0: TokenField_FRM_0,
     FRN_0: TokenField_FRN_0,
 }
-impl instructionVar137 {
+impl instructionVar142 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9917,13 +10367,13 @@ impl instructionVar137 {
         Some((pattern_len, Self { FRN_0, FRM_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1316:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1332:1"]
 #[derive(Clone, Debug)]
-struct instructionVar138 {
+struct instructionVar143 {
     FRN_0: TokenField_FRN_0,
     M_0t_at1: M_0t_at1,
 }
-impl instructionVar138 {
+impl instructionVar143 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9981,13 +10431,13 @@ impl instructionVar138 {
         Some((pattern_len, Self { M_0t_at1, FRN_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1334:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1350:1"]
 #[derive(Clone, Debug)]
-struct instructionVar139 {
+struct instructionVar144 {
     FRM_0: TokenField_FRM_0,
     N_0t_at1: N_0t_at1,
 }
-impl instructionVar139 {
+impl instructionVar144 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10044,13 +10494,13 @@ impl instructionVar139 {
         Some((pattern_len, Self { N_0t_at1, FRM_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1349:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1365:1"]
 #[derive(Clone, Debug)]
-struct instructionVar140 {
+struct instructionVar145 {
     FRN_0: TokenField_FRN_0,
     M_0t_at: M_0t_at,
 }
-impl instructionVar140 {
+impl instructionVar145 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10108,13 +10558,13 @@ impl instructionVar140 {
         Some((pattern_len, Self { M_0t_at, FRN_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1366:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1382:1"]
 #[derive(Clone, Debug)]
-struct instructionVar141 {
+struct instructionVar146 {
     FRM_0: TokenField_FRM_0,
     N_0t_at_neg: N_0t_at_neg,
 }
-impl instructionVar141 {
+impl instructionVar146 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10173,13 +10623,13 @@ impl instructionVar141 {
         Some((pattern_len, Self { N_0t_at_neg, FRM_0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1383:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1399:1"]
 #[derive(Clone, Debug)]
-struct instructionVar142 {
+struct instructionVar147 {
     FRN_0: TokenField_FRN_0,
     M_0t_at_with_r0: M_0t_at_with_r0,
 }
-impl instructionVar142 {
+impl instructionVar147 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10245,13 +10695,13 @@ impl instructionVar142 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1398:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1414:1"]
 #[derive(Clone, Debug)]
-struct instructionVar143 {
+struct instructionVar148 {
     FRM_0: TokenField_FRM_0,
     N_0t_at_with_r0: N_0t_at_with_r0,
 }
-impl instructionVar143 {
+impl instructionVar148 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10316,15 +10766,15 @@ impl instructionVar143 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1413:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1429:1"]
 #[derive(Clone, Debug)]
-struct instructionVar144 {
+struct instructionVar149 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
     FRM_0t: FRM_0t,
     DRM_1t: DRM_1t,
 }
-impl instructionVar144 {
+impl instructionVar149 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10414,15 +10864,15 @@ impl instructionVar144 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1502:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1555:1"]
 #[derive(Clone, Debug)]
-struct instructionVar145 {
+struct instructionVar150 {
     FRN_0t: FRN_0t,
     DRN_1t: DRN_1t,
     FRM_0t: FRM_0t,
     DRM_1t: DRM_1t,
 }
-impl instructionVar145 {
+impl instructionVar150 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10512,13 +10962,13 @@ impl instructionVar145 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1863:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1916:1"]
 #[derive(Clone, Debug)]
-struct instructionVar146 {
+struct instructionVar151 {
     M_0t_at: M_0t_at,
     N_0t_at: N_0t_at,
 }
-impl instructionVar146 {
+impl instructionVar151 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10584,13 +11034,13 @@ impl instructionVar146 {
         Some((pattern_len, Self { M_0t_at, N_0t_at }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1885:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1938:1"]
 #[derive(Clone, Debug)]
-struct instructionVar147 {
+struct instructionVar152 {
     M_0t_at: M_0t_at,
     N_0t_at: N_0t_at,
 }
-impl instructionVar147 {
+impl instructionVar152 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10656,13 +11106,13 @@ impl instructionVar147 {
         Some((pattern_len, Self { M_0t_at, N_0t_at }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1906:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1959:1"]
 #[derive(Clone, Debug)]
-struct instructionVar148 {
+struct instructionVar153 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar148 {
+impl instructionVar153 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -10726,371 +11176,11 @@ impl instructionVar148 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1916:1"]
-#[derive(Clone, Debug)]
-struct instructionVar149 {
-    N_0t_at1: N_0t_at1,
-    M_0t: M_0t,
-}
-impl instructionVar149 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.b"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t_at1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 0 {
-            return None;
-        }
-        let N_0t_at1 = if let Some((len, table)) =
-            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t = if let Some((len, table)) =
-            M_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t_at1, M_0t }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1926:1"]
-#[derive(Clone, Debug)]
-struct instructionVar150 {
-    N_0t_at1: N_0t_at1,
-    M_0t: M_0t,
-}
-impl instructionVar150 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.w"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t_at1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 1 {
-            return None;
-        }
-        let N_0t_at1 = if let Some((len, table)) =
-            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t = if let Some((len, table)) =
-            M_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t_at1, M_0t }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1936:1"]
-#[derive(Clone, Debug)]
-struct instructionVar151 {
-    N_0t_at1: N_0t_at1,
-    M_0t: M_0t,
-}
-impl instructionVar151 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.l"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t_at1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 2 {
-            return None;
-        }
-        let N_0t_at1 = if let Some((len, table)) =
-            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t = if let Some((len, table)) =
-            M_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t_at1, M_0t }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1946:1"]
-#[derive(Clone, Debug)]
-struct instructionVar152 {
-    N_0t: N_0t,
-    M_0t_at1: M_0t_at1,
-}
-impl instructionVar152 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.b"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t_at1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 0 {
-            return None;
-        }
-        let N_0t = if let Some((len, table)) =
-            N_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t_at1 = if let Some((len, table)) =
-            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at1 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1956:1"]
-#[derive(Clone, Debug)]
-struct instructionVar153 {
-    N_0t: N_0t,
-    M_0t_at1: M_0t_at1,
-}
-impl instructionVar153 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.w"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t_at1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 1 {
-            return None;
-        }
-        let N_0t = if let Some((len, table)) =
-            N_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t_at1 = if let Some((len, table)) =
-            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at1 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1966:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1969:1"]
 #[derive(Clone, Debug)]
 struct instructionVar154 {
-    N_0t: N_0t,
-    M_0t_at1: M_0t_at1,
+    N_0t_at1: N_0t_at1,
+    M_0t: M_0t,
 }
 impl instructionVar154 {
     fn display_extend<T>(
@@ -11104,16 +11194,16 @@ impl instructionVar154 {
         T: ContextTrait + Clone,
     {
         let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.l"),
+            DisplayElement::Literal("mov.b"),
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
-        self.M_0t_at1.display_extend(
+        self.M_0t.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
         display.extend_from_slice(&extend);
-        self.N_0t.display_extend(
+        self.N_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
     }
@@ -11129,22 +11219,22 @@ impl instructionVar154 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 6 {
+        if token_parser.OP_0().disassembly() != 2 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 2 {
+        if token_parser.OP_1().disassembly() != 0 {
             return None;
         }
-        let N_0t = if let Some((len, table)) =
-            N_0t::parse(tokens_current, &mut context_instance, inst_start)
+        let N_0t_at1 = if let Some((len, table)) =
+            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
         } else {
             return None;
         };
-        let M_0t_at1 = if let Some((len, table)) =
-            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
+        let M_0t = if let Some((len, table)) =
+            M_0t::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
@@ -11155,13 +11245,13 @@ impl instructionVar154 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at1 }))
+        Some((pattern_len, Self { N_0t_at1, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1976:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1979:1"]
 #[derive(Clone, Debug)]
 struct instructionVar155 {
-    N_0t_at_neg: N_0t_at_neg,
+    N_0t_at1: N_0t_at1,
     M_0t: M_0t,
 }
 impl instructionVar155 {
@@ -11176,7 +11266,7 @@ impl instructionVar155 {
         T: ContextTrait + Clone,
     {
         let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.b"),
+            DisplayElement::Literal("mov.w"),
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
@@ -11185,7 +11275,7 @@ impl instructionVar155 {
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
         display.extend_from_slice(&extend);
-        self.N_0t_at_neg.display_extend(
+        self.N_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
     }
@@ -11204,14 +11294,12 @@ impl instructionVar155 {
         if token_parser.OP_0().disassembly() != 2 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 4 {
+        if token_parser.OP_1().disassembly() != 1 {
             return None;
         }
-        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
+        let N_0t_at1 = if let Some((len, table)) =
+            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
+        {
             block_0_len = block_0_len.max(len as u32);
             table
         } else {
@@ -11229,13 +11317,13 @@ impl instructionVar155 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
+        Some((pattern_len, Self { N_0t_at1, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1987:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1989:1"]
 #[derive(Clone, Debug)]
 struct instructionVar156 {
-    N_0t_at_neg: N_0t_at_neg,
+    N_0t_at1: N_0t_at1,
     M_0t: M_0t,
 }
 impl instructionVar156 {
@@ -11250,80 +11338,6 @@ impl instructionVar156 {
         T: ContextTrait + Clone,
     {
         let extend: [DisplayElement; 2usize] = [
-            DisplayElement::Literal("mov.w"),
-            DisplayElement::Literal(" "),
-        ];
-        display.extend_from_slice(&extend);
-        self.M_0t.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.N_0t_at_neg.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.OP_0().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.OP_1().disassembly() != 5 {
-            return None;
-        }
-        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let M_0t = if let Some((len, table)) =
-            M_0t::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1998:1"]
-#[derive(Clone, Debug)]
-struct instructionVar157 {
-    N_0t_at_neg: N_0t_at_neg,
-    M_0t: M_0t,
-}
-impl instructionVar157 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("mov.l"),
             DisplayElement::Literal(" "),
         ];
@@ -11333,7 +11347,7 @@ impl instructionVar157 {
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
         display.extend_from_slice(&extend);
-        self.N_0t_at_neg.display_extend(
+        self.N_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
     }
@@ -11352,14 +11366,12 @@ impl instructionVar157 {
         if token_parser.OP_0().disassembly() != 2 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 6 {
+        if token_parser.OP_1().disassembly() != 2 {
             return None;
         }
-        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
+        let N_0t_at1 = if let Some((len, table)) =
+            N_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
+        {
             block_0_len = block_0_len.max(len as u32);
             table
         } else {
@@ -11377,16 +11389,16 @@ impl instructionVar157 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
+        Some((pattern_len, Self { N_0t_at1, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2009:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:1999:1"]
 #[derive(Clone, Debug)]
-struct instructionVar158 {
+struct instructionVar157 {
     N_0t: N_0t,
-    M_0t_at: M_0t_at,
+    M_0t_at1: M_0t_at1,
 }
-impl instructionVar158 {
+impl instructionVar157 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11402,7 +11414,7 @@ impl instructionVar158 {
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
-        self.M_0t_at.display_extend(
+        self.M_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
@@ -11426,7 +11438,7 @@ impl instructionVar158 {
         if token_parser.OP_0().disassembly() != 6 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 4 {
+        if token_parser.OP_1().disassembly() != 0 {
             return None;
         }
         let N_0t = if let Some((len, table)) =
@@ -11437,8 +11449,8 @@ impl instructionVar158 {
         } else {
             return None;
         };
-        let M_0t_at = if let Some((len, table)) =
-            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        let M_0t_at1 = if let Some((len, table)) =
+            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
@@ -11449,16 +11461,16 @@ impl instructionVar158 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at }))
+        Some((pattern_len, Self { N_0t, M_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2020:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2009:1"]
 #[derive(Clone, Debug)]
-struct instructionVar159 {
+struct instructionVar158 {
     N_0t: N_0t,
-    M_0t_at: M_0t_at,
+    M_0t_at1: M_0t_at1,
 }
-impl instructionVar159 {
+impl instructionVar158 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11474,7 +11486,7 @@ impl instructionVar159 {
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
-        self.M_0t_at.display_extend(
+        self.M_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
@@ -11498,7 +11510,7 @@ impl instructionVar159 {
         if token_parser.OP_0().disassembly() != 6 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 5 {
+        if token_parser.OP_1().disassembly() != 1 {
             return None;
         }
         let N_0t = if let Some((len, table)) =
@@ -11509,8 +11521,8 @@ impl instructionVar159 {
         } else {
             return None;
         };
-        let M_0t_at = if let Some((len, table)) =
-            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        let M_0t_at1 = if let Some((len, table)) =
+            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
@@ -11521,16 +11533,16 @@ impl instructionVar159 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at }))
+        Some((pattern_len, Self { N_0t, M_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2031:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2019:1"]
 #[derive(Clone, Debug)]
-struct instructionVar160 {
+struct instructionVar159 {
     N_0t: N_0t,
-    M_0t_at: M_0t_at,
+    M_0t_at1: M_0t_at1,
 }
-impl instructionVar160 {
+impl instructionVar159 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11546,7 +11558,7 @@ impl instructionVar160 {
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
-        self.M_0t_at.display_extend(
+        self.M_0t_at1.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
@@ -11570,7 +11582,7 @@ impl instructionVar160 {
         if token_parser.OP_0().disassembly() != 6 {
             return None;
         }
-        if token_parser.OP_1().disassembly() != 6 {
+        if token_parser.OP_1().disassembly() != 2 {
             return None;
         }
         let N_0t = if let Some((len, table)) =
@@ -11581,8 +11593,8 @@ impl instructionVar160 {
         } else {
             return None;
         };
-        let M_0t_at = if let Some((len, table)) =
-            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        let M_0t_at1 = if let Some((len, table)) =
+            M_0t_at1::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
@@ -11593,13 +11605,87 @@ impl instructionVar160 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { N_0t, M_0t_at }))
+        Some((pattern_len, Self { N_0t, M_0t_at1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2042:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2029:1"]
+#[derive(Clone, Debug)]
+struct instructionVar160 {
+    N_0t_at_neg: N_0t_at_neg,
+    M_0t: M_0t,
+}
+impl instructionVar160 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.b"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t_at_neg.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 2 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 4 {
+            return None;
+        }
+        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t = if let Some((len, table)) =
+            M_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2040:1"]
 #[derive(Clone, Debug)]
 struct instructionVar161 {
-    N_0t_at_with_r0: N_0t_at_with_r0,
+    N_0t_at_neg: N_0t_at_neg,
     M_0t: M_0t,
 }
 impl instructionVar161 {
@@ -11614,6 +11700,370 @@ impl instructionVar161 {
         T: ContextTrait + Clone,
     {
         let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.w"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t_at_neg.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 2 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 5 {
+            return None;
+        }
+        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t = if let Some((len, table)) =
+            M_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2051:1"]
+#[derive(Clone, Debug)]
+struct instructionVar162 {
+    N_0t_at_neg: N_0t_at_neg,
+    M_0t: M_0t,
+}
+impl instructionVar162 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.l"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t_at_neg.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 2 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 6 {
+            return None;
+        }
+        let N_0t_at_neg = if let Some((len, table)) = N_0t_at_neg::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t = if let Some((len, table)) =
+            M_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t_at_neg, M_0t }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2062:1"]
+#[derive(Clone, Debug)]
+struct instructionVar163 {
+    N_0t: N_0t,
+    M_0t_at: M_0t_at,
+}
+impl instructionVar163 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.b"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 4 {
+            return None;
+        }
+        let N_0t = if let Some((len, table)) =
+            N_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t_at = if let Some((len, table)) =
+            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t, M_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2073:1"]
+#[derive(Clone, Debug)]
+struct instructionVar164 {
+    N_0t: N_0t,
+    M_0t_at: M_0t_at,
+}
+impl instructionVar164 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.w"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 5 {
+            return None;
+        }
+        let N_0t = if let Some((len, table)) =
+            N_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t_at = if let Some((len, table)) =
+            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t, M_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2084:1"]
+#[derive(Clone, Debug)]
+struct instructionVar165 {
+    N_0t: N_0t,
+    M_0t_at: M_0t_at,
+}
+impl instructionVar165 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
+            DisplayElement::Literal("mov.l"),
+            DisplayElement::Literal(" "),
+        ];
+        display.extend_from_slice(&extend);
+        self.M_0t_at.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.N_0t.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.OP_0().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.OP_1().disassembly() != 6 {
+            return None;
+        }
+        let N_0t = if let Some((len, table)) =
+            N_0t::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let M_0t_at = if let Some((len, table)) =
+            M_0t_at::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { N_0t, M_0t_at }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2095:1"]
+#[derive(Clone, Debug)]
+struct instructionVar166 {
+    N_0t_at_with_r0: N_0t_at_with_r0,
+    M_0t: M_0t,
+}
+impl instructionVar166 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("mov.b"),
             DisplayElement::Literal(" "),
         ];
@@ -11676,13 +12126,13 @@ impl instructionVar161 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2052:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2105:1"]
 #[derive(Clone, Debug)]
-struct instructionVar162 {
+struct instructionVar167 {
     N_0t_at_with_r0: N_0t_at_with_r0,
     M_0t: M_0t,
 }
-impl instructionVar162 {
+impl instructionVar167 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11756,13 +12206,13 @@ impl instructionVar162 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2062:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2115:1"]
 #[derive(Clone, Debug)]
-struct instructionVar163 {
+struct instructionVar168 {
     N_0t_at_with_r0: N_0t_at_with_r0,
     M_0t: M_0t,
 }
-impl instructionVar163 {
+impl instructionVar168 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11836,13 +12286,13 @@ impl instructionVar163 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2072:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2125:1"]
 #[derive(Clone, Debug)]
-struct instructionVar164 {
+struct instructionVar169 {
     N_0t: N_0t,
     M_0t_at_with_r0: M_0t_at_with_r0,
 }
-impl instructionVar164 {
+impl instructionVar169 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11916,13 +12366,13 @@ impl instructionVar164 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2082:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2135:1"]
 #[derive(Clone, Debug)]
-struct instructionVar165 {
+struct instructionVar170 {
     N_0t: N_0t,
     M_0t_at_with_r0: M_0t_at_with_r0,
 }
-impl instructionVar165 {
+impl instructionVar170 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -11996,13 +12446,13 @@ impl instructionVar165 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2092:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2145:1"]
 #[derive(Clone, Debug)]
-struct instructionVar166 {
+struct instructionVar171 {
     N_0t: N_0t,
     M_0t_at_with_r0: M_0t_at_with_r0,
 }
-impl instructionVar166 {
+impl instructionVar171 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12076,12 +12526,12 @@ impl instructionVar166 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2132:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2185:1"]
 #[derive(Clone, Debug)]
-struct instructionVar167 {
+struct instructionVar172 {
     U_0t_gbr_at_1: U_0t_gbr_at_1,
 }
-impl instructionVar167 {
+impl instructionVar172 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12138,12 +12588,12 @@ impl instructionVar167 {
         Some((pattern_len, Self { U_0t_gbr_at_1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2142:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2195:1"]
 #[derive(Clone, Debug)]
-struct instructionVar168 {
+struct instructionVar173 {
     U_0t_gbr_at_2: U_0t_gbr_at_2,
 }
-impl instructionVar168 {
+impl instructionVar173 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12200,12 +12650,12 @@ impl instructionVar168 {
         Some((pattern_len, Self { U_0t_gbr_at_2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2152:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2205:1"]
 #[derive(Clone, Debug)]
-struct instructionVar169 {
+struct instructionVar174 {
     U_0t_gbr_at_4: U_0t_gbr_at_4,
 }
-impl instructionVar169 {
+impl instructionVar174 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12262,12 +12712,12 @@ impl instructionVar169 {
         Some((pattern_len, Self { U_0t_gbr_at_4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2162:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2215:1"]
 #[derive(Clone, Debug)]
-struct instructionVar170 {
+struct instructionVar175 {
     U_0t_gbr_at_1: U_0t_gbr_at_1,
 }
-impl instructionVar170 {
+impl instructionVar175 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12321,12 +12771,12 @@ impl instructionVar170 {
         Some((pattern_len, Self { U_0t_gbr_at_1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2172:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2225:1"]
 #[derive(Clone, Debug)]
-struct instructionVar171 {
+struct instructionVar176 {
     U_0t_gbr_at_2: U_0t_gbr_at_2,
 }
-impl instructionVar171 {
+impl instructionVar176 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12380,12 +12830,12 @@ impl instructionVar171 {
         Some((pattern_len, Self { U_0t_gbr_at_2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2182:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2235:1"]
 #[derive(Clone, Debug)]
-struct instructionVar172 {
+struct instructionVar177 {
     U_0t_gbr_at_4: U_0t_gbr_at_4,
 }
-impl instructionVar172 {
+impl instructionVar177 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12439,13 +12889,13 @@ impl instructionVar172 {
         Some((pattern_len, Self { U_0t_gbr_at_4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2192:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2245:1"]
 #[derive(Clone, Debug)]
-struct instructionVar173 {
+struct instructionVar178 {
     M_0t: M_0t,
     U_2t_M0_dispr01: U_2t_M0_dispr01,
 }
-impl instructionVar173 {
+impl instructionVar178 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12513,13 +12963,13 @@ impl instructionVar173 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2202:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2255:1"]
 #[derive(Clone, Debug)]
-struct instructionVar174 {
+struct instructionVar179 {
     M_0t: M_0t,
     U_2t_M0_dispr02: U_2t_M0_dispr02,
 }
-impl instructionVar174 {
+impl instructionVar179 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12587,13 +13037,13 @@ impl instructionVar174 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2222:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2275:1"]
 #[derive(Clone, Debug)]
-struct instructionVar175 {
+struct instructionVar180 {
     M_0t: M_0t,
     U_2t_M0_dispr01: U_2t_M0_dispr01,
 }
-impl instructionVar175 {
+impl instructionVar180 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12664,13 +13114,13 @@ impl instructionVar175 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2232:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2285:1"]
 #[derive(Clone, Debug)]
-struct instructionVar176 {
+struct instructionVar181 {
     U_2t_M0_dispr02: U_2t_M0_dispr02,
     M_0t: M_0t,
 }
-impl instructionVar176 {
+impl instructionVar181 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12741,12 +13191,12 @@ impl instructionVar176 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2252:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2305:1"]
 #[derive(Clone, Debug)]
-struct instructionVar177 {
+struct instructionVar182 {
     U_0t_4pc: U_0t_4pc,
 }
-impl instructionVar177 {
+impl instructionVar182 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12801,13 +13251,13 @@ impl instructionVar177 {
         Some((pattern_len, Self { U_0t_4pc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2281:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2354:1"]
 #[derive(Clone, Debug)]
-struct instructionVar178 {
+struct instructionVar183 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar178 {
+impl instructionVar183 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12873,13 +13323,13 @@ impl instructionVar178 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2291:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2364:1"]
 #[derive(Clone, Debug)]
-struct instructionVar179 {
+struct instructionVar184 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar179 {
+impl instructionVar184 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -12945,13 +13395,13 @@ impl instructionVar179 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2301:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2374:1"]
 #[derive(Clone, Debug)]
-struct instructionVar180 {
+struct instructionVar185 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar180 {
+impl instructionVar185 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13017,13 +13467,13 @@ impl instructionVar180 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2311:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2384:1"]
 #[derive(Clone, Debug)]
-struct instructionVar181 {
+struct instructionVar186 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar181 {
+impl instructionVar186 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13087,13 +13537,13 @@ impl instructionVar181 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2321:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2394:1"]
 #[derive(Clone, Debug)]
-struct instructionVar182 {
+struct instructionVar187 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar182 {
+impl instructionVar187 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13159,13 +13609,13 @@ impl instructionVar182 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2341:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2414:1"]
 #[derive(Clone, Debug)]
-struct instructionVar183 {
+struct instructionVar188 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar183 {
+impl instructionVar188 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13229,13 +13679,13 @@ impl instructionVar183 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2376:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2449:1"]
 #[derive(Clone, Debug)]
-struct instructionVar184 {
+struct instructionVar189 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar184 {
+impl instructionVar189 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13299,12 +13749,12 @@ impl instructionVar184 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2386:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2459:1"]
 #[derive(Clone, Debug)]
-struct instructionVar185 {
+struct instructionVar190 {
     U_0t_r0: U_0t_r0,
 }
-impl instructionVar185 {
+impl instructionVar190 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13352,12 +13802,12 @@ impl instructionVar185 {
         Some((pattern_len, Self { U_0t_r0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2396:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2469:1"]
 #[derive(Clone, Debug)]
-struct instructionVar186 {
+struct instructionVar191 {
     U_0t1: U_0t1,
 }
-impl instructionVar186 {
+impl instructionVar191 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13407,13 +13857,13 @@ impl instructionVar186 {
         Some((pattern_len, Self { U_0t1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2502:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2575:1"]
 #[derive(Clone, Debug)]
-struct instructionVar187 {
+struct instructionVar192 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar187 {
+impl instructionVar192 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13479,13 +13929,13 @@ impl instructionVar187 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2538:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2611:1"]
 #[derive(Clone, Debug)]
-struct instructionVar188 {
+struct instructionVar193 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar188 {
+impl instructionVar193 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13551,13 +14001,13 @@ impl instructionVar188 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2911:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2984:1"]
 #[derive(Clone, Debug)]
-struct instructionVar189 {
+struct instructionVar194 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar189 {
+impl instructionVar194 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13621,13 +14071,13 @@ impl instructionVar189 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2921:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2994:1"]
 #[derive(Clone, Debug)]
-struct instructionVar190 {
+struct instructionVar195 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar190 {
+impl instructionVar195 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13693,13 +14143,13 @@ impl instructionVar190 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2934:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3007:1"]
 #[derive(Clone, Debug)]
-struct instructionVar191 {
+struct instructionVar196 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar191 {
+impl instructionVar196 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13765,13 +14215,13 @@ impl instructionVar191 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2944:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3017:1"]
 #[derive(Clone, Debug)]
-struct instructionVar192 {
+struct instructionVar197 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar192 {
+impl instructionVar197 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13837,13 +14287,13 @@ impl instructionVar192 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2956:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3029:1"]
 #[derive(Clone, Debug)]
-struct instructionVar193 {
+struct instructionVar198 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar193 {
+impl instructionVar198 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13909,12 +14359,12 @@ impl instructionVar193 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2990:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3063:1"]
 #[derive(Clone, Debug)]
-struct instructionVar194 {
+struct instructionVar199 {
     U_0t: U_0t,
 }
-impl instructionVar194 {
+impl instructionVar199 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -13964,13 +14414,13 @@ impl instructionVar194 {
         Some((pattern_len, Self { U_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2997:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3070:1"]
 #[derive(Clone, Debug)]
-struct instructionVar195 {
+struct instructionVar200 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar195 {
+impl instructionVar200 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14034,12 +14484,12 @@ impl instructionVar195 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3007:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3080:1"]
 #[derive(Clone, Debug)]
-struct instructionVar196 {
+struct instructionVar201 {
     U_0t_r0: U_0t_r0,
 }
-impl instructionVar196 {
+impl instructionVar201 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14087,12 +14537,12 @@ impl instructionVar196 {
         Some((pattern_len, Self { U_0t_r0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3017:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3090:1"]
 #[derive(Clone, Debug)]
-struct instructionVar197 {
+struct instructionVar202 {
     U_0t1: U_0t1,
 }
-impl instructionVar197 {
+impl instructionVar202 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14142,13 +14592,13 @@ impl instructionVar197 {
         Some((pattern_len, Self { U_0t1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3026:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3099:1"]
 #[derive(Clone, Debug)]
-struct instructionVar198 {
+struct instructionVar203 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar198 {
+impl instructionVar203 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14212,12 +14662,12 @@ impl instructionVar198 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3036:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3109:1"]
 #[derive(Clone, Debug)]
-struct instructionVar199 {
+struct instructionVar204 {
     U_0t_r0: U_0t_r0,
 }
-impl instructionVar199 {
+impl instructionVar204 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14265,12 +14715,12 @@ impl instructionVar199 {
         Some((pattern_len, Self { U_0t_r0 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3046:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3119:1"]
 #[derive(Clone, Debug)]
-struct instructionVar200 {
+struct instructionVar205 {
     U_0t1: U_0t1,
 }
-impl instructionVar200 {
+impl instructionVar205 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14320,13 +14770,13 @@ impl instructionVar200 {
         Some((pattern_len, Self { U_0t1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3056:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:3129:1"]
 #[derive(Clone, Debug)]
-struct instructionVar201 {
+struct instructionVar206 {
     N_0t: N_0t,
     M_0t: M_0t,
 }
-impl instructionVar201 {
+impl instructionVar206 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14392,13 +14842,13 @@ impl instructionVar201 {
         Some((pattern_len, Self { N_0t, M_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:628:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:644:1"]
 #[derive(Clone, Debug)]
-struct instructionVar202 {
+struct instructionVar207 {
     N_0t: N_0t,
     I_0t: I_0t,
 }
-impl instructionVar202 {
+impl instructionVar207 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14459,12 +14909,12 @@ impl instructionVar202 {
         Some((pattern_len, Self { N_0t, I_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:712:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:728:1"]
 #[derive(Clone, Debug)]
-struct instructionVar203 {
+struct instructionVar208 {
     I_1tbranch: I_1tbranch,
 }
-impl instructionVar203 {
+impl instructionVar208 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14512,12 +14962,12 @@ impl instructionVar203 {
         Some((pattern_len, Self { I_1tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:735:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:751:1"]
 #[derive(Clone, Debug)]
-struct instructionVar204 {
+struct instructionVar209 {
     I_1tbranch: I_1tbranch,
 }
-impl instructionVar204 {
+impl instructionVar209 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14565,13 +15015,13 @@ impl instructionVar204 {
         Some((pattern_len, Self { I_1tbranch }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2102:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2155:1"]
 #[derive(Clone, Debug)]
-struct instructionVar205 {
+struct instructionVar210 {
     N_0t: N_0t,
     I_0t: I_0t,
 }
-impl instructionVar205 {
+impl instructionVar210 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14632,13 +15082,13 @@ impl instructionVar205 {
         Some((pattern_len, Self { N_0t, I_0t }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2112:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2165:1"]
 #[derive(Clone, Debug)]
-struct instructionVar206 {
+struct instructionVar211 {
     N_0t: N_0t,
     U_0t_2pc: U_0t_2pc,
 }
-impl instructionVar206 {
+impl instructionVar211 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14701,13 +15151,13 @@ impl instructionVar206 {
         Some((pattern_len, Self { N_0t, U_0t_2pc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2122:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2175:1"]
 #[derive(Clone, Debug)]
-struct instructionVar207 {
+struct instructionVar212 {
     N_0t: N_0t,
     U_0t_4pc: U_0t_4pc,
 }
-impl instructionVar207 {
+impl instructionVar212 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14770,14 +15220,14 @@ impl instructionVar207 {
         Some((pattern_len, Self { N_0t, U_0t_4pc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2212:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2265:1"]
 #[derive(Clone, Debug)]
-struct instructionVar208 {
+struct instructionVar213 {
     M_0t: M_0t,
     N_0t: N_0t,
     U_2t_N0_dispr04: U_2t_N0_dispr04,
 }
-impl instructionVar208 {
+impl instructionVar213 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -14857,14 +15307,14 @@ impl instructionVar208 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2242:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:2295:1"]
 #[derive(Clone, Debug)]
-struct instructionVar209 {
+struct instructionVar214 {
     N_0t: N_0t,
     M_0t: M_0t,
     U_2t_M0_dispr04: U_2t_M0_dispr04,
 }
-impl instructionVar209 {
+impl instructionVar214 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -15156,6 +15606,11 @@ enum instruction {
     Var207(instructionVar207),
     Var208(instructionVar208),
     Var209(instructionVar209),
+    Var210(instructionVar210),
+    Var211(instructionVar211),
+    Var212(instructionVar212),
+    Var213(instructionVar213),
+    Var214(instructionVar214),
 }
 impl instruction {
     fn display_extend<T>(
@@ -16633,6 +17088,41 @@ impl instruction {
                 global_set_param,
             ),
             Self::Var209(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var210(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var211(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var212(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var213(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var214(x) => x.display_extend(
                 display,
                 context,
                 inst_start,
@@ -18330,10 +18820,50 @@ impl instruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var209(parsed)));
         }
+        if let Some((inst_len, parsed)) = instructionVar210::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var210(parsed)));
+        }
+        if let Some((inst_len, parsed)) = instructionVar211::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var211(parsed)));
+        }
+        if let Some((inst_len, parsed)) = instructionVar212::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var212(parsed)));
+        }
+        if let Some((inst_len, parsed)) = instructionVar213::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var213(parsed)));
+        }
+        if let Some((inst_len, parsed)) = instructionVar214::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var214(parsed)));
+        }
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:444:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:460:1"]
 #[derive(Clone, Debug)]
 struct M_0tVar0 {
     M_0: TokenField_M_0,
@@ -18415,7 +18945,7 @@ impl M_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:446:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:462:1"]
 #[derive(Clone, Debug)]
 struct N_0tVar0 {
     N_0: TokenField_N_0,
@@ -18497,7 +19027,7 @@ impl N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:448:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:464:1"]
 #[derive(Clone, Debug)]
 struct N_0tjmpVar0 {
     N_0: TokenField_N_0,
@@ -18580,7 +19110,7 @@ impl N_0tjmp {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:450:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:466:1"]
 #[derive(Clone, Debug)]
 struct I_0tVar0 {
     I_0: TokenField_I_0,
@@ -18663,7 +19193,7 @@ impl I_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:452:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:468:1"]
 #[derive(Clone, Debug)]
 struct U_0tVar0 {
     U_0: TokenField_U_0,
@@ -18746,7 +19276,7 @@ impl U_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:453:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:469:1"]
 #[derive(Clone, Debug)]
 struct U_0t1Var0 {
     U_0: TokenField_U_0,
@@ -18836,7 +19366,7 @@ impl U_0t1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:455:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:471:1"]
 #[derive(Clone, Debug)]
 struct I_0t_r0Var0 {
     I_0: TokenField_I_0,
@@ -18923,7 +19453,7 @@ impl I_0t_r0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:457:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:473:1"]
 #[derive(Clone, Debug)]
 struct U_0t_r0Var0 {
     U_0: TokenField_U_0,
@@ -19010,7 +19540,7 @@ impl U_0t_r0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:459:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:475:1"]
 #[derive(Clone, Debug)]
 struct I_0tbranchVar0 {
     I_0: TokenField_I_0,
@@ -19103,7 +19633,7 @@ impl I_0tbranch {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:461:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:477:1"]
 #[derive(Clone, Debug)]
 struct I_1tbranchVar0 {
     I_1: TokenField_I_1,
@@ -19196,7 +19726,7 @@ impl I_1tbranch {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:463:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:479:1"]
 #[derive(Clone, Debug)]
 struct sr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19282,7 +19812,7 @@ impl sr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:465:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:481:1"]
 #[derive(Clone, Debug)]
 struct gbr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19368,7 +19898,7 @@ impl gbr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:467:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:483:1"]
 #[derive(Clone, Debug)]
 struct vbr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19454,7 +19984,7 @@ impl vbr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:469:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:485:1"]
 #[derive(Clone, Debug)]
 struct ssr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19540,7 +20070,7 @@ impl ssr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:471:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:487:1"]
 #[derive(Clone, Debug)]
 struct spc_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19626,7 +20156,7 @@ impl spc_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:473:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:489:1"]
 #[derive(Clone, Debug)]
 struct sgr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19712,7 +20242,7 @@ impl sgr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:475:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:491:1"]
 #[derive(Clone, Debug)]
 struct dbr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -19798,7 +20328,7 @@ impl dbr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:477:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:493:1"]
 #[derive(Clone, Debug)]
 struct sr_tVar0 {}
 impl sr_tVar0 {
@@ -19879,7 +20409,7 @@ impl sr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:479:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:495:1"]
 #[derive(Clone, Debug)]
 struct gbr_tVar0 {}
 impl gbr_tVar0 {
@@ -19960,7 +20490,7 @@ impl gbr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:481:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:497:1"]
 #[derive(Clone, Debug)]
 struct vbr_tVar0 {}
 impl vbr_tVar0 {
@@ -20041,7 +20571,7 @@ impl vbr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:483:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:499:1"]
 #[derive(Clone, Debug)]
 struct ssr_tVar0 {}
 impl ssr_tVar0 {
@@ -20122,7 +20652,7 @@ impl ssr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:485:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:501:1"]
 #[derive(Clone, Debug)]
 struct spc_tVar0 {}
 impl spc_tVar0 {
@@ -20203,7 +20733,7 @@ impl spc_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:487:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:503:1"]
 #[derive(Clone, Debug)]
 struct sgr_tVar0 {}
 impl sgr_tVar0 {
@@ -20284,7 +20814,7 @@ impl sgr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:489:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:505:1"]
 #[derive(Clone, Debug)]
 struct dbr_tVar0 {}
 impl dbr_tVar0 {
@@ -20365,7 +20895,7 @@ impl dbr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:491:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:507:1"]
 #[derive(Clone, Debug)]
 struct N_0t_srVar0 {
     N_0: TokenField_N_0,
@@ -20451,7 +20981,7 @@ impl N_0t_sr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:493:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:509:1"]
 #[derive(Clone, Debug)]
 struct N_0t_gbrVar0 {
     N_0: TokenField_N_0,
@@ -20537,7 +21067,7 @@ impl N_0t_gbr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:495:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:511:1"]
 #[derive(Clone, Debug)]
 struct N_0t_vbrVar0 {
     N_0: TokenField_N_0,
@@ -20623,7 +21153,7 @@ impl N_0t_vbr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:497:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:513:1"]
 #[derive(Clone, Debug)]
 struct N_0t_ssrVar0 {
     N_0: TokenField_N_0,
@@ -20709,7 +21239,7 @@ impl N_0t_ssr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:499:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:515:1"]
 #[derive(Clone, Debug)]
 struct N_0t_spcVar0 {
     N_0: TokenField_N_0,
@@ -20795,7 +21325,7 @@ impl N_0t_spc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:502:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:518:1"]
 #[derive(Clone, Debug)]
 struct N_0t_dbrVar0 {
     N_0: TokenField_N_0,
@@ -20881,7 +21411,7 @@ impl N_0t_dbr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:504:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:520:1"]
 #[derive(Clone, Debug)]
 struct N_0t_bankVar0 {
     N_0: TokenField_N_0,
@@ -20963,7 +21493,7 @@ impl N_0t_bank {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:506:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:522:1"]
 #[derive(Clone, Debug)]
 struct N_0t_sr1Var0 {
     N_0: TokenField_N_0,
@@ -21050,7 +21580,7 @@ impl N_0t_sr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:508:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:524:1"]
 #[derive(Clone, Debug)]
 struct N_0t_gbr1Var0 {
     N_0: TokenField_N_0,
@@ -21137,7 +21667,7 @@ impl N_0t_gbr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:510:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:526:1"]
 #[derive(Clone, Debug)]
 struct N_0t_vbr1Var0 {
     N_0: TokenField_N_0,
@@ -21224,7 +21754,7 @@ impl N_0t_vbr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:512:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:528:1"]
 #[derive(Clone, Debug)]
 struct N_0t_ssr1Var0 {
     N_0: TokenField_N_0,
@@ -21311,7 +21841,7 @@ impl N_0t_ssr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:514:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:530:1"]
 #[derive(Clone, Debug)]
 struct N_0t_spc1Var0 {
     N_0: TokenField_N_0,
@@ -21398,7 +21928,7 @@ impl N_0t_spc1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:517:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:533:1"]
 #[derive(Clone, Debug)]
 struct N_0t_dbr1Var0 {
     N_0: TokenField_N_0,
@@ -21485,7 +22015,7 @@ impl N_0t_dbr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:519:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:535:1"]
 #[derive(Clone, Debug)]
 struct N_0t_bank1Var0 {
     N_0: TokenField_N_0,
@@ -21573,7 +22103,7 @@ impl N_0t_bank1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:521:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:537:1"]
 #[derive(Clone, Debug)]
 struct FR0_tVar0 {}
 impl FR0_tVar0 {
@@ -21654,7 +22184,7 @@ impl FR0_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:523:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:539:1"]
 #[derive(Clone, Debug)]
 struct XMTRX_tVar0 {}
 impl XMTRX_tVar0 {
@@ -21735,7 +22265,7 @@ impl XMTRX_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:525:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:541:1"]
 #[derive(Clone, Debug)]
 struct mach_tVar0 {}
 impl mach_tVar0 {
@@ -21816,7 +22346,7 @@ impl mach_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:527:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:543:1"]
 #[derive(Clone, Debug)]
 struct macl_tVar0 {}
 impl macl_tVar0 {
@@ -21897,7 +22427,7 @@ impl macl_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:529:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:545:1"]
 #[derive(Clone, Debug)]
 struct fpul_tVar0 {}
 impl fpul_tVar0 {
@@ -21978,7 +22508,7 @@ impl fpul_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:531:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:547:1"]
 #[derive(Clone, Debug)]
 struct fpscr_tVar0 {}
 impl fpscr_tVar0 {
@@ -22059,7 +22589,7 @@ impl fpscr_t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:533:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:549:1"]
 #[derive(Clone, Debug)]
 struct mach_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -22145,7 +22675,7 @@ impl mach_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:535:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:551:1"]
 #[derive(Clone, Debug)]
 struct macl_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -22231,7 +22761,7 @@ impl macl_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:537:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:553:1"]
 #[derive(Clone, Debug)]
 struct pr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -22317,7 +22847,7 @@ impl pr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:539:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:555:1"]
 #[derive(Clone, Debug)]
 struct fpul_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -22403,7 +22933,7 @@ impl fpul_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:541:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:557:1"]
 #[derive(Clone, Debug)]
 struct fpscr_N_0tVar0 {
     N_0: TokenField_N_0,
@@ -22491,7 +23021,7 @@ impl fpscr_N_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:543:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:559:1"]
 #[derive(Clone, Debug)]
 struct N_0t_machVar0 {
     N_0: TokenField_N_0,
@@ -22577,7 +23107,7 @@ impl N_0t_mach {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:545:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:561:1"]
 #[derive(Clone, Debug)]
 struct N_0t_maclVar0 {
     N_0: TokenField_N_0,
@@ -22663,7 +23193,7 @@ impl N_0t_macl {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:547:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:563:1"]
 #[derive(Clone, Debug)]
 struct N_0t_prVar0 {
     N_0: TokenField_N_0,
@@ -22749,7 +23279,7 @@ impl N_0t_pr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:549:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:565:1"]
 #[derive(Clone, Debug)]
 struct N_0t_fpulVar0 {
     N_0: TokenField_N_0,
@@ -22835,7 +23365,7 @@ impl N_0t_fpul {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:551:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:567:1"]
 #[derive(Clone, Debug)]
 struct N_0t_fpscrVar0 {
     N_0: TokenField_N_0,
@@ -22920,7 +23450,7 @@ impl N_0t_fpscr {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:553:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:569:1"]
 #[derive(Clone, Debug)]
 struct N_0t_mach1Var0 {
     N_0: TokenField_N_0,
@@ -23009,7 +23539,7 @@ impl N_0t_mach1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:555:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:571:1"]
 #[derive(Clone, Debug)]
 struct N_0t_macl1Var0 {
     N_0: TokenField_N_0,
@@ -23098,7 +23628,7 @@ impl N_0t_macl1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:557:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:573:1"]
 #[derive(Clone, Debug)]
 struct N_0t_pr1Var0 {
     N_0: TokenField_N_0,
@@ -23185,7 +23715,7 @@ impl N_0t_pr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:559:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:575:1"]
 #[derive(Clone, Debug)]
 struct N_0t_fpul1Var0 {
     N_0: TokenField_N_0,
@@ -23274,7 +23804,7 @@ impl N_0t_fpul1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:561:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:577:1"]
 #[derive(Clone, Debug)]
 struct N_0t_fpscr1Var0 {
     N_0: TokenField_N_0,
@@ -23362,7 +23892,7 @@ impl N_0t_fpscr1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:563:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:579:1"]
 #[derive(Clone, Debug)]
 struct M_0t_at1Var0 {
     M_0: TokenField_M_0,
@@ -23445,7 +23975,7 @@ impl M_0t_at1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:565:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:581:1"]
 #[derive(Clone, Debug)]
 struct N_0t_at1Var0 {
     N_0: TokenField_N_0,
@@ -23528,7 +24058,7 @@ impl N_0t_at1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:567:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:583:1"]
 #[derive(Clone, Debug)]
 struct M_0t_atVar0 {
     M_0: TokenField_M_0,
@@ -23614,7 +24144,7 @@ impl M_0t_at {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:569:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:585:1"]
 #[derive(Clone, Debug)]
 struct N_0t_atVar0 {
     N_0: TokenField_N_0,
@@ -23700,7 +24230,7 @@ impl N_0t_at {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:571:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:587:1"]
 #[derive(Clone, Debug)]
 struct FRM_0tVar0 {
     FRM_0: TokenField_FRM_0,
@@ -23782,7 +24312,7 @@ impl FRM_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:573:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:589:1"]
 #[derive(Clone, Debug)]
 struct FRN_0tVar0 {
     FRN_0: TokenField_FRN_0,
@@ -23864,7 +24394,7 @@ impl FRN_0t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:575:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:591:1"]
 #[derive(Clone, Debug)]
 struct DRM_1tVar0 {
     DRM_1: TokenField_DRM_1,
@@ -23946,7 +24476,7 @@ impl DRM_1t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:577:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:593:1"]
 #[derive(Clone, Debug)]
 struct DRN_1tVar0 {
     DRN_1: TokenField_DRN_1,
@@ -24028,7 +24558,7 @@ impl DRN_1t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:579:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:595:1"]
 #[derive(Clone, Debug)]
 struct FVM_2tVar0 {
     FVM_2: TokenField_FVM_2,
@@ -24110,7 +24640,7 @@ impl FVM_2t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:581:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:597:1"]
 #[derive(Clone, Debug)]
 struct FVN_2tVar0 {
     FVN_2: TokenField_FVN_2,
@@ -24192,7 +24722,7 @@ impl FVN_2t {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:583:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:599:1"]
 #[derive(Clone, Debug)]
 struct N_0t_at_with_r0Var0 {
     N_0: TokenField_N_0,
@@ -24282,7 +24812,7 @@ impl N_0t_at_with_r0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:585:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:601:1"]
 #[derive(Clone, Debug)]
 struct M_0t_at_with_r0Var0 {
     M_0: TokenField_M_0,
@@ -24372,7 +24902,7 @@ impl M_0t_at_with_r0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:587:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:603:1"]
 #[derive(Clone, Debug)]
 struct N_0t_at_negVar0 {
     N_0: TokenField_N_0,
@@ -24457,7 +24987,7 @@ impl N_0t_at_neg {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:589:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:605:1"]
 #[derive(Clone, Debug)]
 struct U_2t_M0_dispr01Var0 {
     M_0: TokenField_M_0,
@@ -24553,7 +25083,7 @@ impl U_2t_M0_dispr01 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:590:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:606:1"]
 #[derive(Clone, Debug)]
 struct U_2t_M0_dispr02Var0 {
     M_0: TokenField_M_0,
@@ -24649,7 +25179,7 @@ impl U_2t_M0_dispr02 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:591:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:607:1"]
 #[derive(Clone, Debug)]
 struct U_2t_M0_dispr04Var0 {
     M_0: TokenField_M_0,
@@ -24745,7 +25275,7 @@ impl U_2t_M0_dispr04 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:593:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:609:1"]
 #[derive(Clone, Debug)]
 struct U_2t_N0_dispr04Var0 {
     N_0: TokenField_N_0,
@@ -24841,7 +25371,7 @@ impl U_2t_N0_dispr04 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:596:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:612:1"]
 #[derive(Clone, Debug)]
 struct U_0t_gbr_at_1Var0 {
     U_0: TokenField_U_0,
@@ -24935,7 +25465,7 @@ impl U_0t_gbr_at_1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:597:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:613:1"]
 #[derive(Clone, Debug)]
 struct U_0t_gbr_at_2Var0 {
     U_0: TokenField_U_0,
@@ -25029,7 +25559,7 @@ impl U_0t_gbr_at_2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:598:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:614:1"]
 #[derive(Clone, Debug)]
 struct U_0t_gbr_at_4Var0 {
     U_0: TokenField_U_0,
@@ -25123,7 +25653,7 @@ impl U_0t_gbr_at_4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:605:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:621:1"]
 #[derive(Clone, Debug)]
 struct U_0t_2pcVar0 {
     U_0: TokenField_U_0,
@@ -25214,7 +25744,7 @@ impl U_0t_2pc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:607:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:623:1"]
 #[derive(Clone, Debug)]
 struct U_0t_4pcVar0 {
     U_0: TokenField_U_0,
@@ -25307,7 +25837,7 @@ impl U_0t_4pc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:609:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:625:1"]
 #[derive(Clone, Debug)]
 struct BANKtVar0 {
     BANK: TokenField_BANK,
@@ -25389,7 +25919,7 @@ impl BANKt {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:611:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/SuperH4/data/languages/SuperH4.sinc:627:1"]
 #[derive(Clone, Debug)]
 struct N_0txxVar0 {
     N_0: TokenField_N_0,

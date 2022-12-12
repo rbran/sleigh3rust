@@ -51,7 +51,6 @@ macro_rules! impl_read_to_type {
             let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let mask = value_max << start_bit;
             let mut value = value;
-            assert!(value <= value_max);
             value <<= start_bit;
             value = (mem & !mask) | value;
             if BIG_ENDIAN {
@@ -71,8 +70,6 @@ macro_rules! impl_read_to_type {
             assert!(len_bits + start_bit <= TYPE_BITS);
             let value_max = <$signed_type>::MAX >> (TYPE_BITS - len_bits);
             let value_min = <$signed_type>::MIN >> (TYPE_BITS - len_bits);
-            assert!(value <= value_max);
-            assert!(value >= value_min);
             let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let value = value as $unsigned_type & mask;
             let mem = mem as $unsigned_type;
@@ -206,6 +203,19 @@ impl TokenField_op0811 {
     }
 }
 #[derive(Clone, Copy, Debug)]
+struct TokenField_op0407(u8);
+impl TokenField_op0407 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
 struct TokenField_op0007(u8);
 impl TokenField_op0007 {
     fn execution(&self) -> u8 {
@@ -284,8 +294,8 @@ impl TokenField_rt {
     }
 }
 #[derive(Clone, Copy, Debug)]
-struct TokenField_imm1214(u8);
-impl TokenField_imm1214 {
+struct TokenField_imm1213(u8);
+impl TokenField_imm1213 {
     fn execution(&self) -> u8 {
         self.0
     }
@@ -495,6 +505,21 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_op0811(inner_value)
     }
+    fn op0407(&self) -> TokenField_op0407 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 0u64 as usize;
+            let token_end = 1u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_op0407(inner_value)
+    }
     fn op0007(&self) -> TokenField_op0007 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
@@ -585,7 +610,7 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_rt(inner_value)
     }
-    fn imm1214(&self) -> TokenField_imm1214 {
+    fn imm1213(&self) -> TokenField_imm1213 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
             let work_start = 0u64 as usize;
@@ -595,10 +620,10 @@ impl<const LEN: usize> TokenParser<LEN> {
             work_value[work_start..work_end]
                 .copy_from_slice(&self.0[token_start..token_end]);
             let value =
-                read_u8::<false>(work_value, 4u64 as usize, 3u64 as usize);
+                read_u8::<false>(work_value, 4u64 as usize, 2u64 as usize);
             u8::try_from(value).unwrap()
         };
-        TokenField_imm1214(inner_value)
+        TokenField_imm1213(inner_value)
     }
     fn imm0007(&self) -> TokenField_imm0007 {
         let inner_value = {
@@ -868,7 +893,7 @@ impl core::fmt::Display for DisplayElement {
         }
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:211:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:217:1"]
 #[derive(Clone, Debug)]
 struct instructionVar0 {}
 impl instructionVar0 {
@@ -913,7 +938,7 @@ impl instructionVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:221:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:227:1"]
 #[derive(Clone, Debug)]
 struct instructionVar1 {}
 impl instructionVar1 {
@@ -959,7 +984,7 @@ impl instructionVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:226:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:232:1"]
 #[derive(Clone, Debug)]
 struct instructionVar2 {}
 impl instructionVar2 {
@@ -1005,7 +1030,7 @@ impl instructionVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:193:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:197:1"]
 #[derive(Clone, Debug)]
 struct instructionVar3 {
     rs: TokenField_rs,
@@ -1057,7 +1082,7 @@ impl instructionVar3 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:194:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:198:1"]
 #[derive(Clone, Debug)]
 struct instructionVar4 {
     rs: TokenField_rs,
@@ -1109,12 +1134,82 @@ impl instructionVar4 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:208:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:204:1"]
 #[derive(Clone, Debug)]
 struct instructionVar5 {
-    rs: TokenField_rs,
+    CC: CC,
+    Rel82: Rel82,
 }
 impl instructionVar5 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sk")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if token_parser.op1215().disassembly() != 8 {
+            return None;
+        }
+        if token_parser.op0811().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.op0407().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.op0303().disassembly() != 0 {
+            return None;
+        }
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rel82 = if let Some((len, table)) =
+            Rel82::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, Rel82 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:214:1"]
+#[derive(Clone, Debug)]
+struct instructionVar6 {
+    rs: TokenField_rs,
+}
+impl instructionVar6 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1161,12 +1256,12 @@ impl instructionVar5 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:209:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:215:1"]
 #[derive(Clone, Debug)]
-struct instructionVar6 {
+struct instructionVar7 {
     rs: TokenField_rs,
 }
-impl instructionVar6 {
+impl instructionVar7 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1213,12 +1308,12 @@ impl instructionVar6 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:213:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:219:1"]
 #[derive(Clone, Debug)]
-struct instructionVar7 {
+struct instructionVar8 {
     rs: TokenField_rs,
 }
-impl instructionVar7 {
+impl instructionVar8 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1265,12 +1360,12 @@ impl instructionVar7 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:219:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:225:1"]
 #[derive(Clone, Debug)]
-struct instructionVar8 {
+struct instructionVar9 {
     rs: TokenField_rs,
 }
-impl instructionVar8 {
+impl instructionVar9 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1317,12 +1412,12 @@ impl instructionVar8 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:220:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:226:1"]
 #[derive(Clone, Debug)]
-struct instructionVar9 {
+struct instructionVar10 {
     rs: TokenField_rs,
 }
-impl instructionVar9 {
+impl instructionVar10 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1369,12 +1464,12 @@ impl instructionVar9 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:224:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:230:1"]
 #[derive(Clone, Debug)]
-struct instructionVar10 {
+struct instructionVar11 {
     rs: TokenField_rs,
 }
-impl instructionVar10 {
+impl instructionVar11 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1421,13 +1516,13 @@ impl instructionVar10 {
         Some((pattern_len, Self { rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:202:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:208:1"]
 #[derive(Clone, Debug)]
-struct instructionVar11 {
+struct instructionVar12 {
     rs: TokenField_rs,
     COND: COND,
 }
-impl instructionVar11 {
+impl instructionVar12 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1484,13 +1579,13 @@ impl instructionVar11 {
         Some((pattern_len, Self { COND, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:203:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:209:1"]
 #[derive(Clone, Debug)]
-struct instructionVar12 {
+struct instructionVar13 {
     rs: TokenField_rs,
     COND: COND,
 }
-impl instructionVar12 {
+impl instructionVar13 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1548,13 +1643,13 @@ impl instructionVar12 {
         Some((pattern_len, Self { COND, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:217:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:223:1"]
 #[derive(Clone, Debug)]
-struct instructionVar13 {
+struct instructionVar14 {
     rs: TokenField_rs,
     COND: COND,
 }
-impl instructionVar13 {
+impl instructionVar14 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1612,13 +1707,13 @@ impl instructionVar13 {
         Some((pattern_len, Self { COND, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:154:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:158:1"]
 #[derive(Clone, Debug)]
-struct instructionVar14 {
+struct instructionVar15 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar14 {
+impl instructionVar15 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1665,13 +1760,13 @@ impl instructionVar14 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:155:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:159:1"]
 #[derive(Clone, Debug)]
-struct instructionVar15 {
+struct instructionVar16 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar15 {
+impl instructionVar16 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1718,13 +1813,13 @@ impl instructionVar15 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:156:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:160:1"]
 #[derive(Clone, Debug)]
-struct instructionVar16 {
+struct instructionVar17 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar16 {
+impl instructionVar17 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1771,13 +1866,13 @@ impl instructionVar16 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:157:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:161:1"]
 #[derive(Clone, Debug)]
-struct instructionVar17 {
+struct instructionVar18 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar17 {
+impl instructionVar18 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1824,13 +1919,13 @@ impl instructionVar17 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:158:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:162:1"]
 #[derive(Clone, Debug)]
-struct instructionVar18 {
+struct instructionVar19 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar18 {
+impl instructionVar19 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1877,13 +1972,13 @@ impl instructionVar18 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:159:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:163:1"]
 #[derive(Clone, Debug)]
-struct instructionVar19 {
+struct instructionVar20 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar19 {
+impl instructionVar20 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1930,13 +2025,13 @@ impl instructionVar19 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:160:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:164:1"]
 #[derive(Clone, Debug)]
-struct instructionVar20 {
+struct instructionVar21 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar20 {
+impl instructionVar21 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1983,13 +2078,13 @@ impl instructionVar20 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:161:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:165:1"]
 #[derive(Clone, Debug)]
-struct instructionVar21 {
+struct instructionVar22 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar21 {
+impl instructionVar22 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2036,13 +2131,13 @@ impl instructionVar21 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:163:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:167:1"]
 #[derive(Clone, Debug)]
-struct instructionVar22 {
+struct instructionVar23 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar22 {
+impl instructionVar23 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2098,13 +2193,13 @@ impl instructionVar22 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:164:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:168:1"]
 #[derive(Clone, Debug)]
-struct instructionVar23 {
+struct instructionVar24 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar23 {
+impl instructionVar24 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2160,13 +2255,13 @@ impl instructionVar23 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:165:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:169:1"]
 #[derive(Clone, Debug)]
-struct instructionVar24 {
+struct instructionVar25 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar24 {
+impl instructionVar25 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2222,13 +2317,13 @@ impl instructionVar24 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:166:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:170:1"]
 #[derive(Clone, Debug)]
-struct instructionVar25 {
+struct instructionVar26 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar25 {
+impl instructionVar26 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2284,13 +2379,13 @@ impl instructionVar25 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:167:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:171:1"]
 #[derive(Clone, Debug)]
-struct instructionVar26 {
+struct instructionVar27 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar26 {
+impl instructionVar27 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2346,13 +2441,13 @@ impl instructionVar26 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:168:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:172:1"]
 #[derive(Clone, Debug)]
-struct instructionVar27 {
+struct instructionVar28 {
     rs: TokenField_rs,
     Imm4: Imm4,
 }
-impl instructionVar27 {
+impl instructionVar28 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2408,13 +2503,13 @@ impl instructionVar27 {
         Some((pattern_len, Self { Imm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:169:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:173:1"]
 #[derive(Clone, Debug)]
-struct instructionVar28 {
+struct instructionVar29 {
     rs: TokenField_rs,
     Simm4: Simm4,
 }
-impl instructionVar28 {
+impl instructionVar29 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2470,13 +2565,13 @@ impl instructionVar28 {
         Some((pattern_len, Self { Simm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:170:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:174:1"]
 #[derive(Clone, Debug)]
-struct instructionVar29 {
+struct instructionVar30 {
     rs: TokenField_rs,
     Imm4: Imm4,
 }
-impl instructionVar29 {
+impl instructionVar30 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2532,13 +2627,13 @@ impl instructionVar29 {
         Some((pattern_len, Self { Imm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:172:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:176:1"]
 #[derive(Clone, Debug)]
-struct instructionVar30 {
+struct instructionVar31 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar30 {
+impl instructionVar31 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2585,13 +2680,13 @@ impl instructionVar30 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:173:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:177:1"]
 #[derive(Clone, Debug)]
-struct instructionVar31 {
+struct instructionVar32 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar31 {
+impl instructionVar32 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2638,13 +2733,13 @@ impl instructionVar31 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:174:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:178:1"]
 #[derive(Clone, Debug)]
-struct instructionVar32 {
+struct instructionVar33 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar32 {
+impl instructionVar33 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2691,13 +2786,13 @@ impl instructionVar32 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:175:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:179:1"]
 #[derive(Clone, Debug)]
-struct instructionVar33 {
+struct instructionVar34 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar33 {
+impl instructionVar34 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2744,13 +2839,13 @@ impl instructionVar33 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:176:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:180:1"]
 #[derive(Clone, Debug)]
-struct instructionVar34 {
+struct instructionVar35 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar34 {
+impl instructionVar35 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2797,13 +2892,13 @@ impl instructionVar34 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:177:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:181:1"]
 #[derive(Clone, Debug)]
-struct instructionVar35 {
+struct instructionVar36 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar35 {
+impl instructionVar36 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2850,13 +2945,13 @@ impl instructionVar35 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:188:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:192:1"]
 #[derive(Clone, Debug)]
-struct instructionVar36 {
+struct instructionVar37 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar36 {
+impl instructionVar37 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2903,13 +2998,13 @@ impl instructionVar36 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:190:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:194:1"]
 #[derive(Clone, Debug)]
-struct instructionVar37 {
+struct instructionVar38 {
     rs: TokenField_rs,
     Imm4: Imm4,
 }
-impl instructionVar37 {
+impl instructionVar38 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2965,13 +3060,13 @@ impl instructionVar37 {
         Some((pattern_len, Self { Imm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:191:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:195:1"]
 #[derive(Clone, Debug)]
-struct instructionVar38 {
+struct instructionVar39 {
     rs: TokenField_rs,
     Imm4: Imm4,
 }
-impl instructionVar38 {
+impl instructionVar39 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3027,13 +3122,13 @@ impl instructionVar38 {
         Some((pattern_len, Self { Imm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:192:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:196:1"]
 #[derive(Clone, Debug)]
-struct instructionVar39 {
+struct instructionVar40 {
     rs: TokenField_rs,
     Imm4: Imm4,
 }
-impl instructionVar39 {
+impl instructionVar40 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3089,13 +3184,13 @@ impl instructionVar39 {
         Some((pattern_len, Self { Imm4, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:196:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:200:1"]
 #[derive(Clone, Debug)]
-struct instructionVar40 {
+struct instructionVar41 {
     rs: TokenField_rs,
     RT: RT,
 }
-impl instructionVar40 {
+impl instructionVar41 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3151,13 +3246,13 @@ impl instructionVar40 {
         Some((pattern_len, Self { RT, rs }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:197:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:201:1"]
 #[derive(Clone, Debug)]
-struct instructionVar41 {
+struct instructionVar42 {
     rt: TokenField_rt,
     RS: RS,
 }
-impl instructionVar41 {
+impl instructionVar42 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3214,13 +3309,13 @@ impl instructionVar41 {
         Some((pattern_len, Self { RS, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:198:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:202:1"]
 #[derive(Clone, Debug)]
-struct instructionVar42 {
+struct instructionVar43 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar42 {
+impl instructionVar43 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3267,13 +3362,13 @@ impl instructionVar42 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:200:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:206:1"]
 #[derive(Clone, Debug)]
-struct instructionVar43 {
+struct instructionVar44 {
     COND: COND,
     Rel82: Rel82,
 }
-impl instructionVar43 {
+impl instructionVar44 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3336,13 +3431,13 @@ impl instructionVar43 {
         Some((pattern_len, Self { COND, Rel82 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:201:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:207:1"]
 #[derive(Clone, Debug)]
-struct instructionVar44 {
+struct instructionVar45 {
     COND: COND,
     Rel82: Rel82,
 }
-impl instructionVar44 {
+impl instructionVar45 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3406,12 +3501,12 @@ impl instructionVar44 {
         Some((pattern_len, Self { COND, Rel82 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:212:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:218:1"]
 #[derive(Clone, Debug)]
-struct instructionVar45 {
+struct instructionVar46 {
     Rel8: Rel8,
 }
-impl instructionVar45 {
+impl instructionVar46 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3464,13 +3559,13 @@ impl instructionVar45 {
         Some((pattern_len, Self { Rel8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:222:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:228:1"]
 #[derive(Clone, Debug)]
-struct instructionVar46 {
+struct instructionVar47 {
     rs: TokenField_rs,
     rt: TokenField_rt,
 }
-impl instructionVar46 {
+impl instructionVar47 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3517,12 +3612,12 @@ impl instructionVar46 {
         Some((pattern_len, Self { rs, rt }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:223:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:229:1"]
 #[derive(Clone, Debug)]
-struct instructionVar47 {
+struct instructionVar48 {
     Rel8: Rel8,
 }
-impl instructionVar47 {
+impl instructionVar48 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3575,12 +3670,12 @@ impl instructionVar47 {
         Some((pattern_len, Self { Rel8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:214:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:220:1"]
 #[derive(Clone, Debug)]
-struct instructionVar48 {
+struct instructionVar49 {
     Rel11: Rel11,
 }
-impl instructionVar48 {
+impl instructionVar49 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3633,13 +3728,13 @@ impl instructionVar48 {
         Some((pattern_len, Self { Rel11 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:152:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:156:1"]
 #[derive(Clone, Debug)]
-struct instructionVar49 {
+struct instructionVar50 {
     rd: TokenField_rd,
     Simm10: Simm10,
 }
-impl instructionVar49 {
+impl instructionVar50 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3692,13 +3787,13 @@ impl instructionVar49 {
         Some((pattern_len, Self { Simm10, rd }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:151:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:155:1"]
 #[derive(Clone, Debug)]
-struct instructionVar50 {
+struct instructionVar51 {
     rd: TokenField_rd,
-    Imm11: Imm11,
+    Imm10: Imm10,
 }
-impl instructionVar50 {
+impl instructionVar51 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3716,7 +3811,7 @@ impl instructionVar50 {
             DisplayElement::Literal(", "),
         ];
         display.extend_from_slice(&extend);
-        self.Imm11.display_extend(
+        self.Imm10.display_extend(
             display, context, inst_start, inst_next, global_set,
         );
     }
@@ -3735,8 +3830,8 @@ impl instructionVar50 {
         if token_parser.op1515().disassembly() != 0 {
             return None;
         }
-        let Imm11 = if let Some((len, table)) =
-            Imm11::parse(tokens_current, &mut context_instance, inst_start)
+        let Imm10 = if let Some((len, table)) =
+            Imm10::parse(tokens_current, &mut context_instance, inst_start)
         {
             block_0_len = block_0_len.max(len as u32);
             table
@@ -3748,7 +3843,7 @@ impl instructionVar50 {
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { Imm11, rd }))
+        Some((pattern_len, Self { Imm10, rd }))
     }
 }
 #[derive(Clone, Debug)]
@@ -3804,6 +3899,7 @@ enum instruction {
     Var48(instructionVar48),
     Var49(instructionVar49),
     Var50(instructionVar50),
+    Var51(instructionVar51),
 }
 impl instruction {
     fn display_extend<T>(
@@ -4168,6 +4264,13 @@ impl instruction {
                 global_set_param,
             ),
             Self::Var50(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var51(x) => x.display_extend(
                 display,
                 context,
                 inst_start,
@@ -4593,10 +4696,18 @@ impl instruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var50(parsed)));
         }
+        if let Some((inst_len, parsed)) = instructionVar51::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var51(parsed)));
+        }
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:103:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:107:1"]
 #[derive(Clone, Debug)]
 struct Simm4Var0 {
     simm0003: TokenField_simm0003,
@@ -4679,7 +4790,7 @@ impl Simm4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:104:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:108:1"]
 #[derive(Clone, Debug)]
 struct Simm10Var0 {
     simm1213: TokenField_simm1213,
@@ -4772,7 +4883,7 @@ impl Simm10 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:106:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:110:1"]
 #[derive(Clone, Debug)]
 struct Imm4Var0 {
     imm0003: TokenField_imm0003,
@@ -4855,13 +4966,13 @@ impl Imm4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:107:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:111:1"]
 #[derive(Clone, Debug)]
-struct Imm11Var0 {
-    imm1214: TokenField_imm1214,
+struct Imm10Var0 {
+    imm1213: TokenField_imm1213,
     imm0007: TokenField_imm0007,
 }
-impl Imm11Var0 {
+impl Imm10Var0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4873,7 +4984,7 @@ impl Imm11Var0 {
         T: ContextTrait + Clone,
     {
         let mut computed: i64 = 0;
-        computed = ((self.imm1214.disassembly() << (8u64 as i64))
+        computed = ((self.imm1213.disassembly() << (8u64 as i64))
             | self.imm0007.disassembly());
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("#"),
@@ -4894,22 +5005,22 @@ impl Imm11Var0 {
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         let mut computed: i64 = 0;
-        computed = ((token_parser.imm1214().disassembly() << (8u64 as i64))
+        computed = ((token_parser.imm1213().disassembly() << (8u64 as i64))
             | token_parser.imm0007().disassembly());
-        let imm1214 = token_parser.imm1214();
+        let imm1213 = token_parser.imm1213();
         let imm0007 = token_parser.imm0007();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
-        Some((pattern_len, Self { imm1214, imm0007 }))
+        Some((pattern_len, Self { imm1213, imm0007 }))
     }
 }
 #[derive(Clone, Debug)]
-enum Imm11 {
-    Var0(Imm11Var0),
+enum Imm10 {
+    Var0(Imm10Var0),
 }
-impl Imm11 {
+impl Imm10 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4940,7 +5051,7 @@ impl Imm11 {
     {
         let mut context_current = context_param.clone();
         if let Some((inst_len, parsed)) =
-            Imm11Var0::parse(tokens_param, &mut context_current, inst_start)
+            Imm10Var0::parse(tokens_param, &mut context_current, inst_start)
         {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
@@ -4948,7 +5059,7 @@ impl Imm11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:109:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:113:1"]
 #[derive(Clone, Debug)]
 struct Rel8Var0 {
     simm0007: TokenField_simm0007,
@@ -5037,7 +5148,7 @@ impl Rel8 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:110:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:114:1"]
 #[derive(Clone, Debug)]
 struct Rel82Var0 {
     simm0411: TokenField_simm0411,
@@ -5126,7 +5237,7 @@ impl Rel82 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:111:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:115:1"]
 #[derive(Clone, Debug)]
 struct Rel11Var0 {
     simm0010: TokenField_simm0010,
@@ -5215,7 +5326,7 @@ impl Rel11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:113:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:117:1"]
 #[derive(Clone, Debug)]
 struct RSVar0 {
     rs: TokenField_rs,
@@ -5301,7 +5412,7 @@ impl RS {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:114:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:118:1"]
 #[derive(Clone, Debug)]
 struct RTVar0 {
     rt: TokenField_rt,
@@ -5387,7 +5498,7 @@ impl RT {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:116:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:120:1"]
 #[derive(Clone, Debug)]
 struct CCVar0 {}
 impl CCVar0 {
@@ -5426,7 +5537,7 @@ impl CCVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:117:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:121:1"]
 #[derive(Clone, Debug)]
 struct CCVar1 {}
 impl CCVar1 {
@@ -5465,7 +5576,7 @@ impl CCVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:118:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:122:1"]
 #[derive(Clone, Debug)]
 struct CCVar2 {}
 impl CCVar2 {
@@ -5504,7 +5615,7 @@ impl CCVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:119:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:123:1"]
 #[derive(Clone, Debug)]
 struct CCVar3 {}
 impl CCVar3 {
@@ -5543,7 +5654,7 @@ impl CCVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:120:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:124:1"]
 #[derive(Clone, Debug)]
 struct CCVar4 {}
 impl CCVar4 {
@@ -5582,7 +5693,7 @@ impl CCVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:121:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:125:1"]
 #[derive(Clone, Debug)]
 struct CCVar5 {}
 impl CCVar5 {
@@ -5621,7 +5732,7 @@ impl CCVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:122:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:126:1"]
 #[derive(Clone, Debug)]
 struct CCVar6 {}
 impl CCVar6 {
@@ -5660,7 +5771,7 @@ impl CCVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:123:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:127:1"]
 #[derive(Clone, Debug)]
 struct CCVar7 {}
 impl CCVar7 {
@@ -5841,7 +5952,7 @@ impl CC {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:125:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:129:1"]
 #[derive(Clone, Debug)]
 struct CONDVar0 {
     CC: CC,
@@ -5887,7 +5998,7 @@ impl CONDVar0 {
         Some((pattern_len, Self { CC }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:126:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Toy/data/languages/toyInstructions.sinc:130:1"]
 #[derive(Clone, Debug)]
 struct CONDVar1 {
     CC: CC,

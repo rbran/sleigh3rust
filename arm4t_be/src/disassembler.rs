@@ -51,7 +51,6 @@ macro_rules! impl_read_to_type {
             let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let mask = value_max << start_bit;
             let mut value = value;
-            assert!(value <= value_max);
             value <<= start_bit;
             value = (mem & !mask) | value;
             if BIG_ENDIAN {
@@ -71,8 +70,6 @@ macro_rules! impl_read_to_type {
             assert!(len_bits + start_bit <= TYPE_BITS);
             let value_max = <$signed_type>::MAX >> (TYPE_BITS - len_bits);
             let value_min = <$signed_type>::MIN >> (TYPE_BITS - len_bits);
-            assert!(value <= value_max);
-            assert!(value >= value_min);
             let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
             let value = value as $unsigned_type & mask;
             let mem = mem as $unsigned_type;
@@ -1874,6 +1871,214 @@ impl TokenField_Dd0 {
     }
 }
 #[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_1(u8);
+impl TokenField_Dd_1 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_2(u8);
+impl TokenField_Dd_2 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_3(u8);
+impl TokenField_Dd_3 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_4(u8);
+impl TokenField_Dd_4 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_5(u8);
+impl TokenField_Dd_5 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_6(u8);
+impl TokenField_Dd_6 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_7(u8);
+impl TokenField_Dd_7 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_8(u8);
+impl TokenField_Dd_8 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_9(u8);
+impl TokenField_Dd_9 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_10(u8);
+impl TokenField_Dd_10 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_11(u8);
+impl TokenField_Dd_11 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_12(u8);
+impl TokenField_Dd_12 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_13(u8);
+impl TokenField_Dd_13 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_14(u8);
+impl TokenField_Dd_14 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_15(u8);
+impl TokenField_Dd_15 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Dd_16(u8);
+impl TokenField_Dd_16 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
 struct TokenField_Dm0(u8);
 impl TokenField_Dm0 {
     fn execution(&self) -> u8 {
@@ -2045,6 +2250,32 @@ impl TokenField_Sm1 {
 #[derive(Clone, Copy, Debug)]
 struct TokenField_Sm1next(u8);
 impl TokenField_Sm1next {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Sm0_3(u8);
+impl TokenField_Sm0_3 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_Sm1_3(u8);
+impl TokenField_Sm1_3 {
     fn execution(&self) -> u8 {
         self.0
     }
@@ -4060,6 +4291,32 @@ impl TokenField_thv_Sm1 {
 #[derive(Clone, Copy, Debug)]
 struct TokenField_thv_Sm1next(u8);
 impl TokenField_thv_Sm1next {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_thv_Sm0_3(u8);
+impl TokenField_thv_Sm0_3 {
+    fn execution(&self) -> u8 {
+        self.0
+    }
+    fn disassembly(&self) -> i64 {
+        i64::try_from(self.0).unwrap()
+    }
+    fn display(&self) -> DisplayElement {
+        meaning_number(true, self.0)
+    }
+}
+#[derive(Clone, Copy, Debug)]
+struct TokenField_thv_Sm1_3(u8);
+impl TokenField_thv_Sm1_3 {
     fn execution(&self) -> u8 {
         self.0
     }
@@ -8721,6 +8978,246 @@ impl<const LEN: usize> TokenParser<LEN> {
         };
         TokenField_Dd0(inner_value)
     }
+    fn Dd_1(&self) -> TokenField_Dd_1 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_1(inner_value)
+    }
+    fn Dd_2(&self) -> TokenField_Dd_2 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_2(inner_value)
+    }
+    fn Dd_3(&self) -> TokenField_Dd_3 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_3(inner_value)
+    }
+    fn Dd_4(&self) -> TokenField_Dd_4 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_4(inner_value)
+    }
+    fn Dd_5(&self) -> TokenField_Dd_5 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_5(inner_value)
+    }
+    fn Dd_6(&self) -> TokenField_Dd_6 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_6(inner_value)
+    }
+    fn Dd_7(&self) -> TokenField_Dd_7 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_7(inner_value)
+    }
+    fn Dd_8(&self) -> TokenField_Dd_8 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_8(inner_value)
+    }
+    fn Dd_9(&self) -> TokenField_Dd_9 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_9(inner_value)
+    }
+    fn Dd_10(&self) -> TokenField_Dd_10 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_10(inner_value)
+    }
+    fn Dd_11(&self) -> TokenField_Dd_11 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_11(inner_value)
+    }
+    fn Dd_12(&self) -> TokenField_Dd_12 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_12(inner_value)
+    }
+    fn Dd_13(&self) -> TokenField_Dd_13 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_13(inner_value)
+    }
+    fn Dd_14(&self) -> TokenField_Dd_14 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_14(inner_value)
+    }
+    fn Dd_15(&self) -> TokenField_Dd_15 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_15(inner_value)
+    }
+    fn Dd_16(&self) -> TokenField_Dd_16 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 2u64 as usize;
+            let token_end = 3u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Dd_16(inner_value)
+    }
     fn Dm0(&self) -> TokenField_Dm0 {
         let inner_value = {
             let mut work_value = [0u8; 1u64 as usize];
@@ -8930,6 +9427,36 @@ impl<const LEN: usize> TokenParser<LEN> {
             u8::try_from(value).unwrap()
         };
         TokenField_Sm1next(inner_value)
+    }
+    fn Sm0_3(&self) -> TokenField_Sm0_3 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 3u64 as usize;
+            let token_end = 4u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Sm0_3(inner_value)
+    }
+    fn Sm1_3(&self) -> TokenField_Sm1_3 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 3u64 as usize;
+            let token_end = 4u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_Sm1_3(inner_value)
     }
     fn cmode(&self) -> TokenField_cmode {
         let inner_value = {
@@ -11255,6 +11782,36 @@ impl<const LEN: usize> TokenParser<LEN> {
             u8::try_from(value).unwrap()
         };
         TokenField_thv_Sm1next(inner_value)
+    }
+    fn thv_Sm0_3(&self) -> TokenField_thv_Sm0_3 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 3u64 as usize;
+            let token_end = 4u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_thv_Sm0_3(inner_value)
+    }
+    fn thv_Sm1_3(&self) -> TokenField_thv_Sm1_3 {
+        let inner_value = {
+            let mut work_value = [0u8; 1u64 as usize];
+            let work_start = 0u64 as usize;
+            let work_end = 1u64 as usize;
+            let token_start = 3u64 as usize;
+            let token_end = 4u64 as usize;
+            work_value[work_start..work_end]
+                .copy_from_slice(&self.0[token_start..token_end]);
+            let value =
+                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
+            u8::try_from(value).unwrap()
+        };
+        TokenField_thv_Sm1_3(inner_value)
     }
     fn thv_cmode(&self) -> TokenField_thv_cmode {
         let inner_value = {
@@ -15512,7 +16069,7 @@ impl core::fmt::Display for DisplayElement {
         }
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2253:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2269:1"]
 #[derive(Clone, Debug)]
 struct instructionVar0 {
     Addr24: Addr24,
@@ -15547,6 +16104,9 @@ impl instructionVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -15577,7 +16137,7 @@ impl instructionVar0 {
         Some((pattern_len, Self { Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3478:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3494:1"]
 #[derive(Clone, Debug)]
 struct instructionVar1 {}
 impl instructionVar1 {
@@ -15616,7 +16176,13 @@ impl instructionVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c0031().disassembly() != 3785416719 {
@@ -15631,7 +16197,7 @@ impl instructionVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3547:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3563:1"]
 #[derive(Clone, Debug)]
 struct instructionVar2 {
     rm: rm,
@@ -15674,7 +16240,13 @@ impl instructionVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 0 {
             return None;
         }
         if token_parser.cond().disassembly() != 15 {
@@ -15721,7 +16293,7 @@ impl instructionVar2 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2952:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2949:1"]
 #[derive(Clone, Debug)]
 struct instructionVar3 {
     ItCond: ItCond,
@@ -15757,6 +16329,9 @@ impl instructionVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -15786,7 +16361,7 @@ impl instructionVar3 {
         Some((pattern_len, Self { ItCond }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2260:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2276:1"]
 #[derive(Clone, Debug)]
 struct instructionVar4 {
     COND: COND,
@@ -15826,7 +16401,13 @@ impl instructionVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 5 {
@@ -15861,7 +16442,7 @@ impl instructionVar4 {
         Some((pattern_len, Self { COND, Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2353:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2369:1"]
 #[derive(Clone, Debug)]
 struct instructionVar5 {
     COND: COND,
@@ -15901,6 +16482,9 @@ impl instructionVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -15908,6 +16492,9 @@ impl instructionVar5 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 18 {
@@ -15951,7 +16538,7 @@ impl instructionVar5 {
         Some((pattern_len, Self { COND, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3553:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3569:1"]
 #[derive(Clone, Debug)]
 struct instructionVar6 {
     COND: COND,
@@ -15992,7 +16579,13 @@ impl instructionVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -16034,7 +16627,7 @@ impl instructionVar6 {
         Some((pattern_len, Self { COND }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2361:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2377:1"]
 #[derive(Clone, Debug)]
 struct instructionVar7 {
     COND: COND,
@@ -16074,6 +16667,9 @@ impl instructionVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -16081,6 +16677,9 @@ impl instructionVar7 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 18 {
@@ -16122,7 +16721,7 @@ impl instructionVar7 {
         Some((pattern_len, Self { COND, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2370:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2386:1"]
 #[derive(Clone, Debug)]
 struct instructionVar8 {
     COND: COND,
@@ -16162,6 +16761,9 @@ impl instructionVar8 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -16169,6 +16771,9 @@ impl instructionVar8 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 18 {
@@ -16210,7 +16815,7 @@ impl instructionVar8 {
         Some((pattern_len, Self { COND, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2378:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2394:1"]
 #[derive(Clone, Debug)]
 struct instructionVar9 {
     COND: COND,
@@ -16250,10 +16855,16 @@ impl instructionVar9 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
         if context_instance.register().read_REToverride_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 18 {
@@ -16294,7 +16905,7 @@ impl instructionVar9 {
         Some((pattern_len, Self { COND, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1990:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2006:1"]
 #[derive(Clone, Debug)]
 struct instructionVar10 {
     COND: COND,
@@ -16338,7 +16949,13 @@ impl instructionVar10 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 1 {
@@ -16358,7 +16975,7 @@ impl instructionVar10 {
         } else {
             return None;
         };
-        let mut sub_pattern_c23 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -16380,7 +16997,7 @@ impl instructionVar10 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c23(tokens_current, &mut context_instance)?;
+            sub_pattern_c34(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let ArmPCRelImmed12 = if let Some((len, table)) = ArmPCRelImmed12::parse(
             tokens_current,
@@ -16405,7 +17022,7 @@ impl instructionVar10 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4144:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4160:1"]
 #[derive(Clone, Debug)]
 struct instructionVar11 {
     COND: COND,
@@ -16451,7 +17068,13 @@ impl instructionVar11 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 18 {
@@ -16497,7 +17120,7 @@ impl instructionVar11 {
         Some((pattern_len, Self { COND, cpsrmask, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4166:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4182:1"]
 #[derive(Clone, Debug)]
 struct instructionVar12 {
     COND: COND,
@@ -16543,7 +17166,13 @@ impl instructionVar12 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 22 {
@@ -16589,7 +17218,7 @@ impl instructionVar12 {
         Some((pattern_len, Self { COND, spsrmask, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4136:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4152:1"]
 #[derive(Clone, Debug)]
 struct instructionVar13 {
     COND: COND,
@@ -16635,7 +17264,13 @@ impl instructionVar13 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 50 {
@@ -16685,7 +17320,7 @@ impl instructionVar13 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4158:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4174:1"]
 #[derive(Clone, Debug)]
 struct instructionVar14 {
     COND: COND,
@@ -16731,7 +17366,13 @@ impl instructionVar14 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 54 {
@@ -16781,7 +17422,7 @@ impl instructionVar14 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2476:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2492:1"]
 #[derive(Clone, Debug)]
 struct instructionVar15 {
     COND: COND,
@@ -16827,7 +17468,13 @@ impl instructionVar15 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 23 {
@@ -16870,7 +17517,7 @@ impl instructionVar15 {
         Some((pattern_len, Self { COND, rn, shift1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2487:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2503:1"]
 #[derive(Clone, Debug)]
 struct instructionVar16 {
     COND: COND,
@@ -16916,7 +17563,13 @@ impl instructionVar16 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 23 {
@@ -16959,7 +17612,7 @@ impl instructionVar16 {
         Some((pattern_len, Self { COND, rn, shift2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2498:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2514:1"]
 #[derive(Clone, Debug)]
 struct instructionVar17 {
     COND: COND,
@@ -17005,7 +17658,13 @@ impl instructionVar17 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 23 {
@@ -17048,7 +17707,7 @@ impl instructionVar17 {
         Some((pattern_len, Self { COND, rn, shift3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2509:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2525:1"]
 #[derive(Clone, Debug)]
 struct instructionVar18 {
     COND: COND,
@@ -17094,7 +17753,13 @@ impl instructionVar18 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 21 {
@@ -17137,7 +17802,7 @@ impl instructionVar18 {
         Some((pattern_len, Self { COND, rn, shift1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2520:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2536:1"]
 #[derive(Clone, Debug)]
 struct instructionVar19 {
     COND: COND,
@@ -17183,7 +17848,13 @@ impl instructionVar19 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 21 {
@@ -17226,7 +17897,7 @@ impl instructionVar19 {
         Some((pattern_len, Self { COND, rn, shift2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2531:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2547:1"]
 #[derive(Clone, Debug)]
 struct instructionVar20 {
     COND: COND,
@@ -17272,7 +17943,13 @@ impl instructionVar20 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 21 {
@@ -17315,7 +17992,7 @@ impl instructionVar20 {
         Some((pattern_len, Self { COND, rn, shift3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5608:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5624:1"]
 #[derive(Clone, Debug)]
 struct instructionVar21 {
     COND: COND,
@@ -17369,7 +18046,13 @@ impl instructionVar21 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -17440,7 +18123,7 @@ impl instructionVar21 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3496:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3512:1"]
 #[derive(Clone, Debug)]
 struct instructionVar22 {
     COND: COND,
@@ -17488,7 +18171,13 @@ impl instructionVar22 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -17541,7 +18230,7 @@ impl instructionVar22 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3509:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3525:1"]
 #[derive(Clone, Debug)]
 struct instructionVar23 {
     COND: COND,
@@ -17589,7 +18278,13 @@ impl instructionVar23 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -17642,7 +18337,7 @@ impl instructionVar23 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3521:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3537:1"]
 #[derive(Clone, Debug)]
 struct instructionVar24 {
     COND: COND,
@@ -17690,10 +18385,16 @@ impl instructionVar24 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -17746,7 +18447,7 @@ impl instructionVar24 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3534:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3550:1"]
 #[derive(Clone, Debug)]
 struct instructionVar25 {
     COND: COND,
@@ -17794,7 +18495,13 @@ impl instructionVar25 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -17847,7 +18554,7 @@ impl instructionVar25 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4053:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4050:1"]
 #[derive(Clone, Debug)]
 struct instructionVar26 {
     ItCond: ItCond,
@@ -17893,6 +18600,9 @@ impl instructionVar26 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -17939,7 +18649,7 @@ impl instructionVar26 {
         Some((pattern_len, Self { ItCond, thSRSMode }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4064:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4061:1"]
 #[derive(Clone, Debug)]
 struct instructionVar27 {
     ItCond: ItCond,
@@ -17984,6 +18694,9 @@ impl instructionVar27 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -18030,7 +18743,7 @@ impl instructionVar27 {
         Some((pattern_len, Self { ItCond, thSRSMode }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4074:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4071:1"]
 #[derive(Clone, Debug)]
 struct instructionVar28 {
     ItCond: ItCond,
@@ -18076,6 +18789,9 @@ impl instructionVar28 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -18122,7 +18838,7 @@ impl instructionVar28 {
         Some((pattern_len, Self { ItCond, thSRSMode }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4085:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4082:1"]
 #[derive(Clone, Debug)]
 struct instructionVar29 {
     ItCond: ItCond,
@@ -18167,6 +18883,9 @@ impl instructionVar29 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -18213,7 +18932,7 @@ impl instructionVar29 {
         Some((pattern_len, Self { ItCond, thSRSMode }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4173:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4189:1"]
 #[derive(Clone, Debug)]
 struct instructionVar30 {
     COND: COND,
@@ -18269,7 +18988,13 @@ impl instructionVar30 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -18340,7 +19065,7 @@ impl instructionVar30 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4213:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4229:1"]
 #[derive(Clone, Debug)]
 struct instructionVar31 {
     COND: COND,
@@ -18388,7 +19113,13 @@ impl instructionVar31 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -18441,7 +19172,7 @@ impl instructionVar31 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4224:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4240:1"]
 #[derive(Clone, Debug)]
 struct instructionVar32 {
     COND: COND,
@@ -18489,7 +19220,13 @@ impl instructionVar32 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -18542,7 +19279,7 @@ impl instructionVar32 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4235:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4251:1"]
 #[derive(Clone, Debug)]
 struct instructionVar33 {
     COND: COND,
@@ -18590,7 +19327,13 @@ impl instructionVar33 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -18643,7 +19386,7 @@ impl instructionVar33 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5742:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5758:1"]
 #[derive(Clone, Debug)]
 struct instructionVar34 {
     COND: COND,
@@ -18689,7 +19432,13 @@ impl instructionVar34 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -18732,7 +19481,7 @@ impl instructionVar34 {
         Some((pattern_len, Self { COND, rn, shift1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5753:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5769:1"]
 #[derive(Clone, Debug)]
 struct instructionVar35 {
     COND: COND,
@@ -18778,7 +19527,13 @@ impl instructionVar35 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -18821,7 +19576,7 @@ impl instructionVar35 {
         Some((pattern_len, Self { COND, rn, shift2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5764:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5780:1"]
 #[derive(Clone, Debug)]
 struct instructionVar36 {
     COND: COND,
@@ -18867,7 +19622,13 @@ impl instructionVar36 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -18910,7 +19671,7 @@ impl instructionVar36 {
         Some((pattern_len, Self { COND, rn, shift3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5775:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5791:1"]
 #[derive(Clone, Debug)]
 struct instructionVar37 {
     COND: COND,
@@ -18957,7 +19718,13 @@ impl instructionVar37 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -19000,7 +19767,7 @@ impl instructionVar37 {
         Some((pattern_len, Self { COND, rn, shift1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5786:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5802:1"]
 #[derive(Clone, Debug)]
 struct instructionVar38 {
     COND: COND,
@@ -19047,7 +19814,13 @@ impl instructionVar38 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -19090,7 +19863,7 @@ impl instructionVar38 {
         Some((pattern_len, Self { COND, rn, shift2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5797:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5813:1"]
 #[derive(Clone, Debug)]
 struct instructionVar39 {
     COND: COND,
@@ -19137,7 +19910,13 @@ impl instructionVar39 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 19 {
@@ -19180,7 +19959,7 @@ impl instructionVar39 {
         Some((pattern_len, Self { COND, rn, shift3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5809:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5825:1"]
 #[derive(Clone, Debug)]
 struct instructionVar40 {
     COND: COND,
@@ -19226,7 +20005,13 @@ impl instructionVar40 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 17 {
@@ -19269,7 +20054,7 @@ impl instructionVar40 {
         Some((pattern_len, Self { COND, rn, shift1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5820:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5836:1"]
 #[derive(Clone, Debug)]
 struct instructionVar41 {
     COND: COND,
@@ -19315,7 +20100,13 @@ impl instructionVar41 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 17 {
@@ -19358,7 +20149,7 @@ impl instructionVar41 {
         Some((pattern_len, Self { COND, rn, shift2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5831:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5847:1"]
 #[derive(Clone, Debug)]
 struct instructionVar42 {
     COND: COND,
@@ -19404,7 +20195,13 @@ impl instructionVar42 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2024().disassembly() != 17 {
@@ -19447,7 +20244,7 @@ impl instructionVar42 {
         Some((pattern_len, Self { COND, rn, shift3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1929:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1945:1"]
 #[derive(Clone, Debug)]
 struct instructionVar43 {
     COND: COND,
@@ -19501,7 +20298,13 @@ impl instructionVar43 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -19560,7 +20363,7 @@ impl instructionVar43 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1942:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1958:1"]
 #[derive(Clone, Debug)]
 struct instructionVar44 {
     COND: COND,
@@ -19614,7 +20417,13 @@ impl instructionVar44 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -19673,7 +20482,7 @@ impl instructionVar44 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1955:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1971:1"]
 #[derive(Clone, Debug)]
 struct instructionVar45 {
     COND: COND,
@@ -19727,7 +20536,13 @@ impl instructionVar45 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -19786,7 +20601,7 @@ impl instructionVar45 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2920:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2936:1"]
 #[derive(Clone, Debug)]
 struct instructionVar46 {
     COND: COND,
@@ -19826,6 +20641,9 @@ impl instructionVar46 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -19851,6 +20669,9 @@ impl instructionVar46 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -19879,7 +20700,7 @@ impl instructionVar46 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2929:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2945:1"]
 #[derive(Clone, Debug)]
 struct instructionVar47 {
     COND: COND,
@@ -19919,6 +20740,9 @@ impl instructionVar47 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -19944,6 +20768,9 @@ impl instructionVar47 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -19972,7 +20799,7 @@ impl instructionVar47 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2938:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2954:1"]
 #[derive(Clone, Debug)]
 struct instructionVar48 {
     COND: COND,
@@ -20012,6 +20839,9 @@ impl instructionVar48 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20037,6 +20867,9 @@ impl instructionVar48 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20065,7 +20898,7 @@ impl instructionVar48 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2947:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2963:1"]
 #[derive(Clone, Debug)]
 struct instructionVar49 {
     COND: COND,
@@ -20105,6 +20938,9 @@ impl instructionVar49 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20130,6 +20966,9 @@ impl instructionVar49 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20158,7 +20997,7 @@ impl instructionVar49 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2956:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2972:1"]
 #[derive(Clone, Debug)]
 struct instructionVar50 {
     COND: COND,
@@ -20198,6 +21037,9 @@ impl instructionVar50 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20223,6 +21065,9 @@ impl instructionVar50 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20251,7 +21096,7 @@ impl instructionVar50 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2965:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2981:1"]
 #[derive(Clone, Debug)]
 struct instructionVar51 {
     COND: COND,
@@ -20291,6 +21136,9 @@ impl instructionVar51 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20316,6 +21164,9 @@ impl instructionVar51 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20344,7 +21195,7 @@ impl instructionVar51 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2974:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2990:1"]
 #[derive(Clone, Debug)]
 struct instructionVar52 {
     COND: COND,
@@ -20384,6 +21235,9 @@ impl instructionVar52 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20409,6 +21263,9 @@ impl instructionVar52 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20437,7 +21294,7 @@ impl instructionVar52 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2983:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2999:1"]
 #[derive(Clone, Debug)]
 struct instructionVar53 {
     COND: COND,
@@ -20477,6 +21334,9 @@ impl instructionVar53 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20502,6 +21362,9 @@ impl instructionVar53 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20530,7 +21393,7 @@ impl instructionVar53 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2992:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3008:1"]
 #[derive(Clone, Debug)]
 struct instructionVar54 {
     COND: COND,
@@ -20570,6 +21433,9 @@ impl instructionVar54 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20595,6 +21461,9 @@ impl instructionVar54 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20623,7 +21492,7 @@ impl instructionVar54 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3001:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3017:1"]
 #[derive(Clone, Debug)]
 struct instructionVar55 {
     COND: COND,
@@ -20663,6 +21532,9 @@ impl instructionVar55 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20688,6 +21560,9 @@ impl instructionVar55 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20716,7 +21591,7 @@ impl instructionVar55 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3010:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3026:1"]
 #[derive(Clone, Debug)]
 struct instructionVar56 {
     COND: COND,
@@ -20756,6 +21631,9 @@ impl instructionVar56 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20781,6 +21659,9 @@ impl instructionVar56 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20809,7 +21690,7 @@ impl instructionVar56 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3019:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3035:1"]
 #[derive(Clone, Debug)]
 struct instructionVar57 {
     COND: COND,
@@ -20849,6 +21730,9 @@ impl instructionVar57 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20874,6 +21758,9 @@ impl instructionVar57 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20902,7 +21789,7 @@ impl instructionVar57 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3028:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3044:1"]
 #[derive(Clone, Debug)]
 struct instructionVar58 {
     COND: COND,
@@ -20942,6 +21829,9 @@ impl instructionVar58 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -20967,6 +21857,9 @@ impl instructionVar58 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -20995,7 +21888,7 @@ impl instructionVar58 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3037:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3053:1"]
 #[derive(Clone, Debug)]
 struct instructionVar59 {
     COND: COND,
@@ -21035,6 +21928,9 @@ impl instructionVar59 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21060,6 +21956,9 @@ impl instructionVar59 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21088,7 +21987,7 @@ impl instructionVar59 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3046:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3062:1"]
 #[derive(Clone, Debug)]
 struct instructionVar60 {
     COND: COND,
@@ -21128,6 +22027,9 @@ impl instructionVar60 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21153,6 +22055,9 @@ impl instructionVar60 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21181,7 +22086,7 @@ impl instructionVar60 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3055:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3071:1"]
 #[derive(Clone, Debug)]
 struct instructionVar61 {
     COND: COND,
@@ -21221,6 +22126,9 @@ impl instructionVar61 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21246,6 +22154,9 @@ impl instructionVar61 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21274,7 +22185,7 @@ impl instructionVar61 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3064:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3080:1"]
 #[derive(Clone, Debug)]
 struct instructionVar62 {
     COND: COND,
@@ -21314,6 +22225,9 @@ impl instructionVar62 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21339,6 +22253,9 @@ impl instructionVar62 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21367,7 +22284,7 @@ impl instructionVar62 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3073:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3089:1"]
 #[derive(Clone, Debug)]
 struct instructionVar63 {
     COND: COND,
@@ -21407,6 +22324,9 @@ impl instructionVar63 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21432,6 +22352,9 @@ impl instructionVar63 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21460,7 +22383,7 @@ impl instructionVar63 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3082:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3098:1"]
 #[derive(Clone, Debug)]
 struct instructionVar64 {
     COND: COND,
@@ -21500,6 +22423,9 @@ impl instructionVar64 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21525,6 +22451,9 @@ impl instructionVar64 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21553,7 +22482,7 @@ impl instructionVar64 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3091:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3107:1"]
 #[derive(Clone, Debug)]
 struct instructionVar65 {
     COND: COND,
@@ -21593,6 +22522,9 @@ impl instructionVar65 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21618,6 +22550,9 @@ impl instructionVar65 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21646,7 +22581,7 @@ impl instructionVar65 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3100:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3116:1"]
 #[derive(Clone, Debug)]
 struct instructionVar66 {
     COND: COND,
@@ -21686,6 +22621,9 @@ impl instructionVar66 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21711,6 +22649,9 @@ impl instructionVar66 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21739,7 +22680,7 @@ impl instructionVar66 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3109:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3125:1"]
 #[derive(Clone, Debug)]
 struct instructionVar67 {
     COND: COND,
@@ -21779,6 +22720,9 @@ impl instructionVar67 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21804,6 +22748,9 @@ impl instructionVar67 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21832,7 +22779,7 @@ impl instructionVar67 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3118:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3134:1"]
 #[derive(Clone, Debug)]
 struct instructionVar68 {
     COND: COND,
@@ -21872,6 +22819,9 @@ impl instructionVar68 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21897,6 +22847,9 @@ impl instructionVar68 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -21925,7 +22878,7 @@ impl instructionVar68 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3127:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3143:1"]
 #[derive(Clone, Debug)]
 struct instructionVar69 {
     COND: COND,
@@ -21965,6 +22918,9 @@ impl instructionVar69 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -21990,6 +22946,9 @@ impl instructionVar69 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22018,7 +22977,7 @@ impl instructionVar69 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3136:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3152:1"]
 #[derive(Clone, Debug)]
 struct instructionVar70 {
     COND: COND,
@@ -22058,6 +23017,9 @@ impl instructionVar70 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22083,6 +23045,9 @@ impl instructionVar70 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22111,7 +23076,7 @@ impl instructionVar70 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3145:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3161:1"]
 #[derive(Clone, Debug)]
 struct instructionVar71 {
     COND: COND,
@@ -22151,6 +23116,9 @@ impl instructionVar71 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22176,6 +23144,9 @@ impl instructionVar71 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22204,7 +23175,7 @@ impl instructionVar71 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3154:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3170:1"]
 #[derive(Clone, Debug)]
 struct instructionVar72 {
     COND: COND,
@@ -22244,6 +23215,9 @@ impl instructionVar72 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22269,6 +23243,9 @@ impl instructionVar72 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22297,7 +23274,7 @@ impl instructionVar72 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3163:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3179:1"]
 #[derive(Clone, Debug)]
 struct instructionVar73 {
     COND: COND,
@@ -22337,6 +23314,9 @@ impl instructionVar73 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22362,6 +23342,9 @@ impl instructionVar73 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22390,7 +23373,7 @@ impl instructionVar73 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3172:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3188:1"]
 #[derive(Clone, Debug)]
 struct instructionVar74 {
     COND: COND,
@@ -22430,6 +23413,9 @@ impl instructionVar74 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22455,6 +23441,9 @@ impl instructionVar74 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22483,7 +23472,7 @@ impl instructionVar74 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3181:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3197:1"]
 #[derive(Clone, Debug)]
 struct instructionVar75 {
     COND: COND,
@@ -22523,6 +23512,9 @@ impl instructionVar75 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22548,6 +23540,9 @@ impl instructionVar75 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22576,7 +23571,7 @@ impl instructionVar75 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3190:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3206:1"]
 #[derive(Clone, Debug)]
 struct instructionVar76 {
     COND: COND,
@@ -22616,6 +23611,9 @@ impl instructionVar76 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22641,6 +23639,9 @@ impl instructionVar76 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22669,7 +23670,7 @@ impl instructionVar76 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3199:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3215:1"]
 #[derive(Clone, Debug)]
 struct instructionVar77 {
     COND: COND,
@@ -22709,6 +23710,9 @@ impl instructionVar77 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22734,6 +23738,9 @@ impl instructionVar77 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22762,7 +23769,7 @@ impl instructionVar77 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3208:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3224:1"]
 #[derive(Clone, Debug)]
 struct instructionVar78 {
     COND: COND,
@@ -22802,6 +23809,9 @@ impl instructionVar78 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22827,6 +23837,9 @@ impl instructionVar78 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22855,7 +23868,7 @@ impl instructionVar78 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3217:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3233:1"]
 #[derive(Clone, Debug)]
 struct instructionVar79 {
     COND: COND,
@@ -22895,6 +23908,9 @@ impl instructionVar79 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -22920,6 +23936,9 @@ impl instructionVar79 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -22948,7 +23967,7 @@ impl instructionVar79 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3226:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3242:1"]
 #[derive(Clone, Debug)]
 struct instructionVar80 {
     COND: COND,
@@ -22988,6 +24007,9 @@ impl instructionVar80 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23013,6 +24035,9 @@ impl instructionVar80 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23041,7 +24066,7 @@ impl instructionVar80 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3235:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3251:1"]
 #[derive(Clone, Debug)]
 struct instructionVar81 {
     COND: COND,
@@ -23081,6 +24106,9 @@ impl instructionVar81 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23106,6 +24134,9 @@ impl instructionVar81 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23134,7 +24165,7 @@ impl instructionVar81 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3244:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3260:1"]
 #[derive(Clone, Debug)]
 struct instructionVar82 {
     COND: COND,
@@ -23174,6 +24205,9 @@ impl instructionVar82 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23199,6 +24233,9 @@ impl instructionVar82 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23227,7 +24264,7 @@ impl instructionVar82 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3253:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3269:1"]
 #[derive(Clone, Debug)]
 struct instructionVar83 {
     COND: COND,
@@ -23267,6 +24304,9 @@ impl instructionVar83 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23292,6 +24332,9 @@ impl instructionVar83 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23320,7 +24363,7 @@ impl instructionVar83 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3262:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3278:1"]
 #[derive(Clone, Debug)]
 struct instructionVar84 {
     COND: COND,
@@ -23360,6 +24403,9 @@ impl instructionVar84 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23385,6 +24431,9 @@ impl instructionVar84 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23413,7 +24462,7 @@ impl instructionVar84 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3271:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3287:1"]
 #[derive(Clone, Debug)]
 struct instructionVar85 {
     COND: COND,
@@ -23453,6 +24502,9 @@ impl instructionVar85 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23478,6 +24530,9 @@ impl instructionVar85 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23506,7 +24561,7 @@ impl instructionVar85 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3280:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3296:1"]
 #[derive(Clone, Debug)]
 struct instructionVar86 {
     COND: COND,
@@ -23546,6 +24601,9 @@ impl instructionVar86 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23571,6 +24629,9 @@ impl instructionVar86 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23599,7 +24660,7 @@ impl instructionVar86 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3591:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3607:1"]
 #[derive(Clone, Debug)]
 struct instructionVar87 {
     COND: COND,
@@ -23639,6 +24700,9 @@ impl instructionVar87 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23664,6 +24728,9 @@ impl instructionVar87 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23692,7 +24759,7 @@ impl instructionVar87 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3601:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3617:1"]
 #[derive(Clone, Debug)]
 struct instructionVar88 {
     COND: COND,
@@ -23732,6 +24799,9 @@ impl instructionVar88 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23757,6 +24827,9 @@ impl instructionVar88 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23785,7 +24858,7 @@ impl instructionVar88 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3611:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3627:1"]
 #[derive(Clone, Debug)]
 struct instructionVar89 {
     COND: COND,
@@ -23825,6 +24898,9 @@ impl instructionVar89 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23850,6 +24926,9 @@ impl instructionVar89 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23878,7 +24957,7 @@ impl instructionVar89 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3621:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3637:1"]
 #[derive(Clone, Debug)]
 struct instructionVar90 {
     COND: COND,
@@ -23918,6 +24997,9 @@ impl instructionVar90 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -23943,6 +25025,9 @@ impl instructionVar90 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -23971,7 +25056,7 @@ impl instructionVar90 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3631:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3647:1"]
 #[derive(Clone, Debug)]
 struct instructionVar91 {
     COND: COND,
@@ -24011,6 +25096,9 @@ impl instructionVar91 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24036,6 +25124,9 @@ impl instructionVar91 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24064,7 +25155,7 @@ impl instructionVar91 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3641:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3657:1"]
 #[derive(Clone, Debug)]
 struct instructionVar92 {
     COND: COND,
@@ -24104,6 +25195,9 @@ impl instructionVar92 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24129,6 +25223,9 @@ impl instructionVar92 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24157,7 +25254,7 @@ impl instructionVar92 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3651:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3667:1"]
 #[derive(Clone, Debug)]
 struct instructionVar93 {
     COND: COND,
@@ -24197,6 +25294,9 @@ impl instructionVar93 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24222,6 +25322,9 @@ impl instructionVar93 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24250,7 +25353,7 @@ impl instructionVar93 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3661:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3677:1"]
 #[derive(Clone, Debug)]
 struct instructionVar94 {
     COND: COND,
@@ -24290,6 +25393,9 @@ impl instructionVar94 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24315,6 +25421,9 @@ impl instructionVar94 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24343,7 +25452,7 @@ impl instructionVar94 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3671:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3687:1"]
 #[derive(Clone, Debug)]
 struct instructionVar95 {
     COND: COND,
@@ -24383,6 +25492,9 @@ impl instructionVar95 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24408,6 +25520,9 @@ impl instructionVar95 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24436,7 +25551,7 @@ impl instructionVar95 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3681:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3697:1"]
 #[derive(Clone, Debug)]
 struct instructionVar96 {
     COND: COND,
@@ -24476,6 +25591,9 @@ impl instructionVar96 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24501,6 +25619,9 @@ impl instructionVar96 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24529,7 +25650,7 @@ impl instructionVar96 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3691:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3707:1"]
 #[derive(Clone, Debug)]
 struct instructionVar97 {
     COND: COND,
@@ -24569,6 +25690,9 @@ impl instructionVar97 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24594,6 +25718,9 @@ impl instructionVar97 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24622,7 +25749,7 @@ impl instructionVar97 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3701:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3717:1"]
 #[derive(Clone, Debug)]
 struct instructionVar98 {
     COND: COND,
@@ -24662,6 +25789,9 @@ impl instructionVar98 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24687,6 +25817,9 @@ impl instructionVar98 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24715,7 +25848,7 @@ impl instructionVar98 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3711:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3727:1"]
 #[derive(Clone, Debug)]
 struct instructionVar99 {
     COND: COND,
@@ -24755,6 +25888,9 @@ impl instructionVar99 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24780,6 +25916,9 @@ impl instructionVar99 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24808,7 +25947,7 @@ impl instructionVar99 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3721:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3737:1"]
 #[derive(Clone, Debug)]
 struct instructionVar100 {
     COND: COND,
@@ -24848,6 +25987,9 @@ impl instructionVar100 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24873,6 +26015,9 @@ impl instructionVar100 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24901,7 +26046,7 @@ impl instructionVar100 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3731:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3747:1"]
 #[derive(Clone, Debug)]
 struct instructionVar101 {
     COND: COND,
@@ -24941,6 +26086,9 @@ impl instructionVar101 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -24966,6 +26114,9 @@ impl instructionVar101 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -24994,7 +26145,7 @@ impl instructionVar101 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3741:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3757:1"]
 #[derive(Clone, Debug)]
 struct instructionVar102 {
     COND: COND,
@@ -25034,6 +26185,9 @@ impl instructionVar102 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25059,6 +26213,9 @@ impl instructionVar102 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25087,7 +26244,7 @@ impl instructionVar102 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3751:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3767:1"]
 #[derive(Clone, Debug)]
 struct instructionVar103 {
     COND: COND,
@@ -25127,6 +26284,9 @@ impl instructionVar103 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25152,6 +26312,9 @@ impl instructionVar103 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25180,7 +26343,7 @@ impl instructionVar103 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3761:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3777:1"]
 #[derive(Clone, Debug)]
 struct instructionVar104 {
     COND: COND,
@@ -25220,6 +26383,9 @@ impl instructionVar104 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25245,6 +26411,9 @@ impl instructionVar104 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25273,7 +26442,7 @@ impl instructionVar104 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3771:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3787:1"]
 #[derive(Clone, Debug)]
 struct instructionVar105 {
     COND: COND,
@@ -25313,6 +26482,9 @@ impl instructionVar105 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25338,6 +26510,9 @@ impl instructionVar105 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25366,7 +26541,7 @@ impl instructionVar105 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3781:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3797:1"]
 #[derive(Clone, Debug)]
 struct instructionVar106 {
     COND: COND,
@@ -25406,6 +26581,9 @@ impl instructionVar106 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25431,6 +26609,9 @@ impl instructionVar106 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25459,7 +26640,7 @@ impl instructionVar106 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3791:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3807:1"]
 #[derive(Clone, Debug)]
 struct instructionVar107 {
     COND: COND,
@@ -25499,6 +26680,9 @@ impl instructionVar107 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25524,6 +26708,9 @@ impl instructionVar107 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25552,7 +26739,7 @@ impl instructionVar107 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3801:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3817:1"]
 #[derive(Clone, Debug)]
 struct instructionVar108 {
     COND: COND,
@@ -25592,6 +26779,9 @@ impl instructionVar108 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25617,6 +26807,9 @@ impl instructionVar108 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25645,7 +26838,7 @@ impl instructionVar108 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3811:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3827:1"]
 #[derive(Clone, Debug)]
 struct instructionVar109 {
     COND: COND,
@@ -25685,6 +26878,9 @@ impl instructionVar109 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25710,6 +26906,9 @@ impl instructionVar109 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25738,7 +26937,7 @@ impl instructionVar109 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3821:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3837:1"]
 #[derive(Clone, Debug)]
 struct instructionVar110 {
     COND: COND,
@@ -25778,6 +26977,9 @@ impl instructionVar110 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25803,6 +27005,9 @@ impl instructionVar110 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25831,7 +27036,7 @@ impl instructionVar110 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3831:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3847:1"]
 #[derive(Clone, Debug)]
 struct instructionVar111 {
     COND: COND,
@@ -25871,6 +27076,9 @@ impl instructionVar111 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25896,6 +27104,9 @@ impl instructionVar111 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -25924,7 +27135,7 @@ impl instructionVar111 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3841:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3857:1"]
 #[derive(Clone, Debug)]
 struct instructionVar112 {
     COND: COND,
@@ -25964,6 +27175,9 @@ impl instructionVar112 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -25989,6 +27203,9 @@ impl instructionVar112 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26017,7 +27234,7 @@ impl instructionVar112 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3851:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3867:1"]
 #[derive(Clone, Debug)]
 struct instructionVar113 {
     COND: COND,
@@ -26057,6 +27274,9 @@ impl instructionVar113 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26082,6 +27302,9 @@ impl instructionVar113 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26110,7 +27333,7 @@ impl instructionVar113 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3861:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3877:1"]
 #[derive(Clone, Debug)]
 struct instructionVar114 {
     COND: COND,
@@ -26150,6 +27373,9 @@ impl instructionVar114 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26175,6 +27401,9 @@ impl instructionVar114 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26203,7 +27432,7 @@ impl instructionVar114 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3871:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3887:1"]
 #[derive(Clone, Debug)]
 struct instructionVar115 {
     COND: COND,
@@ -26243,6 +27472,9 @@ impl instructionVar115 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26268,6 +27500,9 @@ impl instructionVar115 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26296,7 +27531,7 @@ impl instructionVar115 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3881:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3897:1"]
 #[derive(Clone, Debug)]
 struct instructionVar116 {
     COND: COND,
@@ -26336,6 +27571,9 @@ impl instructionVar116 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26361,6 +27599,9 @@ impl instructionVar116 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26389,7 +27630,7 @@ impl instructionVar116 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3891:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3907:1"]
 #[derive(Clone, Debug)]
 struct instructionVar117 {
     COND: COND,
@@ -26429,6 +27670,9 @@ impl instructionVar117 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26454,6 +27698,9 @@ impl instructionVar117 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26482,7 +27729,7 @@ impl instructionVar117 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3901:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3917:1"]
 #[derive(Clone, Debug)]
 struct instructionVar118 {
     COND: COND,
@@ -26522,6 +27769,9 @@ impl instructionVar118 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26547,6 +27797,9 @@ impl instructionVar118 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26575,7 +27828,7 @@ impl instructionVar118 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3911:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3927:1"]
 #[derive(Clone, Debug)]
 struct instructionVar119 {
     COND: COND,
@@ -26615,6 +27868,9 @@ impl instructionVar119 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26640,6 +27896,9 @@ impl instructionVar119 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26668,7 +27927,7 @@ impl instructionVar119 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3921:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3937:1"]
 #[derive(Clone, Debug)]
 struct instructionVar120 {
     COND: COND,
@@ -26708,6 +27967,9 @@ impl instructionVar120 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26733,6 +27995,9 @@ impl instructionVar120 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26761,7 +28026,7 @@ impl instructionVar120 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3931:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3947:1"]
 #[derive(Clone, Debug)]
 struct instructionVar121 {
     COND: COND,
@@ -26801,6 +28066,9 @@ impl instructionVar121 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26826,6 +28094,9 @@ impl instructionVar121 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26854,7 +28125,7 @@ impl instructionVar121 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3941:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3957:1"]
 #[derive(Clone, Debug)]
 struct instructionVar122 {
     COND: COND,
@@ -26894,6 +28165,9 @@ impl instructionVar122 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -26919,6 +28193,9 @@ impl instructionVar122 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -26947,7 +28224,7 @@ impl instructionVar122 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3951:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3967:1"]
 #[derive(Clone, Debug)]
 struct instructionVar123 {
     COND: COND,
@@ -26987,6 +28264,9 @@ impl instructionVar123 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27012,6 +28292,9 @@ impl instructionVar123 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27040,7 +28323,7 @@ impl instructionVar123 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3961:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3977:1"]
 #[derive(Clone, Debug)]
 struct instructionVar124 {
     COND: COND,
@@ -27080,6 +28363,9 @@ impl instructionVar124 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27105,6 +28391,9 @@ impl instructionVar124 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27133,7 +28422,7 @@ impl instructionVar124 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3971:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3987:1"]
 #[derive(Clone, Debug)]
 struct instructionVar125 {
     COND: COND,
@@ -27173,6 +28462,9 @@ impl instructionVar125 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27198,6 +28490,9 @@ impl instructionVar125 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27226,7 +28521,7 @@ impl instructionVar125 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3981:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3997:1"]
 #[derive(Clone, Debug)]
 struct instructionVar126 {
     COND: COND,
@@ -27266,6 +28561,9 @@ impl instructionVar126 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27291,6 +28589,9 @@ impl instructionVar126 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27319,7 +28620,7 @@ impl instructionVar126 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3991:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4007:1"]
 #[derive(Clone, Debug)]
 struct instructionVar127 {
     COND: COND,
@@ -27359,6 +28660,9 @@ impl instructionVar127 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27384,6 +28688,9 @@ impl instructionVar127 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27412,7 +28719,7 @@ impl instructionVar127 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4123:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4139:1"]
 #[derive(Clone, Debug)]
 struct instructionVar128 {
     Rd: TokenField_Rd,
@@ -27454,7 +28761,13 @@ impl instructionVar128 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 16 {
@@ -27482,7 +28795,7 @@ impl instructionVar128 {
         Some((pattern_len, Self { COND, Rd }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4130:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4146:1"]
 #[derive(Clone, Debug)]
 struct instructionVar129 {
     Rd: TokenField_Rd,
@@ -27524,7 +28837,13 @@ impl instructionVar129 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 20 {
@@ -27552,7 +28871,7 @@ impl instructionVar129 {
         Some((pattern_len, Self { COND, Rd }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3289:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3305:1"]
 #[derive(Clone, Debug)]
 struct instructionVar130 {
     COND: COND,
@@ -27592,6 +28911,9 @@ impl instructionVar130 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27614,6 +28936,9 @@ impl instructionVar130 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27643,7 +28968,7 @@ impl instructionVar130 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3299:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3315:1"]
 #[derive(Clone, Debug)]
 struct instructionVar131 {
     COND: COND,
@@ -27683,6 +29008,9 @@ impl instructionVar131 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27705,6 +29033,9 @@ impl instructionVar131 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27734,7 +29065,7 @@ impl instructionVar131 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3309:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3325:1"]
 #[derive(Clone, Debug)]
 struct instructionVar132 {
     COND: COND,
@@ -27774,6 +29105,9 @@ impl instructionVar132 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27796,6 +29130,9 @@ impl instructionVar132 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27825,7 +29162,7 @@ impl instructionVar132 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3319:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3335:1"]
 #[derive(Clone, Debug)]
 struct instructionVar133 {
     COND: COND,
@@ -27865,6 +29202,9 @@ impl instructionVar133 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27887,6 +29227,9 @@ impl instructionVar133 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -27916,7 +29259,7 @@ impl instructionVar133 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3329:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3345:1"]
 #[derive(Clone, Debug)]
 struct instructionVar134 {
     COND: COND,
@@ -27956,6 +29299,9 @@ impl instructionVar134 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -27978,6 +29324,9 @@ impl instructionVar134 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28007,7 +29356,7 @@ impl instructionVar134 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3339:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3355:1"]
 #[derive(Clone, Debug)]
 struct instructionVar135 {
     COND: COND,
@@ -28047,6 +29396,9 @@ impl instructionVar135 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28069,6 +29421,9 @@ impl instructionVar135 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28098,7 +29453,7 @@ impl instructionVar135 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3349:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3365:1"]
 #[derive(Clone, Debug)]
 struct instructionVar136 {
     COND: COND,
@@ -28138,6 +29493,9 @@ impl instructionVar136 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28160,6 +29518,9 @@ impl instructionVar136 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28189,7 +29550,7 @@ impl instructionVar136 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3359:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3375:1"]
 #[derive(Clone, Debug)]
 struct instructionVar137 {
     COND: COND,
@@ -28229,6 +29590,9 @@ impl instructionVar137 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28251,6 +29615,9 @@ impl instructionVar137 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28280,7 +29647,7 @@ impl instructionVar137 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4001:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4017:1"]
 #[derive(Clone, Debug)]
 struct instructionVar138 {
     COND: COND,
@@ -28320,6 +29687,9 @@ impl instructionVar138 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28342,6 +29712,9 @@ impl instructionVar138 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28371,7 +29744,7 @@ impl instructionVar138 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4012:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4028:1"]
 #[derive(Clone, Debug)]
 struct instructionVar139 {
     COND: COND,
@@ -28411,6 +29784,9 @@ impl instructionVar139 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28433,6 +29809,9 @@ impl instructionVar139 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28462,7 +29841,7 @@ impl instructionVar139 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4023:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4039:1"]
 #[derive(Clone, Debug)]
 struct instructionVar140 {
     COND: COND,
@@ -28502,6 +29881,9 @@ impl instructionVar140 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28524,6 +29906,9 @@ impl instructionVar140 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28553,7 +29938,7 @@ impl instructionVar140 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4034:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4050:1"]
 #[derive(Clone, Debug)]
 struct instructionVar141 {
     COND: COND,
@@ -28593,6 +29978,9 @@ impl instructionVar141 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28615,6 +30003,9 @@ impl instructionVar141 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28644,7 +30035,7 @@ impl instructionVar141 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4045:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4061:1"]
 #[derive(Clone, Debug)]
 struct instructionVar142 {
     COND: COND,
@@ -28684,6 +30075,9 @@ impl instructionVar142 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28706,6 +30100,9 @@ impl instructionVar142 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28735,7 +30132,7 @@ impl instructionVar142 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4056:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4072:1"]
 #[derive(Clone, Debug)]
 struct instructionVar143 {
     COND: COND,
@@ -28775,6 +30172,9 @@ impl instructionVar143 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28797,6 +30197,9 @@ impl instructionVar143 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28826,7 +30229,7 @@ impl instructionVar143 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4067:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4083:1"]
 #[derive(Clone, Debug)]
 struct instructionVar144 {
     COND: COND,
@@ -28866,6 +30269,9 @@ impl instructionVar144 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28888,6 +30294,9 @@ impl instructionVar144 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -28917,7 +30326,7 @@ impl instructionVar144 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4078:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4094:1"]
 #[derive(Clone, Debug)]
 struct instructionVar145 {
     COND: COND,
@@ -28957,6 +30366,9 @@ impl instructionVar145 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -28979,6 +30391,9 @@ impl instructionVar145 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -29008,7 +30423,7 @@ impl instructionVar145 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3369:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3385:1"]
 #[derive(Clone, Debug)]
 struct instructionVar146 {
     COND: COND,
@@ -29048,6 +30463,9 @@ impl instructionVar146 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -29067,6 +30485,9 @@ impl instructionVar146 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -29097,7 +30518,7 @@ impl instructionVar146 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4089:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4105:1"]
 #[derive(Clone, Debug)]
 struct instructionVar147 {
     COND: COND,
@@ -29137,6 +30558,9 @@ impl instructionVar147 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -29156,6 +30580,9 @@ impl instructionVar147 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -29186,7 +30613,7 @@ impl instructionVar147 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1984:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2000:1"]
 #[derive(Clone, Debug)]
 struct instructionVar148 {
     Rd: TokenField_Rd,
@@ -29231,7 +30658,13 @@ impl instructionVar148 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 1 {
@@ -29248,7 +30681,7 @@ impl instructionVar148 {
         } else {
             return None;
         };
-        let mut sub_pattern_c23 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -29270,7 +30703,7 @@ impl instructionVar148 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c23(tokens_current, &mut context_instance)?;
+            sub_pattern_c34(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let ArmPCRelImmed12 = if let Some((len, table)) = ArmPCRelImmed12::parse(
             tokens_current,
@@ -29297,7 +30730,7 @@ impl instructionVar148 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2032:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2048:1"]
 #[derive(Clone, Debug)]
 struct instructionVar149 {
     COND: COND,
@@ -29351,7 +30784,13 @@ impl instructionVar149 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -29410,7 +30849,7 @@ impl instructionVar149 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2045:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2061:1"]
 #[derive(Clone, Debug)]
 struct instructionVar150 {
     COND: COND,
@@ -29464,7 +30903,13 @@ impl instructionVar150 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -29523,7 +30968,7 @@ impl instructionVar150 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2058:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2074:1"]
 #[derive(Clone, Debug)]
 struct instructionVar151 {
     COND: COND,
@@ -29577,7 +31022,13 @@ impl instructionVar151 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -29636,7 +31087,7 @@ impl instructionVar151 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2104:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2120:1"]
 #[derive(Clone, Debug)]
 struct instructionVar152 {
     COND: COND,
@@ -29690,7 +31141,13 @@ impl instructionVar152 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -29749,7 +31206,7 @@ impl instructionVar152 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2117:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2133:1"]
 #[derive(Clone, Debug)]
 struct instructionVar153 {
     COND: COND,
@@ -29803,7 +31260,13 @@ impl instructionVar153 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -29862,7 +31325,7 @@ impl instructionVar153 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2130:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2146:1"]
 #[derive(Clone, Debug)]
 struct instructionVar154 {
     COND: COND,
@@ -29916,7 +31379,13 @@ impl instructionVar154 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -29975,7 +31444,7 @@ impl instructionVar154 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2213:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2229:1"]
 #[derive(Clone, Debug)]
 struct instructionVar155 {
     COND: COND,
@@ -30029,7 +31498,13 @@ impl instructionVar155 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -30088,7 +31563,7 @@ impl instructionVar155 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2226:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2242:1"]
 #[derive(Clone, Debug)]
 struct instructionVar156 {
     COND: COND,
@@ -30142,7 +31617,13 @@ impl instructionVar156 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -30201,7 +31682,7 @@ impl instructionVar156 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2239:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2255:1"]
 #[derive(Clone, Debug)]
 struct instructionVar157 {
     COND: COND,
@@ -30255,7 +31736,13 @@ impl instructionVar157 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -30314,7 +31801,7 @@ impl instructionVar157 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2628:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2644:1"]
 #[derive(Clone, Debug)]
 struct instructionVar158 {
     COND: COND,
@@ -30368,7 +31855,13 @@ impl instructionVar158 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -30427,7 +31920,7 @@ impl instructionVar158 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2641:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2657:1"]
 #[derive(Clone, Debug)]
 struct instructionVar159 {
     COND: COND,
@@ -30481,7 +31974,13 @@ impl instructionVar159 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -30540,7 +32039,7 @@ impl instructionVar159 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2654:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2670:1"]
 #[derive(Clone, Debug)]
 struct instructionVar160 {
     COND: COND,
@@ -30594,7 +32093,13 @@ impl instructionVar160 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -30653,7 +32158,7 @@ impl instructionVar160 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5671:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5687:1"]
 #[derive(Clone, Debug)]
 struct instructionVar161 {
     Rd: TokenField_Rd,
@@ -30699,7 +32204,13 @@ impl instructionVar161 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 16 {
@@ -30729,7 +32240,7 @@ impl instructionVar161 {
         Some((pattern_len, Self { COND, Rn, Rd, Rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5679:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5695:1"]
 #[derive(Clone, Debug)]
 struct instructionVar162 {
     Rd: TokenField_Rd,
@@ -30776,7 +32287,13 @@ impl instructionVar162 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2027().disassembly() != 20 {
@@ -30806,7 +32323,7 @@ impl instructionVar162 {
         Some((pattern_len, Self { COND, Rn, Rd, Rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3441:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3457:1"]
 #[derive(Clone, Debug)]
 struct instructionVar163 {
     Rn: TokenField_Rn,
@@ -30859,7 +32376,13 @@ impl instructionVar163 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -30908,7 +32431,7 @@ impl instructionVar163 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3458:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3474:1"]
 #[derive(Clone, Debug)]
 struct instructionVar164 {
     Rd: TokenField_Rd,
@@ -30957,7 +32480,13 @@ impl instructionVar164 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -31009,7 +32538,7 @@ impl instructionVar164 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3468:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3484:1"]
 #[derive(Clone, Debug)]
 struct instructionVar165 {
     Rd: TokenField_Rd,
@@ -31058,7 +32587,13 @@ impl instructionVar165 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -31110,7 +32645,7 @@ impl instructionVar165 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3486:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3502:1"]
 #[derive(Clone, Debug)]
 struct instructionVar166 {
     Rd: TokenField_Rd,
@@ -31159,7 +32694,13 @@ impl instructionVar166 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 13 {
@@ -31211,7 +32752,7 @@ impl instructionVar166 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4183:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4199:1"]
 #[derive(Clone, Debug)]
 struct instructionVar167 {
     Rd: TokenField_Rd,
@@ -31260,7 +32801,13 @@ impl instructionVar167 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -31312,7 +32859,7 @@ impl instructionVar167 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4193:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4209:1"]
 #[derive(Clone, Debug)]
 struct instructionVar168 {
     Rd: TokenField_Rd,
@@ -31361,7 +32908,13 @@ impl instructionVar168 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -31413,7 +32966,7 @@ impl instructionVar168 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4203:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4219:1"]
 #[derive(Clone, Debug)]
 struct instructionVar169 {
     Rd: TokenField_Rd,
@@ -31462,7 +33015,13 @@ impl instructionVar169 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 15 {
@@ -31514,7 +33073,7 @@ impl instructionVar169 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4286:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4302:1"]
 #[derive(Clone, Debug)]
 struct instructionVar170 {
     COND: COND,
@@ -31568,7 +33127,13 @@ impl instructionVar170 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -31627,7 +33192,7 @@ impl instructionVar170 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4299:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4315:1"]
 #[derive(Clone, Debug)]
 struct instructionVar171 {
     COND: COND,
@@ -31681,7 +33246,13 @@ impl instructionVar171 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -31740,7 +33311,7 @@ impl instructionVar171 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4312:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4328:1"]
 #[derive(Clone, Debug)]
 struct instructionVar172 {
     COND: COND,
@@ -31794,7 +33365,13 @@ impl instructionVar172 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -31853,7 +33430,7 @@ impl instructionVar172 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4628:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4644:1"]
 #[derive(Clone, Debug)]
 struct instructionVar173 {
     COND: COND,
@@ -31907,7 +33484,13 @@ impl instructionVar173 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -31966,7 +33549,7 @@ impl instructionVar173 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4641:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4657:1"]
 #[derive(Clone, Debug)]
 struct instructionVar174 {
     COND: COND,
@@ -32020,7 +33603,13 @@ impl instructionVar174 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -32079,7 +33668,7 @@ impl instructionVar174 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4654:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4670:1"]
 #[derive(Clone, Debug)]
 struct instructionVar175 {
     COND: COND,
@@ -32133,7 +33722,13 @@ impl instructionVar175 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -32192,7 +33787,7 @@ impl instructionVar175 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4700:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4716:1"]
 #[derive(Clone, Debug)]
 struct instructionVar176 {
     COND: COND,
@@ -32246,7 +33841,13 @@ impl instructionVar176 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -32305,7 +33906,7 @@ impl instructionVar176 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4713:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4729:1"]
 #[derive(Clone, Debug)]
 struct instructionVar177 {
     COND: COND,
@@ -32359,7 +33960,13 @@ impl instructionVar177 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -32418,7 +34025,7 @@ impl instructionVar177 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4726:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4742:1"]
 #[derive(Clone, Debug)]
 struct instructionVar178 {
     COND: COND,
@@ -32472,7 +34079,13 @@ impl instructionVar178 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -32531,7 +34144,7 @@ impl instructionVar178 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4832:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4848:1"]
 #[derive(Clone, Debug)]
 struct instructionVar179 {
     COND: COND,
@@ -32585,7 +34198,13 @@ impl instructionVar179 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -32644,7 +34263,7 @@ impl instructionVar179 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4845:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4861:1"]
 #[derive(Clone, Debug)]
 struct instructionVar180 {
     COND: COND,
@@ -32698,7 +34317,13 @@ impl instructionVar180 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -32757,7 +34382,7 @@ impl instructionVar180 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4858:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4874:1"]
 #[derive(Clone, Debug)]
 struct instructionVar181 {
     COND: COND,
@@ -32811,7 +34436,13 @@ impl instructionVar181 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -32870,7 +34501,7 @@ impl instructionVar181 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5057:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5073:1"]
 #[derive(Clone, Debug)]
 struct instructionVar182 {
     RdLo: TokenField_RdLo,
@@ -32924,7 +34555,13 @@ impl instructionVar182 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -32973,7 +34610,7 @@ impl instructionVar182 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5278:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5294:1"]
 #[derive(Clone, Debug)]
 struct instructionVar183 {
     RdLo: TokenField_RdLo,
@@ -33027,7 +34664,13 @@ impl instructionVar183 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -33076,7 +34719,7 @@ impl instructionVar183 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5593:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5609:1"]
 #[derive(Clone, Debug)]
 struct instructionVar184 {
     COND: COND,
@@ -33130,7 +34773,13 @@ impl instructionVar184 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -33189,7 +34838,7 @@ impl instructionVar184 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5622:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5638:1"]
 #[derive(Clone, Debug)]
 struct instructionVar185 {
     COND: COND,
@@ -33243,7 +34892,13 @@ impl instructionVar185 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -33302,7 +34957,7 @@ impl instructionVar185 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5637:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5653:1"]
 #[derive(Clone, Debug)]
 struct instructionVar186 {
     COND: COND,
@@ -33356,7 +35011,13 @@ impl instructionVar186 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -33415,7 +35076,7 @@ impl instructionVar186 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:6064:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:6080:1"]
 #[derive(Clone, Debug)]
 struct instructionVar187 {
     Rd: TokenField_Rd,
@@ -33474,7 +35135,13 @@ impl instructionVar187 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -33537,7 +35204,7 @@ impl instructionVar187 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:6079:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:6095:1"]
 #[derive(Clone, Debug)]
 struct instructionVar188 {
     Rd: TokenField_Rd,
@@ -33596,7 +35263,13 @@ impl instructionVar188 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -33659,7 +35332,7 @@ impl instructionVar188 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1896:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1912:1"]
 #[derive(Clone, Debug)]
 struct instructionVar189 {
     Rd: TokenField_Rd,
@@ -33714,7 +35387,13 @@ impl instructionVar189 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -33772,7 +35451,7 @@ impl instructionVar189 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1907:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1923:1"]
 #[derive(Clone, Debug)]
 struct instructionVar190 {
     Rd: TokenField_Rd,
@@ -33827,7 +35506,13 @@ impl instructionVar190 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -33885,7 +35570,7 @@ impl instructionVar190 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1918:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1934:1"]
 #[derive(Clone, Debug)]
 struct instructionVar191 {
     Rd: TokenField_Rd,
@@ -33940,7 +35625,13 @@ impl instructionVar191 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 5 {
@@ -33998,7 +35689,7 @@ impl instructionVar191 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1999:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2015:1"]
 #[derive(Clone, Debug)]
 struct instructionVar192 {
     Rd: TokenField_Rd,
@@ -34053,7 +35744,13 @@ impl instructionVar192 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -34111,7 +35808,7 @@ impl instructionVar192 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2010:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2026:1"]
 #[derive(Clone, Debug)]
 struct instructionVar193 {
     Rd: TokenField_Rd,
@@ -34166,7 +35863,13 @@ impl instructionVar193 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -34224,7 +35927,7 @@ impl instructionVar193 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2021:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2037:1"]
 #[derive(Clone, Debug)]
 struct instructionVar194 {
     Rd: TokenField_Rd,
@@ -34279,7 +35982,13 @@ impl instructionVar194 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 4 {
@@ -34337,7 +36046,7 @@ impl instructionVar194 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2071:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2087:1"]
 #[derive(Clone, Debug)]
 struct instructionVar195 {
     Rd: TokenField_Rd,
@@ -34392,7 +36101,13 @@ impl instructionVar195 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -34450,7 +36165,7 @@ impl instructionVar195 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2082:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2098:1"]
 #[derive(Clone, Debug)]
 struct instructionVar196 {
     Rd: TokenField_Rd,
@@ -34505,7 +36220,13 @@ impl instructionVar196 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -34563,7 +36284,7 @@ impl instructionVar196 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2093:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2109:1"]
 #[derive(Clone, Debug)]
 struct instructionVar197 {
     Rd: TokenField_Rd,
@@ -34618,7 +36339,13 @@ impl instructionVar197 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 0 {
@@ -34676,7 +36403,7 @@ impl instructionVar197 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2145:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2161:1"]
 #[derive(Clone, Debug)]
 struct instructionVar198 {
     Addr24: Addr24,
@@ -34711,6 +36438,9 @@ impl instructionVar198 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -34738,7 +36468,7 @@ impl instructionVar198 {
         Some((pattern_len, Self { Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2268:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2284:1"]
 #[derive(Clone, Debug)]
 struct instructionVar199 {
     Addr24: Addr24,
@@ -34773,6 +36503,9 @@ impl instructionVar199 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -34800,7 +36533,7 @@ impl instructionVar199 {
         Some((pattern_len, Self { Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3379:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3395:1"]
 #[derive(Clone, Debug)]
 struct instructionVar200 {
     COND: COND,
@@ -34840,6 +36573,9 @@ impl instructionVar200 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -34856,6 +36592,9 @@ impl instructionVar200 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -34887,7 +36626,7 @@ impl instructionVar200 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4100:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4116:1"]
 #[derive(Clone, Debug)]
 struct instructionVar201 {
     COND: COND,
@@ -34927,6 +36666,9 @@ impl instructionVar201 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -34943,6 +36685,9 @@ impl instructionVar201 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         let COND = if let Some((len, table)) =
@@ -34974,7 +36719,7 @@ impl instructionVar201 {
         Some((pattern_len, Self { COND, mcrOperands }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3391:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:3407:1"]
 #[derive(Clone, Debug)]
 struct instructionVar202 {
     cpn: TokenField_cpn,
@@ -35029,7 +36774,13 @@ impl instructionVar202 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
@@ -35073,7 +36824,7 @@ impl instructionVar202 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4113:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4129:1"]
 #[derive(Clone, Debug)]
 struct instructionVar203 {
     cpn: TokenField_cpn,
@@ -35128,7 +36879,13 @@ impl instructionVar203 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
@@ -35172,7 +36929,7 @@ impl instructionVar203 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2448:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2464:1"]
 #[derive(Clone, Debug)]
 struct instructionVar204 {
     cpn: TokenField_cpn,
@@ -35227,7 +36984,13 @@ impl instructionVar204 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2427().disassembly() != 14 {
@@ -35268,7 +37031,7 @@ impl instructionVar204 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2755:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2771:1"]
 #[derive(Clone, Debug)]
 struct instructionVar205 {
     COND: COND,
@@ -35316,7 +37079,13 @@ impl instructionVar205 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 1 {
@@ -35350,7 +37119,7 @@ impl instructionVar205 {
         } else {
             return None;
         };
-        let mut sub_pattern_c78 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c89 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -35359,7 +37128,7 @@ impl instructionVar205 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c87 =
+                let mut sub_pattern_c98 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -35380,7 +37149,7 @@ impl instructionVar205 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c87(tokens_param, &mut context_current)
+                    sub_pattern_c98(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -35394,7 +37163,7 @@ impl instructionVar205 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c78(tokens_current, &mut context_instance)?;
+            sub_pattern_c89(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -35411,7 +37180,7 @@ impl instructionVar205 {
         Some((pattern_len, Self { COND, addrmode2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2777:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2793:1"]
 #[derive(Clone, Debug)]
 struct instructionVar206 {
     COND: COND,
@@ -35455,7 +37224,13 @@ impl instructionVar206 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -35484,7 +37259,7 @@ impl instructionVar206 {
         } else {
             return None;
         };
-        let mut sub_pattern_c68 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c79 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -35493,7 +37268,7 @@ impl instructionVar206 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c77 =
+                let mut sub_pattern_c88 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -35514,7 +37289,7 @@ impl instructionVar206 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c77(tokens_param, &mut context_current)
+                    sub_pattern_c88(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -35528,7 +37303,7 @@ impl instructionVar206 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c68(tokens_current, &mut context_instance)?;
+            sub_pattern_c79(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -35545,7 +37320,7 @@ impl instructionVar206 {
         Some((pattern_len, Self { COND, addrmode2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2743:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2759:1"]
 #[derive(Clone, Debug)]
 struct instructionVar207 {
     COND: COND,
@@ -35593,7 +37368,13 @@ impl instructionVar207 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if context_instance.register().read_LRset_disassembly() != 1 {
@@ -35624,7 +37405,7 @@ impl instructionVar207 {
         } else {
             return None;
         };
-        let mut sub_pattern_c70 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c81 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -35633,7 +37414,7 @@ impl instructionVar207 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c79 =
+                let mut sub_pattern_c90 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -35654,7 +37435,7 @@ impl instructionVar207 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c79(tokens_param, &mut context_current)
+                    sub_pattern_c90(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -35668,7 +37449,7 @@ impl instructionVar207 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c70(tokens_current, &mut context_instance)?;
+            sub_pattern_c81(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -35685,7 +37466,7 @@ impl instructionVar207 {
         Some((pattern_len, Self { COND, addrmode2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2768:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2784:1"]
 #[derive(Clone, Debug)]
 struct instructionVar208 {
     COND: COND,
@@ -35729,7 +37510,13 @@ impl instructionVar208 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -35755,7 +37542,7 @@ impl instructionVar208 {
         } else {
             return None;
         };
-        let mut sub_pattern_c60 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c71 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -35764,7 +37551,7 @@ impl instructionVar208 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c69 =
+                let mut sub_pattern_c80 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -35785,7 +37572,7 @@ impl instructionVar208 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c69(tokens_param, &mut context_current)
+                    sub_pattern_c80(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -35799,7 +37586,7 @@ impl instructionVar208 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c60(tokens_current, &mut context_instance)?;
+            sub_pattern_c71(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -35816,7 +37603,7 @@ impl instructionVar208 {
         Some((pattern_len, Self { COND, addrmode2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2793:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2809:1"]
 #[derive(Clone, Debug)]
 struct instructionVar209 {
     Rd: TokenField_Rd,
@@ -35862,7 +37649,13 @@ impl instructionVar209 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -35888,7 +37681,7 @@ impl instructionVar209 {
         } else {
             return None;
         };
-        let mut sub_pattern_c60 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c71 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -35897,7 +37690,7 @@ impl instructionVar209 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c69 =
+                let mut sub_pattern_c80 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -35918,7 +37711,7 @@ impl instructionVar209 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c69(tokens_param, &mut context_current)
+                    sub_pattern_c80(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -35932,7 +37725,7 @@ impl instructionVar209 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c60(tokens_current, &mut context_instance)?;
+            sub_pattern_c71(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -35957,7 +37750,7 @@ impl instructionVar209 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2897:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2913:1"]
 #[derive(Clone, Debug)]
 struct instructionVar210 {
     Rd: TokenField_Rd,
@@ -36003,7 +37796,13 @@ impl instructionVar210 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -36029,7 +37828,7 @@ impl instructionVar210 {
         } else {
             return None;
         };
-        let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c71 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -36038,7 +37837,7 @@ impl instructionVar210 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c68 =
+                let mut sub_pattern_c80 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -36059,7 +37858,7 @@ impl instructionVar210 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c68(tokens_param, &mut context_current)
+                    sub_pattern_c80(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -36073,7 +37872,7 @@ impl instructionVar210 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c59(tokens_current, &mut context_instance)?;
+            sub_pattern_c71(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -36098,7 +37897,7 @@ impl instructionVar210 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5453:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5469:1"]
 #[derive(Clone, Debug)]
 struct instructionVar211 {
     Rd: TokenField_Rd,
@@ -36144,7 +37943,13 @@ impl instructionVar211 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -36170,7 +37975,7 @@ impl instructionVar211 {
         } else {
             return None;
         };
-        let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c71 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -36179,7 +37984,7 @@ impl instructionVar211 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c68 =
+                let mut sub_pattern_c80 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -36200,7 +38005,7 @@ impl instructionVar211 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c68(tokens_param, &mut context_current)
+                    sub_pattern_c80(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -36214,7 +38019,7 @@ impl instructionVar211 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c59(tokens_current, &mut context_instance)?;
+            sub_pattern_c71(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -36239,7 +38044,7 @@ impl instructionVar211 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5553:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5569:1"]
 #[derive(Clone, Debug)]
 struct instructionVar212 {
     Rd: TokenField_Rd,
@@ -36285,7 +38090,13 @@ impl instructionVar212 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -36311,7 +38122,7 @@ impl instructionVar212 {
         } else {
             return None;
         };
-        let mut sub_pattern_c60 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c71 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -36320,7 +38131,7 @@ impl instructionVar212 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c69 =
+                let mut sub_pattern_c80 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -36341,7 +38152,7 @@ impl instructionVar212 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c69(tokens_param, &mut context_current)
+                    sub_pattern_c80(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -36355,7 +38166,7 @@ impl instructionVar212 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c60(tokens_current, &mut context_instance)?;
+            sub_pattern_c71(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -36380,7 +38191,7 @@ impl instructionVar212 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2150:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2166:1"]
 #[derive(Clone, Debug)]
 struct instructionVar213 {
     cc: cc,
@@ -36420,6 +38231,9 @@ impl instructionVar213 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -36452,7 +38266,7 @@ impl instructionVar213 {
         Some((pattern_len, Self { cc, Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2180:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2196:1"]
 #[derive(Clone, Debug)]
 struct instructionVar214 {
     Rd: TokenField_Rd,
@@ -36507,7 +38321,13 @@ impl instructionVar214 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -36565,7 +38385,7 @@ impl instructionVar214 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2191:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2207:1"]
 #[derive(Clone, Debug)]
 struct instructionVar215 {
     Rd: TokenField_Rd,
@@ -36620,7 +38440,13 @@ impl instructionVar215 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -36678,7 +38504,7 @@ impl instructionVar215 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2202:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2218:1"]
 #[derive(Clone, Debug)]
 struct instructionVar216 {
     Rd: TokenField_Rd,
@@ -36733,7 +38559,13 @@ impl instructionVar216 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 14 {
@@ -36791,7 +38623,7 @@ impl instructionVar216 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2274:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2290:1"]
 #[derive(Clone, Debug)]
 struct instructionVar217 {
     COND: COND,
@@ -36831,6 +38663,9 @@ impl instructionVar217 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -36866,7 +38701,7 @@ impl instructionVar217 {
         Some((pattern_len, Self { COND, Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2282:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2298:1"]
 #[derive(Clone, Debug)]
 struct instructionVar218 {
     COND: COND,
@@ -36906,6 +38741,9 @@ impl instructionVar218 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
             return None;
         }
@@ -36941,7 +38779,7 @@ impl instructionVar218 {
         Some((pattern_len, Self { COND, Addr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2595:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2611:1"]
 #[derive(Clone, Debug)]
 struct instructionVar219 {
     Rd: TokenField_Rd,
@@ -36996,7 +38834,13 @@ impl instructionVar219 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -37054,7 +38898,7 @@ impl instructionVar219 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2606:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2622:1"]
 #[derive(Clone, Debug)]
 struct instructionVar220 {
     Rd: TokenField_Rd,
@@ -37109,7 +38953,13 @@ impl instructionVar220 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -37167,7 +39017,7 @@ impl instructionVar220 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2617:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2633:1"]
 #[derive(Clone, Debug)]
 struct instructionVar221 {
     Rd: TokenField_Rd,
@@ -37222,7 +39072,13 @@ impl instructionVar221 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 1 {
@@ -37280,7 +39136,7 @@ impl instructionVar221 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2694:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2710:1"]
 #[derive(Clone, Debug)]
 struct instructionVar222 {
     cpn: TokenField_cpn,
@@ -37328,7 +39184,13 @@ impl instructionVar222 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 6 {
@@ -37373,7 +39235,7 @@ impl instructionVar222 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2702:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2718:1"]
 #[derive(Clone, Debug)]
 struct instructionVar223 {
     cpn: TokenField_cpn,
@@ -37422,7 +39284,13 @@ impl instructionVar223 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 6 {
@@ -37467,7 +39335,7 @@ impl instructionVar223 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2710:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2726:1"]
 #[derive(Clone, Debug)]
 struct instructionVar224 {
     COND: COND,
@@ -37511,7 +39379,13 @@ impl instructionVar224 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 4 {
@@ -37561,7 +39435,7 @@ impl instructionVar224 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2716:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2732:1"]
 #[derive(Clone, Debug)]
 struct instructionVar225 {
     COND: COND,
@@ -37605,7 +39479,13 @@ impl instructionVar225 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 4 {
@@ -37655,7 +39535,7 @@ impl instructionVar225 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2735:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2751:1"]
 #[derive(Clone, Debug)]
 struct instructionVar226 {
     Rd: TokenField_Rd,
@@ -37700,7 +39580,13 @@ impl instructionVar226 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -37720,7 +39606,7 @@ impl instructionVar226 {
         } else {
             return None;
         };
-        let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -37729,7 +39615,7 @@ impl instructionVar226 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c53 =
+                let mut sub_pattern_c64 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -37750,7 +39636,7 @@ impl instructionVar226 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c53(tokens_param, &mut context_current)
+                    sub_pattern_c64(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -37764,7 +39650,7 @@ impl instructionVar226 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c44(tokens_current, &mut context_instance)?;
+            sub_pattern_c55(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -37789,7 +39675,7 @@ impl instructionVar226 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2786:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2802:1"]
 #[derive(Clone, Debug)]
 struct instructionVar227 {
     Rd: TokenField_Rd,
@@ -37835,7 +39721,13 @@ impl instructionVar227 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -37855,7 +39747,7 @@ impl instructionVar227 {
         } else {
             return None;
         };
-        let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -37864,7 +39756,7 @@ impl instructionVar227 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c53 =
+                let mut sub_pattern_c64 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -37885,7 +39777,7 @@ impl instructionVar227 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c53(tokens_param, &mut context_current)
+                    sub_pattern_c64(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -37899,7 +39791,7 @@ impl instructionVar227 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c44(tokens_current, &mut context_instance)?;
+            sub_pattern_c55(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -37924,7 +39816,7 @@ impl instructionVar227 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2845:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2861:1"]
 #[derive(Clone, Debug)]
 struct instructionVar228 {
     Rd: TokenField_Rd,
@@ -37970,7 +39862,13 @@ impl instructionVar228 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -38013,7 +39911,7 @@ impl instructionVar228 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2862:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2878:1"]
 #[derive(Clone, Debug)]
 struct instructionVar229 {
     Rd: TokenField_Rd,
@@ -38059,7 +39957,13 @@ impl instructionVar229 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -38102,7 +40006,7 @@ impl instructionVar229 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2879:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:2895:1"]
 #[derive(Clone, Debug)]
 struct instructionVar230 {
     Rd: TokenField_Rd,
@@ -38148,7 +40052,13 @@ impl instructionVar230 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -38191,7 +40101,7 @@ impl instructionVar230 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4253:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4269:1"]
 #[derive(Clone, Debug)]
 struct instructionVar231 {
     Rd: TokenField_Rd,
@@ -38246,7 +40156,13 @@ impl instructionVar231 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -38304,7 +40220,7 @@ impl instructionVar231 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4264:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4280:1"]
 #[derive(Clone, Debug)]
 struct instructionVar232 {
     Rd: TokenField_Rd,
@@ -38359,7 +40275,13 @@ impl instructionVar232 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -38417,7 +40339,7 @@ impl instructionVar232 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4275:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4291:1"]
 #[derive(Clone, Debug)]
 struct instructionVar233 {
     Rd: TokenField_Rd,
@@ -38472,7 +40394,13 @@ impl instructionVar233 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 12 {
@@ -38530,7 +40458,7 @@ impl instructionVar233 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4595:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4611:1"]
 #[derive(Clone, Debug)]
 struct instructionVar234 {
     Rd: TokenField_Rd,
@@ -38585,7 +40513,13 @@ impl instructionVar234 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -38643,7 +40577,7 @@ impl instructionVar234 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4606:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4622:1"]
 #[derive(Clone, Debug)]
 struct instructionVar235 {
     Rd: TokenField_Rd,
@@ -38698,7 +40632,13 @@ impl instructionVar235 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -38756,7 +40696,7 @@ impl instructionVar235 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4617:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4633:1"]
 #[derive(Clone, Debug)]
 struct instructionVar236 {
     Rd: TokenField_Rd,
@@ -38811,7 +40751,13 @@ impl instructionVar236 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 3 {
@@ -38869,7 +40815,7 @@ impl instructionVar236 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4667:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4683:1"]
 #[derive(Clone, Debug)]
 struct instructionVar237 {
     Rd: TokenField_Rd,
@@ -38924,7 +40870,13 @@ impl instructionVar237 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -38982,7 +40934,7 @@ impl instructionVar237 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4678:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4694:1"]
 #[derive(Clone, Debug)]
 struct instructionVar238 {
     Rd: TokenField_Rd,
@@ -39037,7 +40989,13 @@ impl instructionVar238 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -39095,7 +41053,7 @@ impl instructionVar238 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4689:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4705:1"]
 #[derive(Clone, Debug)]
 struct instructionVar239 {
     Rd: TokenField_Rd,
@@ -39150,7 +41108,13 @@ impl instructionVar239 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 7 {
@@ -39208,7 +41172,7 @@ impl instructionVar239 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4799:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4815:1"]
 #[derive(Clone, Debug)]
 struct instructionVar240 {
     Rd: TokenField_Rd,
@@ -39263,7 +41227,13 @@ impl instructionVar240 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -39321,7 +41291,7 @@ impl instructionVar240 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4810:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4826:1"]
 #[derive(Clone, Debug)]
 struct instructionVar241 {
     Rd: TokenField_Rd,
@@ -39376,7 +41346,13 @@ impl instructionVar241 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -39434,7 +41410,7 @@ impl instructionVar241 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4821:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:4837:1"]
 #[derive(Clone, Debug)]
 struct instructionVar242 {
     Rd: TokenField_Rd,
@@ -39489,7 +41465,13 @@ impl instructionVar242 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 6 {
@@ -39547,7 +41529,7 @@ impl instructionVar242 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5407:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5423:1"]
 #[derive(Clone, Debug)]
 struct instructionVar243 {
     cpn: TokenField_cpn,
@@ -39595,7 +41577,13 @@ impl instructionVar243 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 6 {
@@ -39640,7 +41628,7 @@ impl instructionVar243 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5415:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5431:1"]
 #[derive(Clone, Debug)]
 struct instructionVar244 {
     cpn: TokenField_cpn,
@@ -39689,7 +41677,13 @@ impl instructionVar244 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 6 {
@@ -39734,7 +41728,7 @@ impl instructionVar244 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5438:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5454:1"]
 #[derive(Clone, Debug)]
 struct instructionVar245 {
     Rd: TokenField_Rd,
@@ -39779,7 +41773,13 @@ impl instructionVar245 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -39799,7 +41799,7 @@ impl instructionVar245 {
         } else {
             return None;
         };
-        let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -39808,7 +41808,7 @@ impl instructionVar245 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c53 =
+                let mut sub_pattern_c64 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -39829,7 +41829,7 @@ impl instructionVar245 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c53(tokens_param, &mut context_current)
+                    sub_pattern_c64(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -39843,7 +41843,7 @@ impl instructionVar245 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c44(tokens_current, &mut context_instance)?;
+            sub_pattern_c55(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -39868,7 +41868,7 @@ impl instructionVar245 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5445:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5461:1"]
 #[derive(Clone, Debug)]
 struct instructionVar246 {
     Rd: TokenField_Rd,
@@ -39914,7 +41914,13 @@ impl instructionVar246 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2627().disassembly() != 1 {
@@ -39934,7 +41940,7 @@ impl instructionVar246 {
         } else {
             return None;
         };
-        let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
+        let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
             let mut tokens = tokens;
@@ -39943,7 +41949,7 @@ impl instructionVar246 {
                 if token_parser.I25().disassembly() == 0 {
                     return Some(((), (), u32::try_from(4u64).unwrap()));
                 }
-                let mut sub_pattern_c53 =
+                let mut sub_pattern_c64 =
                     |tokens: &[u8], context_param: &mut T| {
                         let mut pattern_len = 0 as u32;
                         let mut context_instance = context_param.clone();
@@ -39964,7 +41970,7 @@ impl instructionVar246 {
                     };
                 let mut context_current = context_param.clone();
                 if let Some(((), (), sub_pattern_len)) =
-                    sub_pattern_c53(tokens_param, &mut context_current)
+                    sub_pattern_c64(tokens_param, &mut context_current)
                 {
                     *context_param = context_current;
                     return Some(((), (), sub_pattern_len));
@@ -39978,7 +41984,7 @@ impl instructionVar246 {
             Some(((), (), pattern_len))
         };
         let ((), (), sub_len) =
-            sub_pattern_c44(tokens_current, &mut context_instance)?;
+            sub_pattern_c55(tokens_current, &mut context_instance)?;
         block_0_len = block_0_len.max(sub_len);
         let addrmode2 = if let Some((len, table)) =
             addrmode2::parse(tokens_current, &mut context_instance, inst_start)
@@ -40003,7 +42009,7 @@ impl instructionVar246 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5461:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5477:1"]
 #[derive(Clone, Debug)]
 struct instructionVar247 {
     Rd: TokenField_Rd,
@@ -40049,7 +42055,13 @@ impl instructionVar247 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 0 {
@@ -40092,7 +42104,7 @@ impl instructionVar247 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5423:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5439:1"]
 #[derive(Clone, Debug)]
 struct instructionVar248 {
     COND: COND,
@@ -40136,7 +42148,13 @@ impl instructionVar248 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2527().disassembly() != 4 {
@@ -40183,7 +42201,7 @@ impl instructionVar248 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5560:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5576:1"]
 #[derive(Clone, Debug)]
 struct instructionVar249 {
     Rd: TokenField_Rd,
@@ -40238,7 +42256,13 @@ impl instructionVar249 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -40296,7 +42320,7 @@ impl instructionVar249 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5571:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5587:1"]
 #[derive(Clone, Debug)]
 struct instructionVar250 {
     Rd: TokenField_Rd,
@@ -40351,7 +42375,13 @@ impl instructionVar250 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -40409,7 +42439,7 @@ impl instructionVar250 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5582:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5598:1"]
 #[derive(Clone, Debug)]
 struct instructionVar251 {
     Rd: TokenField_Rd,
@@ -40464,7 +42494,13 @@ impl instructionVar251 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2124().disassembly() != 2 {
@@ -40522,7 +42558,7 @@ impl instructionVar251 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5652:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:5668:1"]
 #[derive(Clone, Debug)]
 struct instructionVar252 {
     immed24: TokenField_immed24,
@@ -40560,7 +42596,13 @@ impl instructionVar252 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcond_disassembly() != 1 {
             return None;
         }
         if token_parser.c2427().disassembly() != 15 {
@@ -40582,6832 +42624,15 @@ impl instructionVar252 {
         Some((pattern_len, Self { COND, immed24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2532:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3956:1"]
 #[derive(Clone, Debug)]
 struct instructionVar253 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    Hrd0002: Hrd0002,
-}
-impl instructionVar253 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 70 {
-            return None;
-        }
-        if token_parser.rm0306().disassembly() != 14 {
-            return None;
-        }
-        if token_parser.hrd0002().disassembly() != 7 {
-            return None;
-        }
-        if token_parser.h1().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                Hrd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2948:1"]
-#[derive(Clone, Debug)]
-struct instructionVar254 {
-    ItCond: ItCond,
-}
-impl instructionVar254 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("nop")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op0().disassembly() != 48896 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2956:1"]
-#[derive(Clone, Debug)]
-struct instructionVar255 {}
-impl instructionVar255 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("nop")];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.op0().disassembly() != 18112 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self {}))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3126:1"]
-#[derive(Clone, Debug)]
-struct instructionVar256 {
-    ItCond: ItCond,
-    thldrlist_inc: thldrlist_inc,
-}
-impl instructionVar256 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("    ")];
-        display.extend_from_slice(&extend);
-        self.thldrlist_inc.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op0().disassembly() != 59581 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 0u64 as u32;
-        let thldrlist_inc = if let Some((len, table)) = thldrlist_inc::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_1_len = block_1_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                thldrlist_inc,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3217:1"]
-#[derive(Clone, Debug)]
-struct instructionVar257 {
-    ItCond: ItCond,
-    thstrlist_dec: thstrlist_dec,
-}
-impl instructionVar257 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("push")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("    ")];
-        display.extend_from_slice(&extend);
-        self.thstrlist_dec.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op0().disassembly() != 59693 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 0u64 as u32;
-        let thstrlist_dec = if let Some((len, table)) = thstrlist_dec::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_1_len = block_1_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                thstrlist_dec,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1523:1"]
-#[derive(Clone, Debug)]
-struct instructionVar258 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    bxns: bxns,
-}
-impl instructionVar258 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
-        display.extend_from_slice(&extend);
-        self.bxns.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op7().disassembly() != 142 {
-            return None;
-        }
-        if token_parser.hrm0305().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.h2().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let bxns = if let Some((len, table)) =
-            bxns::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                bxns,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1033:1"]
-#[derive(Clone, Debug)]
-struct instructionVar259 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar259 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("adc")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 261 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZNO,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2540:1"]
-#[derive(Clone, Debug)]
-struct instructionVar260 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    Hrd0002: Hrd0002,
-}
-impl instructionVar260 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_LRset(
-            Some(inst_next),
-            context.register().read_LRset_disassembly(),
-        );
-        global_set.set_TMode(
-            Some(inst_next),
-            context.register().read_TMode_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 70 {
-            return None;
-        }
-        if token_parser.hrm0305().disassembly() != 7 {
-            return None;
-        }
-        if token_parser.hrd0002().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.h1().disassembly() != 1 {
-            return None;
-        }
-        let tmp = (1u64 as i64);
-        context_instance.register_mut().write_LRset_disassembly(tmp);
-        let tmp = (1u64 as i64);
-        context_instance.register_mut().write_TMode_disassembly(tmp);
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                Hrd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1161:1"]
-#[derive(Clone, Debug)]
-struct instructionVar261 {
-    ItCond: ItCond,
-    Hrd0002: Hrd0002,
-    Hrm0305: Hrm0305,
-}
-impl instructionVar261 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 68 {
-            return None;
-        }
-        if token_parser.hrd0002().disassembly() != 7 {
-            return None;
-        }
-        if token_parser.h1().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrd0002,
-                Hrm0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1217:1"]
-#[derive(Clone, Debug)]
-struct instructionVar262 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar262 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("and")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 256 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        let Rm0305 = token_parser.Rm0305();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rd0002,
-                Rm0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1252:1"]
-#[derive(Clone, Debug)]
-struct instructionVar263 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    Immed5: Immed5,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar263 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 6usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#0x20"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.immed5().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed5 = if let Some((len, table)) =
-            Immed5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed5,
-                CheckInIT_CZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1270:1"]
-#[derive(Clone, Debug)]
-struct instructionVar264 {
-    Rd0002: TokenField_Rd0002,
-    Rs0305: TokenField_Rs0305,
-    ItCond: ItCond,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar264 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rs0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 260 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        let Rs0305 = token_parser.Rs0305();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZN,
-                Rd0002,
-                Rs0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1360:1"]
-#[derive(Clone, Debug)]
-struct instructionVar265 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar265 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bic")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 270 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        let Rm0305 = token_parser.Rm0305();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rd0002,
-                Rm0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1638:1"]
-#[derive(Clone, Debug)]
-struct instructionVar266 {
-    Rn0002: TokenField_Rn0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-}
-impl instructionVar266 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmn")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rn0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 267 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rn0002 = token_parser.Rn0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Rm0305,
-                Rn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1678:1"]
-#[derive(Clone, Debug)]
-struct instructionVar267 {
-    Rn0002: TokenField_Rn0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-}
-impl instructionVar267 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rn0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 266 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rn0002 = token_parser.Rn0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Rm0305,
-                Rn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1832:1"]
-#[derive(Clone, Debug)]
-struct instructionVar268 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar268 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("eor")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 257 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2379:1"]
-#[derive(Clone, Debug)]
-struct instructionVar269 {
-    Rd0002: TokenField_Rd0002,
-    Rs0305: TokenField_Rs0305,
-    ItCond: ItCond,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar269 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsl")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rs0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 258 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rs0305 = token_parser.Rs0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZN,
-                Rs0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2395:1"]
-#[derive(Clone, Debug)]
-struct instructionVar270 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    Immed5: Immed5,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar270 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 6usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#0x20"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.immed5().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed5 = if let Some((len, table)) =
-            Immed5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed5,
-                CheckInIT_CZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2414:1"]
-#[derive(Clone, Debug)]
-struct instructionVar271 {
-    Rd0002: TokenField_Rd0002,
-    Rs0305: TokenField_Rs0305,
-    ItCond: ItCond,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar271 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rs0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 259 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        let Rs0305 = token_parser.Rs0305();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZN,
-                Rd0002,
-                Rs0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2510:1"]
-#[derive(Clone, Debug)]
-struct instructionVar272 {
-    Rd0002: TokenField_Rd0002,
-    Rn0305: TokenField_Rn0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar272 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rn0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0305 = token_parser.Rn0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rn0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2524:1"]
-#[derive(Clone, Debug)]
-struct instructionVar273 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    Hrd0002: Hrd0002,
-}
-impl instructionVar273 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 70 {
-            return None;
-        }
-        if token_parser.hrd0002().disassembly() != 7 {
-            return None;
-        }
-        if token_parser.h1().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                Hrd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2910:1"]
-#[derive(Clone, Debug)]
-struct instructionVar274 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar274 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mul")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 269 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2940:1"]
-#[derive(Clone, Debug)]
-struct instructionVar275 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar275 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mvn")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 271 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2960:1"]
-#[derive(Clone, Debug)]
-struct instructionVar276 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar276 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("orr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 268 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_ZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3410:1"]
-#[derive(Clone, Debug)]
-struct instructionVar277 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar277 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("rsb")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 265 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZNO,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3597:1"]
-#[derive(Clone, Debug)]
-struct instructionVar278 {
-    Rd0002: TokenField_Rd0002,
-    Rs0305: TokenField_Rs0305,
-    ItCond: ItCond,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar278 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ror")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rs0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 263 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rs0305 = token_parser.Rs0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZN,
-                Rs0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3697:1"]
-#[derive(Clone, Debug)]
-struct instructionVar279 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar279 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sbc")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 262 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZNO,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4797:1"]
-#[derive(Clone, Debug)]
-struct instructionVar280 {
-    Rn0002: TokenField_Rn0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-}
-impl instructionVar280 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("tst")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rn0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op6().disassembly() != 264 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rn0002 = token_parser.Rn0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Rm0305,
-                Rn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1175:1"]
-#[derive(Clone, Debug)]
-struct instructionVar281 {
-    ItCond: ItCond,
-    Immed7_4: Immed7_4,
-}
-impl instructionVar281 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            DisplayElement::Register(Register::sp),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed7_4.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op7().disassembly() != 352 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed7_4 = if let Some((len, table)) =
-            Immed7_4::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, Immed7_4 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1530:1"]
-#[derive(Clone, Debug)]
-struct instructionVar282 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    bxns: bxns,
-}
-impl instructionVar282 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
-        display.extend_from_slice(&extend);
-        self.bxns.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op7().disassembly() != 142 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let bxns = if let Some((len, table)) =
-            bxns::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                bxns,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1537:1"]
-#[derive(Clone, Debug)]
-struct instructionVar283 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    bxns: bxns,
-}
-impl instructionVar283 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_LRset(
-            Some(inst_next),
-            context.register().read_LRset_disassembly(),
-        );
-        global_set.set_TMode(
-            Some(inst_next),
-            context.register().read_TMode_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
-        display.extend_from_slice(&extend);
-        self.bxns.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if context_instance.register().read_LRset_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op7().disassembly() != 142 {
-            return None;
-        }
-        let tmp = (0u64 as i64);
-        context_instance.register_mut().write_LRset_disassembly(tmp);
-        let tmp = (1u64 as i64);
-        context_instance.register_mut().write_TMode_disassembly(tmp);
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let bxns = if let Some((len, table)) =
-            bxns::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                bxns,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4531:1"]
-#[derive(Clone, Debug)]
-struct instructionVar284 {
-    ItCond: ItCond,
-    Immed7_4: Immed7_4,
-}
-impl instructionVar284 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            DisplayElement::Register(Register::sp),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed7_4.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op7().disassembly() != 353 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed7_4 = if let Some((len, table)) =
-            Immed7_4::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, Immed7_4 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1155:1"]
-#[derive(Clone, Debug)]
-struct instructionVar285 {
-    ItCond: ItCond,
-    Hrd0002: Hrd0002,
-    Hrm0305: Hrm0305,
-}
-impl instructionVar285 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 68 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrd0002,
-                Hrm0305,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1687:1"]
-#[derive(Clone, Debug)]
-struct instructionVar286 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    Hrn0002: Hrn0002,
-}
-impl instructionVar286 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrn0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 69 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrn0002 = if let Some((len, table)) =
-            Hrn0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                Hrn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2518:1"]
-#[derive(Clone, Debug)]
-struct instructionVar287 {
-    ItCond: ItCond,
-    Hrm0305: Hrm0305,
-    Hrd0002: Hrd0002,
-}
-impl instructionVar287 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Hrd0002.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.Hrm0305.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 70 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrm0305 = if let Some((len, table)) =
-            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Hrd0002 = if let Some((len, table)) =
-            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Hrm0305,
-                Hrd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3106:1"]
-#[derive(Clone, Debug)]
-struct instructionVar288 {
-    ItCond: ItCond,
-    ldbrace: ldbrace,
-}
-impl instructionVar288 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.ldbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 94 {
-            return None;
-        }
-        if token_parser.R().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let ldbrace = if let Some((len, table)) =
-            ldbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, ldbrace }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3115:1"]
-#[derive(Clone, Debug)]
-struct instructionVar289 {
-    ItCond: ItCond,
-    pclbrace: pclbrace,
-}
-impl instructionVar289 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.pclbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 94 {
-            return None;
-        }
-        if token_parser.R().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let pclbrace = if let Some((len, table)) =
-            pclbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, pclbrace }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3199:1"]
-#[derive(Clone, Debug)]
-struct instructionVar290 {
-    ItCond: ItCond,
-    psbrace: psbrace,
-}
-impl instructionVar290 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("push")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.psbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 90 {
-            return None;
-        }
-        if token_parser.R().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let psbrace = if let Some((len, table)) =
-            psbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, psbrace }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3208:1"]
-#[derive(Clone, Debug)]
-struct instructionVar291 {
-    ItCond: ItCond,
-    pcpbrace: pcpbrace,
-}
-impl instructionVar291 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("push")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.pcpbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 90 {
-            return None;
-        }
-        if token_parser.R().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let pcpbrace = if let Some((len, table)) =
-            pcpbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, pcpbrace }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4612:1"]
-#[derive(Clone, Debug)]
-struct instructionVar292 {
-    immed8: TokenField_immed8,
-    ItCond: ItCond,
-}
-impl instructionVar292 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("svc")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal("\t"), self.immed8.display()];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op8().disassembly() != 223 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let immed8 = token_parser.immed8();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, immed8 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1066:1"]
-#[derive(Clone, Debug)]
-struct instructionVar293 {
-    Rd0002: TokenField_Rd0002,
-    Rn0305: TokenField_Rn0305,
-    ItCond: ItCond,
-    Immed3: Immed3,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar293 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rn0305.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed3.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 14 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed3 = if let Some((len, table)) =
-            Immed3::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0305 = token_parser.Rn0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed3,
-                CheckInIT_CZNO,
-                Rn0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1146:1"]
-#[derive(Clone, Debug)]
-struct instructionVar294 {
-    Rd0002: TokenField_Rd0002,
-    Rn0305: TokenField_Rn0305,
-    Rm0608: TokenField_Rm0608,
-    ItCond: ItCond,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar294 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 6usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rn0305.display(),
-            DisplayElement::Literal(","),
-            self.Rm0608.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 12 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0608 = token_parser.Rm0608();
-        let Rn0305 = token_parser.Rn0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZNO,
-                Rm0608,
-                Rn0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1464:1"]
-#[derive(Clone, Debug)]
-struct instructionVar295 {
-    offset11: TokenField_offset11,
-    ItCond: ItCond,
-}
-impl instructionVar295 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut off: i64 = 0;
-        off = (self.offset11.disassembly() << (1u64 as i64));
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("blx")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal(" \t"),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, off),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 29 {
-            return None;
-        }
-        if token_parser.thc0000().disassembly() != 0 {
-            return None;
-        }
-        let mut off: i64 = 0;
-        off = (token_parser.offset11().disassembly() << (1u64 as i64));
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let offset11 = token_parser.offset11();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, offset11 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1560:1"]
-#[derive(Clone, Debug)]
-struct instructionVar296 {
-    Rn0002: TokenField_Rn0002,
-    ItCond: ItCond,
-    Addr5: Addr5,
-}
-impl instructionVar296 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("cbnz")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("  "),
-            self.Rn0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Addr5.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op12().disassembly() != 11 {
-            return None;
-        }
-        if token_parser.thc1111().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.thc1010().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.thc0808().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Addr5 = if let Some((len, table)) =
-            Addr5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0002 = token_parser.Rn0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Addr5,
-                Rn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1567:1"]
-#[derive(Clone, Debug)]
-struct instructionVar297 {
-    Rn0002: TokenField_Rn0002,
-    ItCond: ItCond,
-    Addr5: Addr5,
-}
-impl instructionVar297 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cbz")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("  "),
-            self.Rn0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Addr5.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op12().disassembly() != 11 {
-            return None;
-        }
-        if token_parser.thc1111().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.thc1010().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.thc0808().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Addr5 = if let Some((len, table)) =
-            Addr5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0002 = token_parser.Rn0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Addr5,
-                Rn0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2011:1"]
-#[derive(Clone, Debug)]
-struct instructionVar298 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar298 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 44 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2040:1"]
-#[derive(Clone, Debug)]
-struct instructionVar299 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar299 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrb")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 46 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2054:1"]
-#[derive(Clone, Debug)]
-struct instructionVar300 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar300 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrh")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 45 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2061:1"]
-#[derive(Clone, Debug)]
-struct instructionVar301 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar301 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrsb")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 43 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2068:1"]
-#[derive(Clone, Debug)]
-struct instructionVar302 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar302 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrsh")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 47 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4307:1"]
-#[derive(Clone, Debug)]
-struct instructionVar303 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar303 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 40 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4327:1"]
-#[derive(Clone, Debug)]
-struct instructionVar304 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar304 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("strb")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 42 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4341:1"]
-#[derive(Clone, Debug)]
-struct instructionVar305 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnRmIndirect: RnRmIndirect,
-}
-impl instructionVar305 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("strh")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnRmIndirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 41 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnRmIndirect,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4504:1"]
-#[derive(Clone, Debug)]
-struct instructionVar306 {
-    Rd0002: TokenField_Rd0002,
-    Rn0305: TokenField_Rn0305,
-    ItCond: ItCond,
-    Immed3: Immed3,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar306 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rn0305.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed3.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 15 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed3 = if let Some((len, table)) =
-            Immed3::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0305 = token_parser.Rn0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed3,
-                CheckInIT_CZNO,
-                Rn0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4522:1"]
-#[derive(Clone, Debug)]
-struct instructionVar307 {
-    Rd0002: TokenField_Rd0002,
-    Rn0305: TokenField_Rn0305,
-    Rm0608: TokenField_Rm0608,
-    ItCond: ItCond,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar307 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 6usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rn0305.display(),
-            DisplayElement::Literal(","),
-            self.Rm0608.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op9().disassembly() != 13 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0608 = token_parser.Rm0608();
-        let Rn0305 = token_parser.Rn0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                CheckInIT_CZNO,
-                Rm0608,
-                Rn0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1075:1"]
-#[derive(Clone, Debug)]
-struct instructionVar308 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Immed8: Immed8,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar308 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 6 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed8 = if let Some((len, table)) =
-            Immed8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed8,
-                CheckInIT_CZNO,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1169:1"]
-#[derive(Clone, Debug)]
-struct instructionVar309 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Sprel8: Sprel8,
-}
-impl instructionVar309 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Sprel8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 21 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Sprel8 = if let Some((len, table)) =
-            Sprel8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Sprel8,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1181:1"]
-#[derive(Clone, Debug)]
-struct instructionVar310 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Pcrel8: Pcrel8,
-}
-impl instructionVar310 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("adr")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Pcrel8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 20 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Pcrel8 = if let Some((len, table)) =
-            Pcrel8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Pcrel8,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1261:1"]
-#[derive(Clone, Debug)]
-struct instructionVar311 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    Immed5: Immed5,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar311 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed5.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 2 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed5 = if let Some((len, table)) =
-            Immed5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed5,
-                CheckInIT_CZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1320:1"]
-#[derive(Clone, Debug)]
-struct instructionVar312 {
-    ItCond: ItCond,
-    Addr11: Addr11,
-}
-impl instructionVar312 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Addr11.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 28 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Addr11 = if let Some((len, table)) =
-            Addr11::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, Addr11 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1449:1"]
-#[derive(Clone, Debug)]
-struct instructionVar313 {
-    soffset11: TokenField_soffset11,
-    ItCond: ItCond,
-}
-impl instructionVar313 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut off: i64 = 0;
-        off = ((i64::try_from(inst_start).unwrap() + (4u64 as i64))
-            + (self.soffset11.disassembly() << (12u64 as i64)));
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bl")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal(" \t"),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, off),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 30 {
-            return None;
-        }
-        let mut off: i64 = 0;
-        off = ((i64::try_from(inst_start).unwrap() + (4u64 as i64))
-            + (token_parser.soffset11().disassembly() << (12u64 as i64)));
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let soffset11 = token_parser.soffset11();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, soffset11 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1455:1"]
-#[derive(Clone, Debug)]
-struct instructionVar314 {
-    offset11: TokenField_offset11,
-    ItCond: ItCond,
-}
-impl instructionVar314 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut off: i64 = 0;
-        off = (self.offset11.disassembly() << (1u64 as i64));
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bl")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal(" \t"),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, off),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 31 {
-            return None;
-        }
-        let mut off: i64 = 0;
-        off = (token_parser.offset11().disassembly() << (1u64 as i64));
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let offset11 = token_parser.offset11();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ItCond, offset11 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1647:1"]
-#[derive(Clone, Debug)]
-struct instructionVar315 {
-    Rn0810: TokenField_Rn0810,
-    ItCond: ItCond,
-    Immed8: Immed8,
-}
-impl instructionVar315 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rn0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 5 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed8 = if let Some((len, table)) =
-            Immed8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn0810 = token_parser.Rn0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed8,
-                Rn0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1923:1"]
-#[derive(Clone, Debug)]
-struct instructionVar316 {
-    ItCond: ItCond,
-    Rn_exclaim: Rn_exclaim,
-    ldbrace: ldbrace,
-    Rn_exclaim_WB: Rn_exclaim_WB,
-}
-impl instructionVar316 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldmia")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Rn_exclaim.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.ldbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 25 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn_exclaim = if let Some((len, table)) =
-            Rn_exclaim::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let ldbrace = if let Some((len, table)) =
-            ldbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn_exclaim_WB = if let Some((len, table)) = Rn_exclaim_WB::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Rn_exclaim,
-                ldbrace,
-                Rn_exclaim_WB,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2004:1"]
-#[derive(Clone, Debug)]
-struct instructionVar317 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect4: RnIndirect4,
-}
-impl instructionVar317 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect4.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 13 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect4 = if let Some((len, table)) = RnIndirect4::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect4,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2018:1"]
-#[derive(Clone, Debug)]
-struct instructionVar318 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Pcrel8Indirect: Pcrel8Indirect,
-}
-impl instructionVar318 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Pcrel8Indirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 9 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Pcrel8Indirect = if let Some((len, table)) = Pcrel8Indirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Pcrel8Indirect,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2026:1"]
-#[derive(Clone, Debug)]
-struct instructionVar319 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Sprel8Indirect: Sprel8Indirect,
-}
-impl instructionVar319 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Sprel8Indirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 19 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Sprel8Indirect = if let Some((len, table)) = Sprel8Indirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Sprel8Indirect,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2033:1"]
-#[derive(Clone, Debug)]
-struct instructionVar320 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect1: RnIndirect1,
-}
-impl instructionVar320 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrb")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 15 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect1 = if let Some((len, table)) = RnIndirect1::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect1,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2047:1"]
-#[derive(Clone, Debug)]
-struct instructionVar321 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect2: RnIndirect2,
-}
-impl instructionVar321 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("ldrh")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect2.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 17 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect2 = if let Some((len, table)) = RnIndirect2::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect2,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2370:1"]
-#[derive(Clone, Debug)]
-struct instructionVar322 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    Immed5: Immed5,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar322 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsl")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed5.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 0 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed5 = if let Some((len, table)) =
-            Immed5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed5,
-                CheckInIT_CZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2404:1"]
-#[derive(Clone, Debug)]
-struct instructionVar323 {
-    Rd0002: TokenField_Rd0002,
-    Rm0305: TokenField_Rm0305,
-    ItCond: ItCond,
-    Immed5: Immed5,
-    CheckInIT_CZN: CheckInIT_CZN,
-}
-impl instructionVar323 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-            self.Rm0305.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed5.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 1 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed5 = if let Some((len, table)) =
-            Immed5::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rm0305 = token_parser.Rm0305();
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed5,
-                CheckInIT_CZN,
-                Rm0305,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2502:1"]
-#[derive(Clone, Debug)]
-struct instructionVar324 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Immed8: Immed8,
-    CheckInIT_ZN: CheckInIT_ZN,
-}
-impl instructionVar324 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_ZN.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 4 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed8 = if let Some((len, table)) =
-            Immed8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed8,
-                CheckInIT_ZN,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4293:1"]
-#[derive(Clone, Debug)]
-struct instructionVar325 {
-    ItCond: ItCond,
-    Rn_exclaim: Rn_exclaim,
-    stbrace: stbrace,
-    Rn_exclaim_WB: Rn_exclaim_WB,
-}
-impl instructionVar325 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("stmia")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Rn_exclaim.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
-        display.extend_from_slice(&extend);
-        self.stbrace.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 24 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn_exclaim = if let Some((len, table)) =
-            Rn_exclaim::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let stbrace = if let Some((len, table)) =
-            stbrace::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rn_exclaim_WB = if let Some((len, table)) = Rn_exclaim_WB::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Rn_exclaim,
-                stbrace,
-                Rn_exclaim_WB,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4301:1"]
-#[derive(Clone, Debug)]
-struct instructionVar326 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect4: RnIndirect4,
-}
-impl instructionVar326 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect4.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 12 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect4 = if let Some((len, table)) = RnIndirect4::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect4,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4313:1"]
-#[derive(Clone, Debug)]
-struct instructionVar327 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Sprel8Indirect: Sprel8Indirect,
-}
-impl instructionVar327 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Sprel8Indirect.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 18 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Sprel8Indirect = if let Some((len, table)) = Sprel8Indirect::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Sprel8Indirect,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4320:1"]
-#[derive(Clone, Debug)]
-struct instructionVar328 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect1: RnIndirect1,
-}
-impl instructionVar328 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("strb")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect1.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 14 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect1 = if let Some((len, table)) = RnIndirect1::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect1,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4334:1"]
-#[derive(Clone, Debug)]
-struct instructionVar329 {
-    Rd0002: TokenField_Rd0002,
-    ItCond: ItCond,
-    RnIndirect2: RnIndirect2,
-}
-impl instructionVar329 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Literal("strh")];
-        display.extend_from_slice(&extend);
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0002.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.RnIndirect2.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 16 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let RnIndirect2 = if let Some((len, table)) = RnIndirect2::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0002 = token_parser.Rd0002();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                RnIndirect2,
-                Rd0002,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4513:1"]
-#[derive(Clone, Debug)]
-struct instructionVar330 {
-    Rd0810: TokenField_Rd0810,
-    ItCond: ItCond,
-    Immed8: Immed8,
-    CheckInIT_CZNO: CheckInIT_CZNO,
-}
-impl instructionVar330 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
-        display.extend_from_slice(&extend);
-        self.CheckInIT_CZNO.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        self.ItCond.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("\t"),
-            self.Rd0810.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.Immed8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op11().disassembly() != 7 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Immed8 = if let Some((len, table)) =
-            Immed8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
-            tokens_current,
-            &mut context_instance,
-            inst_start,
-        ) {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let Rd0810 = token_parser.Rd0810();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                Immed8,
-                CheckInIT_CZNO,
-                Rd0810,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1315:1"]
-#[derive(Clone, Debug)]
-struct instructionVar331 {
-    ItCond: ItCond,
-    thcc: thcc,
-    Addr8: Addr8,
-}
-impl instructionVar331 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.thcc.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
-        display.extend_from_slice(&extend);
-        self.Addr8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 2u64 as u32;
-        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_TMode_disassembly() != 1 {
-            return None;
-        }
-        if token_parser.op12().disassembly() != 13 {
-            return None;
-        }
-        let ItCond = if let Some((len, table)) =
-            ItCond::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let thcc = if let Some((len, table)) =
-            thcc::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let mut sub_pattern_c10 = |tokens: &[u8], context_param: &mut T| {
-            let mut pattern_len = 0 as u32;
-            let mut context_instance = context_param.clone();
-            let mut tokens = tokens;
-            let block_0 = |tokens_param: &[u8], context_param: &mut T| {
-                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
-                if token_parser.thc1515().disassembly() == 0 {
-                    return Some(((), (), u32::try_from(2u64).unwrap()));
-                }
-                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
-                if token_parser.thc1414().disassembly() == 0 {
-                    return Some(((), (), u32::try_from(2u64).unwrap()));
-                }
-                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
-                if token_parser.thc1313().disassembly() == 0 {
-                    return Some(((), (), u32::try_from(2u64).unwrap()));
-                }
-                None
-            };
-            let ((), (), block_0_len) = block_0(tokens, &mut context_instance)?;
-            pattern_len += block_0_len;
-            tokens = &tokens[usize::try_from(block_0_len).unwrap()..];
-            *context_param = context_instance;
-            Some(((), (), pattern_len))
-        };
-        let ((), (), sub_len) =
-            sub_pattern_c10(tokens_current, &mut context_instance)?;
-        block_0_len = block_0_len.max(sub_len);
-        let Addr8 = if let Some((len, table)) =
-            Addr8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((
-            pattern_len,
-            Self {
-                ItCond,
-                thcc,
-                Addr8,
-            },
-        ))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3959:1"]
-#[derive(Clone, Debug)]
-struct instructionVar332 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar332 {
+impl instructionVar253 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47446,6 +42671,9 @@ impl instructionVar332 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47489,15 +42717,15 @@ impl instructionVar332 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3966:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3963:1"]
 #[derive(Clone, Debug)]
-struct instructionVar333 {
+struct instructionVar254 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar333 {
+impl instructionVar254 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47536,6 +42764,9 @@ impl instructionVar333 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47579,15 +42810,15 @@ impl instructionVar333 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3986:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3983:1"]
 #[derive(Clone, Debug)]
-struct instructionVar334 {
+struct instructionVar255 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar334 {
+impl instructionVar255 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47626,6 +42857,9 @@ impl instructionVar334 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47669,15 +42903,15 @@ impl instructionVar334 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3996:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3993:1"]
 #[derive(Clone, Debug)]
-struct instructionVar335 {
+struct instructionVar256 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar335 {
+impl instructionVar256 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47716,6 +42950,9 @@ impl instructionVar335 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47759,15 +42996,15 @@ impl instructionVar335 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4006:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4003:1"]
 #[derive(Clone, Debug)]
-struct instructionVar336 {
+struct instructionVar257 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar336 {
+impl instructionVar257 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47806,6 +43043,9 @@ impl instructionVar336 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47849,15 +43089,15 @@ impl instructionVar336 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4016:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4013:1"]
 #[derive(Clone, Debug)]
-struct instructionVar337 {
+struct instructionVar258 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar337 {
+impl instructionVar258 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47896,6 +43136,9 @@ impl instructionVar337 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -47939,9 +43182,9 @@ impl instructionVar337 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3974:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3971:1"]
 #[derive(Clone, Debug)]
-struct instructionVar338 {
+struct instructionVar259 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -47949,7 +43192,7 @@ struct instructionVar338 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar338 {
+impl instructionVar259 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -47991,6 +43234,9 @@ impl instructionVar338 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48052,9 +43298,9 @@ impl instructionVar338 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4034:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4031:1"]
 #[derive(Clone, Debug)]
-struct instructionVar339 {
+struct instructionVar260 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -48062,7 +43308,7 @@ struct instructionVar339 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar339 {
+impl instructionVar260 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48104,6 +43350,9 @@ impl instructionVar339 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48165,16 +43414,16 @@ impl instructionVar339 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4046:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4043:1"]
 #[derive(Clone, Debug)]
-struct instructionVar340 {
+struct instructionVar261 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
     thYBIT: thYBIT,
 }
-impl instructionVar340 {
+impl instructionVar261 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48216,6 +43465,9 @@ impl instructionVar340 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48268,13 +43520,13 @@ impl instructionVar340 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1439:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1436:1"]
 #[derive(Clone, Debug)]
-struct instructionVar341 {
+struct instructionVar262 {
     ItCond: ItCond,
     ThAddr24: ThAddr24,
 }
-impl instructionVar341 {
+impl instructionVar262 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48307,6 +43559,9 @@ impl instructionVar341 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48360,13 +43615,13 @@ impl instructionVar341 {
         Some((pattern_len, Self { ItCond, ThAddr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1474:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1471:1"]
 #[derive(Clone, Debug)]
-struct instructionVar342 {
+struct instructionVar263 {
     ItCond: ItCond,
     ThAddr24: ThAddr24,
 }
-impl instructionVar342 {
+impl instructionVar263 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48399,6 +43654,9 @@ impl instructionVar342 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48455,16 +43713,16 @@ impl instructionVar342 {
         Some((pattern_len, Self { ItCond, ThAddr24 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3867:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3864:1"]
 #[derive(Clone, Debug)]
-struct instructionVar343 {
+struct instructionVar264 {
     Rt1215: TokenField_Rt1215,
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar343 {
+impl instructionVar264 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48505,6 +43763,9 @@ impl instructionVar343 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48547,16 +43808,16 @@ impl instructionVar343 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3924:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3921:1"]
 #[derive(Clone, Debug)]
-struct instructionVar344 {
+struct instructionVar265 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     Ra1215: TokenField_Ra1215,
     ItCond: ItCond,
 }
-impl instructionVar344 {
+impl instructionVar265 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48597,6 +43858,9 @@ impl instructionVar344 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48639,16 +43903,16 @@ impl instructionVar344 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3933:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3930:1"]
 #[derive(Clone, Debug)]
-struct instructionVar345 {
+struct instructionVar266 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     Ra1215: TokenField_Ra1215,
     ItCond: ItCond,
 }
-impl instructionVar345 {
+impl instructionVar266 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48689,6 +43953,9 @@ impl instructionVar345 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48731,16 +43998,16 @@ impl instructionVar345 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3942:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3939:1"]
 #[derive(Clone, Debug)]
-struct instructionVar346 {
+struct instructionVar267 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     Ra1215: TokenField_Ra1215,
     ItCond: ItCond,
 }
-impl instructionVar346 {
+impl instructionVar267 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48781,6 +44048,9 @@ impl instructionVar346 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48823,16 +44093,16 @@ impl instructionVar346 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3950:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3947:1"]
 #[derive(Clone, Debug)]
-struct instructionVar347 {
+struct instructionVar268 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     Ra1215: TokenField_Ra1215,
     ItCond: ItCond,
 }
-impl instructionVar347 {
+impl instructionVar268 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48873,6 +44143,9 @@ impl instructionVar347 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -48915,16 +44188,16 @@ impl instructionVar347 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4026:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4023:1"]
 #[derive(Clone, Debug)]
-struct instructionVar348 {
+struct instructionVar269 {
     Ra1215: TokenField_Ra1215,
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
     ItCond: ItCond,
 }
-impl instructionVar348 {
+impl instructionVar269 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -48965,6 +44238,9 @@ impl instructionVar348 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49007,9 +44283,9 @@ impl instructionVar348 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2467:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2464:1"]
 #[derive(Clone, Debug)]
-struct instructionVar349 {
+struct instructionVar270 {
     thcpn: TokenField_thcpn,
     thc0507: TokenField_thc0507,
     Rt1215: TokenField_Rt1215,
@@ -49018,7 +44294,7 @@ struct instructionVar349 {
     thopcode2: TokenField_thopcode2,
     ItCond: ItCond,
 }
-impl instructionVar349 {
+impl instructionVar270 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49062,6 +44338,9 @@ impl instructionVar349 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49111,9 +44390,9 @@ impl instructionVar349 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2476:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2473:1"]
 #[derive(Clone, Debug)]
-struct instructionVar350 {
+struct instructionVar271 {
     thcpn: TokenField_thcpn,
     thc0507: TokenField_thc0507,
     Rt1215: TokenField_Rt1215,
@@ -49122,7 +44401,7 @@ struct instructionVar350 {
     thopcode2: TokenField_thopcode2,
     ItCond: ItCond,
 }
-impl instructionVar350 {
+impl instructionVar271 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49167,6 +44446,9 @@ impl instructionVar350 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49216,13 +44498,13 @@ impl instructionVar350 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3135:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3132:1"]
 #[derive(Clone, Debug)]
-struct instructionVar351 {
+struct instructionVar272 {
     ItCond: ItCond,
     thldrlist_inc: thldrlist_inc,
 }
-impl instructionVar351 {
+impl instructionVar272 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49257,6 +44539,9 @@ impl instructionVar351 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49302,9 +44587,9 @@ impl instructionVar351 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3839:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3836:1"]
 #[derive(Clone, Debug)]
-struct instructionVar352 {
+struct instructionVar273 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -49313,7 +44598,7 @@ struct instructionVar352 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar352 {
+impl instructionVar273 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49357,6 +44642,9 @@ impl instructionVar352 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49417,9 +44705,9 @@ impl instructionVar352 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3852:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3849:1"]
 #[derive(Clone, Debug)]
-struct instructionVar353 {
+struct instructionVar274 {
     Rt1215: TokenField_Rt1215,
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
@@ -49428,7 +44716,7 @@ struct instructionVar353 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar353 {
+impl instructionVar274 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49472,6 +44760,9 @@ impl instructionVar353 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49532,9 +44823,9 @@ impl instructionVar353 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3886:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3883:1"]
 #[derive(Clone, Debug)]
-struct instructionVar354 {
+struct instructionVar275 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -49542,7 +44833,7 @@ struct instructionVar354 {
     ItCond: ItCond,
     thYBIT: thYBIT,
 }
-impl instructionVar354 {
+impl instructionVar275 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49586,6 +44877,9 @@ impl instructionVar354 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49637,9 +44931,9 @@ impl instructionVar354 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3896:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3893:1"]
 #[derive(Clone, Debug)]
-struct instructionVar355 {
+struct instructionVar276 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -49648,7 +44942,7 @@ struct instructionVar355 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar355 {
+impl instructionVar276 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49692,6 +44986,9 @@ impl instructionVar355 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49752,9 +45049,9 @@ impl instructionVar355 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3909:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3906:1"]
 #[derive(Clone, Debug)]
-struct instructionVar356 {
+struct instructionVar277 {
     Rt1215: TokenField_Rt1215,
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
@@ -49763,7 +45060,7 @@ struct instructionVar356 {
     thdXbot: thdXbot,
     thdXtop: thdXtop,
 }
-impl instructionVar356 {
+impl instructionVar277 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49807,6 +45104,9 @@ impl instructionVar356 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49867,9 +45167,9 @@ impl instructionVar356 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3825:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3822:1"]
 #[derive(Clone, Debug)]
-struct instructionVar357 {
+struct instructionVar278 {
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
     Rm0003: TokenField_Rm0003,
@@ -49878,7 +45178,7 @@ struct instructionVar357 {
     thYBIT: thYBIT,
     thXBIT: thXBIT,
 }
-impl instructionVar357 {
+impl instructionVar278 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -49925,6 +45225,9 @@ impl instructionVar357 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -49998,9 +45301,9 @@ impl instructionVar357 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3876:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3873:1"]
 #[derive(Clone, Debug)]
-struct instructionVar358 {
+struct instructionVar279 {
     Rt1215: TokenField_Rt1215,
     Rd0811: TokenField_Rd0811,
     Rn0003: TokenField_Rn0003,
@@ -50009,7 +45312,7 @@ struct instructionVar358 {
     thYBIT: thYBIT,
     thXBIT: thXBIT,
 }
-impl instructionVar358 {
+impl instructionVar279 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -50056,6 +45359,9 @@ impl instructionVar358 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -50129,9 +45435,9 @@ impl instructionVar358 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2485:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2482:1"]
 #[derive(Clone, Debug)]
-struct instructionVar359 {
+struct instructionVar280 {
     thcpn: TokenField_thcpn,
     thopcode1: TokenField_thopcode1,
     Rt1215: TokenField_Rt1215,
@@ -50139,7 +45445,7 @@ struct instructionVar359 {
     thCRm: TokenField_thCRm,
     ItCond: ItCond,
 }
-impl instructionVar359 {
+impl instructionVar280 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -50182,6 +45488,9 @@ impl instructionVar359 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -50223,9 +45532,9 @@ impl instructionVar359 {
         ))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2493:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2490:1"]
 #[derive(Clone, Debug)]
-struct instructionVar360 {
+struct instructionVar281 {
     thcpn: TokenField_thcpn,
     thopcode1: TokenField_thopcode1,
     Rt1215: TokenField_Rt1215,
@@ -50233,7 +45542,7 @@ struct instructionVar360 {
     thCRm: TokenField_thCRm,
     ItCond: ItCond,
 }
-impl instructionVar360 {
+impl instructionVar281 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -50276,6 +45585,9 @@ impl instructionVar360 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if context_instance.register().read_TMode_disassembly() != 1 {
             return None;
         }
@@ -50313,6 +45625,7213 @@ impl instructionVar360 {
                 thcpn,
                 thopcode1,
                 thCRm,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1526:1"]
+#[derive(Clone, Debug)]
+struct instructionVar282 {
+    instruction: Box<instruction>,
+}
+impl instructionVar282 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        self.instruction.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 0u64 as u32;
+        if context_instance.register().read_TMode_disassembly() != 0 {
+            return None;
+        }
+        if context_instance.register().read_ARMcondCk_disassembly() != 0 {
+            return None;
+        }
+        let tmp = (1u64 as i64);
+        context_instance
+            .register_mut()
+            .write_ARMcondCk_disassembly(tmp);
+        let tmp = (1u64 as i64);
+        context_instance
+            .register_mut()
+            .write_ARMcond_disassembly(tmp);
+        let mut sub_pattern_c19 = |tokens: &[u8], context_param: &mut T| {
+            let mut pattern_len = 0 as u32;
+            let mut context_instance = context_param.clone();
+            let mut tokens = tokens;
+            let block_0 = |tokens_param: &[u8], context_param: &mut T| {
+                let token_parser = <TokenParser<4usize>>::new(tokens_param)?;
+                if token_parser.bit31().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(4u64).unwrap()));
+                }
+                let token_parser = <TokenParser<4usize>>::new(tokens_param)?;
+                if token_parser.bit30().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(4u64).unwrap()));
+                }
+                let token_parser = <TokenParser<4usize>>::new(tokens_param)?;
+                if token_parser.bit29().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(4u64).unwrap()));
+                }
+                let token_parser = <TokenParser<4usize>>::new(tokens_param)?;
+                if token_parser.bit28().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(4u64).unwrap()));
+                }
+                None
+            };
+            let ((), (), block_0_len) = block_0(tokens, &mut context_instance)?;
+            pattern_len += block_0_len;
+            tokens = &tokens[usize::try_from(block_0_len).unwrap()..];
+            *context_param = context_instance;
+            Some(((), (), pattern_len))
+        };
+        let ((), (), sub_len) =
+            sub_pattern_c19(tokens_current, &mut context_instance)?;
+        block_0_len = block_0_len.max(sub_len);
+        let instruction = if let Some((len, table)) = instruction::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            Box::new(table)
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { instruction }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1527:1"]
+#[derive(Clone, Debug)]
+struct instructionVar283 {
+    instruction: Box<instruction>,
+}
+impl instructionVar283 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        self.instruction.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 0u64 as u32;
+        if context_instance.register().read_ARMcondCk_disassembly() != 0 {
+            return None;
+        }
+        let tmp = (1u64 as i64);
+        context_instance
+            .register_mut()
+            .write_ARMcondCk_disassembly(tmp);
+        let tmp = (0u64 as i64);
+        context_instance
+            .register_mut()
+            .write_ARMcond_disassembly(tmp);
+        let instruction = if let Some((len, table)) = instruction::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            Box::new(table)
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { instruction }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2529:1"]
+#[derive(Clone, Debug)]
+struct instructionVar284 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    Hrd0002: Hrd0002,
+}
+impl instructionVar284 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 70 {
+            return None;
+        }
+        if token_parser.rm0306().disassembly() != 14 {
+            return None;
+        }
+        if token_parser.hrd0002().disassembly() != 7 {
+            return None;
+        }
+        if token_parser.h1().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                Hrd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2945:1"]
+#[derive(Clone, Debug)]
+struct instructionVar285 {
+    ItCond: ItCond,
+}
+impl instructionVar285 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("nop")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op0().disassembly() != 48896 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2953:1"]
+#[derive(Clone, Debug)]
+struct instructionVar286 {}
+impl instructionVar286 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("nop")];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op0().disassembly() != 18112 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self {}))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3123:1"]
+#[derive(Clone, Debug)]
+struct instructionVar287 {
+    ItCond: ItCond,
+    thldrlist_inc: thldrlist_inc,
+}
+impl instructionVar287 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("    ")];
+        display.extend_from_slice(&extend);
+        self.thldrlist_inc.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op0().disassembly() != 59581 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 0u64 as u32;
+        let thldrlist_inc = if let Some((len, table)) = thldrlist_inc::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_1_len = block_1_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                thldrlist_inc,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3214:1"]
+#[derive(Clone, Debug)]
+struct instructionVar288 {
+    ItCond: ItCond,
+    thstrlist_dec: thstrlist_dec,
+}
+impl instructionVar288 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("push")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("    ")];
+        display.extend_from_slice(&extend);
+        self.thstrlist_dec.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op0().disassembly() != 59693 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 0u64 as u32;
+        let thstrlist_dec = if let Some((len, table)) = thstrlist_dec::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_1_len = block_1_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                thstrlist_dec,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1520:1"]
+#[derive(Clone, Debug)]
+struct instructionVar289 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    bxns: bxns,
+}
+impl instructionVar289 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
+        display.extend_from_slice(&extend);
+        self.bxns.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op7().disassembly() != 142 {
+            return None;
+        }
+        if token_parser.hrm0305().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.h2().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let bxns = if let Some((len, table)) =
+            bxns::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                bxns,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1030:1"]
+#[derive(Clone, Debug)]
+struct instructionVar290 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar290 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("adc")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 261 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZNO,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2537:1"]
+#[derive(Clone, Debug)]
+struct instructionVar291 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    Hrd0002: Hrd0002,
+}
+impl instructionVar291 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_LRset(
+            Some(inst_next),
+            context.register().read_LRset_disassembly(),
+        );
+        global_set.set_TMode(
+            Some(inst_next),
+            context.register().read_TMode_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 70 {
+            return None;
+        }
+        if token_parser.hrm0305().disassembly() != 7 {
+            return None;
+        }
+        if token_parser.hrd0002().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.h1().disassembly() != 1 {
+            return None;
+        }
+        let tmp = (1u64 as i64);
+        context_instance.register_mut().write_LRset_disassembly(tmp);
+        let tmp = (1u64 as i64);
+        context_instance.register_mut().write_TMode_disassembly(tmp);
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                Hrd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1158:1"]
+#[derive(Clone, Debug)]
+struct instructionVar292 {
+    ItCond: ItCond,
+    Hrd0002: Hrd0002,
+    Hrm0305: Hrm0305,
+}
+impl instructionVar292 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 68 {
+            return None;
+        }
+        if token_parser.hrd0002().disassembly() != 7 {
+            return None;
+        }
+        if token_parser.h1().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrd0002,
+                Hrm0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1214:1"]
+#[derive(Clone, Debug)]
+struct instructionVar293 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar293 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("and")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 256 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        let Rm0305 = token_parser.Rm0305();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rd0002,
+                Rm0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1249:1"]
+#[derive(Clone, Debug)]
+struct instructionVar294 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    Immed5: Immed5,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar294 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 6usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#0x20"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 2 {
+            return None;
+        }
+        if token_parser.immed5().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed5 = if let Some((len, table)) =
+            Immed5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed5,
+                CheckInIT_CZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1267:1"]
+#[derive(Clone, Debug)]
+struct instructionVar295 {
+    Rd0002: TokenField_Rd0002,
+    Rs0305: TokenField_Rs0305,
+    ItCond: ItCond,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar295 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rs0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 260 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        let Rs0305 = token_parser.Rs0305();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZN,
+                Rd0002,
+                Rs0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1357:1"]
+#[derive(Clone, Debug)]
+struct instructionVar296 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar296 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bic")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 270 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        let Rm0305 = token_parser.Rm0305();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rd0002,
+                Rm0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1635:1"]
+#[derive(Clone, Debug)]
+struct instructionVar297 {
+    Rn0002: TokenField_Rn0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+}
+impl instructionVar297 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmn")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rn0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 267 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rn0002 = token_parser.Rn0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Rm0305,
+                Rn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1675:1"]
+#[derive(Clone, Debug)]
+struct instructionVar298 {
+    Rn0002: TokenField_Rn0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+}
+impl instructionVar298 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rn0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 266 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rn0002 = token_parser.Rn0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Rm0305,
+                Rn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1829:1"]
+#[derive(Clone, Debug)]
+struct instructionVar299 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar299 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("eor")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 257 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2376:1"]
+#[derive(Clone, Debug)]
+struct instructionVar300 {
+    Rd0002: TokenField_Rd0002,
+    Rs0305: TokenField_Rs0305,
+    ItCond: ItCond,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar300 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsl")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rs0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 258 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rs0305 = token_parser.Rs0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZN,
+                Rs0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2392:1"]
+#[derive(Clone, Debug)]
+struct instructionVar301 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    Immed5: Immed5,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar301 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 6usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#0x20"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.immed5().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed5 = if let Some((len, table)) =
+            Immed5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed5,
+                CheckInIT_CZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2411:1"]
+#[derive(Clone, Debug)]
+struct instructionVar302 {
+    Rd0002: TokenField_Rd0002,
+    Rs0305: TokenField_Rs0305,
+    ItCond: ItCond,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar302 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rs0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 259 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        let Rs0305 = token_parser.Rs0305();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZN,
+                Rd0002,
+                Rs0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2507:1"]
+#[derive(Clone, Debug)]
+struct instructionVar303 {
+    Rd0002: TokenField_Rd0002,
+    Rn0305: TokenField_Rn0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar303 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rn0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0305 = token_parser.Rn0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rn0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2521:1"]
+#[derive(Clone, Debug)]
+struct instructionVar304 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    Hrd0002: Hrd0002,
+}
+impl instructionVar304 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 70 {
+            return None;
+        }
+        if token_parser.hrd0002().disassembly() != 7 {
+            return None;
+        }
+        if token_parser.h1().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                Hrd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2907:1"]
+#[derive(Clone, Debug)]
+struct instructionVar305 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar305 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mul")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 269 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2937:1"]
+#[derive(Clone, Debug)]
+struct instructionVar306 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar306 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mvn")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 271 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2957:1"]
+#[derive(Clone, Debug)]
+struct instructionVar307 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar307 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("orr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 268 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_ZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3407:1"]
+#[derive(Clone, Debug)]
+struct instructionVar308 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar308 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("rsb")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 265 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZNO,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3594:1"]
+#[derive(Clone, Debug)]
+struct instructionVar309 {
+    Rd0002: TokenField_Rd0002,
+    Rs0305: TokenField_Rs0305,
+    ItCond: ItCond,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar309 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ror")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rs0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 263 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rs0305 = token_parser.Rs0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZN,
+                Rs0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3694:1"]
+#[derive(Clone, Debug)]
+struct instructionVar310 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar310 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sbc")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 262 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZNO,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4794:1"]
+#[derive(Clone, Debug)]
+struct instructionVar311 {
+    Rn0002: TokenField_Rn0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+}
+impl instructionVar311 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("tst")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rn0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op6().disassembly() != 264 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rn0002 = token_parser.Rn0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Rm0305,
+                Rn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1172:1"]
+#[derive(Clone, Debug)]
+struct instructionVar312 {
+    ItCond: ItCond,
+    Immed7_4: Immed7_4,
+}
+impl instructionVar312 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            DisplayElement::Register(Register::sp),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed7_4.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op7().disassembly() != 352 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed7_4 = if let Some((len, table)) =
+            Immed7_4::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, Immed7_4 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1527:1"]
+#[derive(Clone, Debug)]
+struct instructionVar313 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    bxns: bxns,
+}
+impl instructionVar313 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
+        display.extend_from_slice(&extend);
+        self.bxns.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op7().disassembly() != 142 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let bxns = if let Some((len, table)) =
+            bxns::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                bxns,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1534:1"]
+#[derive(Clone, Debug)]
+struct instructionVar314 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    bxns: bxns,
+}
+impl instructionVar314 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_LRset(
+            Some(inst_next),
+            context.register().read_LRset_disassembly(),
+        );
+        global_set.set_TMode(
+            Some(inst_next),
+            context.register().read_TMode_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bx")];
+        display.extend_from_slice(&extend);
+        self.bxns.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_LRset_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op7().disassembly() != 142 {
+            return None;
+        }
+        let tmp = (0u64 as i64);
+        context_instance.register_mut().write_LRset_disassembly(tmp);
+        let tmp = (1u64 as i64);
+        context_instance.register_mut().write_TMode_disassembly(tmp);
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let bxns = if let Some((len, table)) =
+            bxns::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                bxns,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4528:1"]
+#[derive(Clone, Debug)]
+struct instructionVar315 {
+    ItCond: ItCond,
+    Immed7_4: Immed7_4,
+}
+impl instructionVar315 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            DisplayElement::Register(Register::sp),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed7_4.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op7().disassembly() != 353 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed7_4 = if let Some((len, table)) =
+            Immed7_4::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, Immed7_4 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1152:1"]
+#[derive(Clone, Debug)]
+struct instructionVar316 {
+    ItCond: ItCond,
+    Hrd0002: Hrd0002,
+    Hrm0305: Hrm0305,
+}
+impl instructionVar316 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 68 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrd0002,
+                Hrm0305,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1684:1"]
+#[derive(Clone, Debug)]
+struct instructionVar317 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    Hrn0002: Hrn0002,
+}
+impl instructionVar317 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrn0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 69 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrn0002 = if let Some((len, table)) =
+            Hrn0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                Hrn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2515:1"]
+#[derive(Clone, Debug)]
+struct instructionVar318 {
+    ItCond: ItCond,
+    Hrm0305: Hrm0305,
+    Hrd0002: Hrd0002,
+}
+impl instructionVar318 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Hrd0002.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.Hrm0305.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 70 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrm0305 = if let Some((len, table)) =
+            Hrm0305::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Hrd0002 = if let Some((len, table)) =
+            Hrd0002::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Hrm0305,
+                Hrd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3103:1"]
+#[derive(Clone, Debug)]
+struct instructionVar319 {
+    ItCond: ItCond,
+    ldbrace: ldbrace,
+}
+impl instructionVar319 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.ldbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 94 {
+            return None;
+        }
+        if token_parser.R().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let ldbrace = if let Some((len, table)) =
+            ldbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, ldbrace }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3112:1"]
+#[derive(Clone, Debug)]
+struct instructionVar320 {
+    ItCond: ItCond,
+    pclbrace: pclbrace,
+}
+impl instructionVar320 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("pop")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.pclbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 94 {
+            return None;
+        }
+        if token_parser.R().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let pclbrace = if let Some((len, table)) =
+            pclbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, pclbrace }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3196:1"]
+#[derive(Clone, Debug)]
+struct instructionVar321 {
+    ItCond: ItCond,
+    psbrace: psbrace,
+}
+impl instructionVar321 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("push")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.psbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 90 {
+            return None;
+        }
+        if token_parser.R().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let psbrace = if let Some((len, table)) =
+            psbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, psbrace }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3205:1"]
+#[derive(Clone, Debug)]
+struct instructionVar322 {
+    ItCond: ItCond,
+    pcpbrace: pcpbrace,
+}
+impl instructionVar322 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("push")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.pcpbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 90 {
+            return None;
+        }
+        if token_parser.R().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let pcpbrace = if let Some((len, table)) =
+            pcpbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, pcpbrace }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4609:1"]
+#[derive(Clone, Debug)]
+struct instructionVar323 {
+    immed8: TokenField_immed8,
+    ItCond: ItCond,
+}
+impl instructionVar323 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("svc")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal("\t"), self.immed8.display()];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op8().disassembly() != 223 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let immed8 = token_parser.immed8();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, immed8 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1063:1"]
+#[derive(Clone, Debug)]
+struct instructionVar324 {
+    Rd0002: TokenField_Rd0002,
+    Rn0305: TokenField_Rn0305,
+    ItCond: ItCond,
+    Immed3: Immed3,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar324 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rn0305.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed3.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 14 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed3 = if let Some((len, table)) =
+            Immed3::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0305 = token_parser.Rn0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed3,
+                CheckInIT_CZNO,
+                Rn0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1143:1"]
+#[derive(Clone, Debug)]
+struct instructionVar325 {
+    Rd0002: TokenField_Rd0002,
+    Rn0305: TokenField_Rn0305,
+    Rm0608: TokenField_Rm0608,
+    ItCond: ItCond,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar325 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 6usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rn0305.display(),
+            DisplayElement::Literal(","),
+            self.Rm0608.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 12 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0608 = token_parser.Rm0608();
+        let Rn0305 = token_parser.Rn0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZNO,
+                Rm0608,
+                Rn0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1461:1"]
+#[derive(Clone, Debug)]
+struct instructionVar326 {
+    offset11: TokenField_offset11,
+    ItCond: ItCond,
+}
+impl instructionVar326 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut off: i64 = 0;
+        off = (self.offset11.disassembly() << (1u64 as i64));
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("blx")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal(" \t"),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, off),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 29 {
+            return None;
+        }
+        if token_parser.thc0000().disassembly() != 0 {
+            return None;
+        }
+        let mut off: i64 = 0;
+        off = (token_parser.offset11().disassembly() << (1u64 as i64));
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let offset11 = token_parser.offset11();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, offset11 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1557:1"]
+#[derive(Clone, Debug)]
+struct instructionVar327 {
+    Rn0002: TokenField_Rn0002,
+    ItCond: ItCond,
+    Addr5: Addr5,
+}
+impl instructionVar327 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("cbnz")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("  "),
+            self.Rn0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Addr5.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op12().disassembly() != 11 {
+            return None;
+        }
+        if token_parser.thc1111().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.thc1010().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.thc0808().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Addr5 = if let Some((len, table)) =
+            Addr5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0002 = token_parser.Rn0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Addr5,
+                Rn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1564:1"]
+#[derive(Clone, Debug)]
+struct instructionVar328 {
+    Rn0002: TokenField_Rn0002,
+    ItCond: ItCond,
+    Addr5: Addr5,
+}
+impl instructionVar328 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cbz")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("  "),
+            self.Rn0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Addr5.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op12().disassembly() != 11 {
+            return None;
+        }
+        if token_parser.thc1111().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.thc1010().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.thc0808().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Addr5 = if let Some((len, table)) =
+            Addr5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0002 = token_parser.Rn0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Addr5,
+                Rn0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2008:1"]
+#[derive(Clone, Debug)]
+struct instructionVar329 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar329 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 44 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2037:1"]
+#[derive(Clone, Debug)]
+struct instructionVar330 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar330 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrb")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 46 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2051:1"]
+#[derive(Clone, Debug)]
+struct instructionVar331 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar331 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrh")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 45 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2058:1"]
+#[derive(Clone, Debug)]
+struct instructionVar332 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar332 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrsb")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 43 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2065:1"]
+#[derive(Clone, Debug)]
+struct instructionVar333 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar333 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrsh")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 47 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4304:1"]
+#[derive(Clone, Debug)]
+struct instructionVar334 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar334 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 40 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4324:1"]
+#[derive(Clone, Debug)]
+struct instructionVar335 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar335 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("strb")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 42 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4338:1"]
+#[derive(Clone, Debug)]
+struct instructionVar336 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnRmIndirect: RnRmIndirect,
+}
+impl instructionVar336 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("strh")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnRmIndirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 41 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnRmIndirect = if let Some((len, table)) = RnRmIndirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnRmIndirect,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4501:1"]
+#[derive(Clone, Debug)]
+struct instructionVar337 {
+    Rd0002: TokenField_Rd0002,
+    Rn0305: TokenField_Rn0305,
+    ItCond: ItCond,
+    Immed3: Immed3,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar337 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rn0305.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed3.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 15 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed3 = if let Some((len, table)) =
+            Immed3::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0305 = token_parser.Rn0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed3,
+                CheckInIT_CZNO,
+                Rn0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4519:1"]
+#[derive(Clone, Debug)]
+struct instructionVar338 {
+    Rd0002: TokenField_Rd0002,
+    Rn0305: TokenField_Rn0305,
+    Rm0608: TokenField_Rm0608,
+    ItCond: ItCond,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar338 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 6usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rn0305.display(),
+            DisplayElement::Literal(","),
+            self.Rm0608.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op9().disassembly() != 13 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0608 = token_parser.Rm0608();
+        let Rn0305 = token_parser.Rn0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                CheckInIT_CZNO,
+                Rm0608,
+                Rn0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1072:1"]
+#[derive(Clone, Debug)]
+struct instructionVar339 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Immed8: Immed8,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar339 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 6 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed8 = if let Some((len, table)) =
+            Immed8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed8,
+                CheckInIT_CZNO,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1166:1"]
+#[derive(Clone, Debug)]
+struct instructionVar340 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Sprel8: Sprel8,
+}
+impl instructionVar340 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("add")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Sprel8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 21 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Sprel8 = if let Some((len, table)) =
+            Sprel8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Sprel8,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1178:1"]
+#[derive(Clone, Debug)]
+struct instructionVar341 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Pcrel8: Pcrel8,
+}
+impl instructionVar341 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("adr")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Pcrel8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 20 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Pcrel8 = if let Some((len, table)) =
+            Pcrel8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Pcrel8,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1258:1"]
+#[derive(Clone, Debug)]
+struct instructionVar342 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    Immed5: Immed5,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar342 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("asr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed5.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 2 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed5 = if let Some((len, table)) =
+            Immed5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed5,
+                CheckInIT_CZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1317:1"]
+#[derive(Clone, Debug)]
+struct instructionVar343 {
+    ItCond: ItCond,
+    Addr11: Addr11,
+}
+impl instructionVar343 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Addr11.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 28 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Addr11 = if let Some((len, table)) =
+            Addr11::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, Addr11 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1446:1"]
+#[derive(Clone, Debug)]
+struct instructionVar344 {
+    soffset11: TokenField_soffset11,
+    ItCond: ItCond,
+}
+impl instructionVar344 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut off: i64 = 0;
+        off = ((i64::try_from(inst_start).unwrap() + (4u64 as i64))
+            + (self.soffset11.disassembly() << (12u64 as i64)));
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bl")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal(" \t"),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, off),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 30 {
+            return None;
+        }
+        let mut off: i64 = 0;
+        off = ((i64::try_from(inst_start).unwrap() + (4u64 as i64))
+            + (token_parser.soffset11().disassembly() << (12u64 as i64)));
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let soffset11 = token_parser.soffset11();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, soffset11 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1452:1"]
+#[derive(Clone, Debug)]
+struct instructionVar345 {
+    offset11: TokenField_offset11,
+    ItCond: ItCond,
+}
+impl instructionVar345 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut off: i64 = 0;
+        off = (self.offset11.disassembly() << (1u64 as i64));
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("bl")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal(" \t"),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, off),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 31 {
+            return None;
+        }
+        let mut off: i64 = 0;
+        off = (token_parser.offset11().disassembly() << (1u64 as i64));
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let offset11 = token_parser.offset11();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ItCond, offset11 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1644:1"]
+#[derive(Clone, Debug)]
+struct instructionVar346 {
+    Rn0810: TokenField_Rn0810,
+    ItCond: ItCond,
+    Immed8: Immed8,
+}
+impl instructionVar346 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("cmp")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rn0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 5 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed8 = if let Some((len, table)) =
+            Immed8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn0810 = token_parser.Rn0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed8,
+                Rn0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1920:1"]
+#[derive(Clone, Debug)]
+struct instructionVar347 {
+    ItCond: ItCond,
+    Rn_exclaim: Rn_exclaim,
+    ldbrace: ldbrace,
+    Rn_exclaim_WB: Rn_exclaim_WB,
+}
+impl instructionVar347 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldmia")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Rn_exclaim.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.ldbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 25 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn_exclaim = if let Some((len, table)) =
+            Rn_exclaim::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let ldbrace = if let Some((len, table)) =
+            ldbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn_exclaim_WB = if let Some((len, table)) = Rn_exclaim_WB::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Rn_exclaim,
+                ldbrace,
+                Rn_exclaim_WB,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2001:1"]
+#[derive(Clone, Debug)]
+struct instructionVar348 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect4: RnIndirect4,
+}
+impl instructionVar348 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect4.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 13 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect4 = if let Some((len, table)) = RnIndirect4::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect4,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2015:1"]
+#[derive(Clone, Debug)]
+struct instructionVar349 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Pcrel8Indirect: Pcrel8Indirect,
+}
+impl instructionVar349 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Pcrel8Indirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 9 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Pcrel8Indirect = if let Some((len, table)) = Pcrel8Indirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Pcrel8Indirect,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2023:1"]
+#[derive(Clone, Debug)]
+struct instructionVar350 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Sprel8Indirect: Sprel8Indirect,
+}
+impl instructionVar350 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("ldr")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Sprel8Indirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 19 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Sprel8Indirect = if let Some((len, table)) = Sprel8Indirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Sprel8Indirect,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2030:1"]
+#[derive(Clone, Debug)]
+struct instructionVar351 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect1: RnIndirect1,
+}
+impl instructionVar351 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrb")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect1.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 15 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect1 = if let Some((len, table)) = RnIndirect1::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect1,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2044:1"]
+#[derive(Clone, Debug)]
+struct instructionVar352 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect2: RnIndirect2,
+}
+impl instructionVar352 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("ldrh")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect2.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 17 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect2 = if let Some((len, table)) = RnIndirect2::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect2,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2367:1"]
+#[derive(Clone, Debug)]
+struct instructionVar353 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    Immed5: Immed5,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar353 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsl")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed5.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 0 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed5 = if let Some((len, table)) =
+            Immed5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed5,
+                CheckInIT_CZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2401:1"]
+#[derive(Clone, Debug)]
+struct instructionVar354 {
+    Rd0002: TokenField_Rd0002,
+    Rm0305: TokenField_Rm0305,
+    ItCond: ItCond,
+    Immed5: Immed5,
+    CheckInIT_CZN: CheckInIT_CZN,
+}
+impl instructionVar354 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("lsr")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+            self.Rm0305.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed5.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 1 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed5 = if let Some((len, table)) =
+            Immed5::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZN = if let Some((len, table)) = CheckInIT_CZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rm0305 = token_parser.Rm0305();
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed5,
+                CheckInIT_CZN,
+                Rm0305,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:2499:1"]
+#[derive(Clone, Debug)]
+struct instructionVar355 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Immed8: Immed8,
+    CheckInIT_ZN: CheckInIT_ZN,
+}
+impl instructionVar355 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("mov")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_ZN.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 4 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed8 = if let Some((len, table)) =
+            Immed8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_ZN = if let Some((len, table)) = CheckInIT_ZN::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed8,
+                CheckInIT_ZN,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4290:1"]
+#[derive(Clone, Debug)]
+struct instructionVar356 {
+    ItCond: ItCond,
+    Rn_exclaim: Rn_exclaim,
+    stbrace: stbrace,
+    Rn_exclaim_WB: Rn_exclaim_WB,
+}
+impl instructionVar356 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("stmia")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Rn_exclaim.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",")];
+        display.extend_from_slice(&extend);
+        self.stbrace.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 24 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn_exclaim = if let Some((len, table)) =
+            Rn_exclaim::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let stbrace = if let Some((len, table)) =
+            stbrace::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rn_exclaim_WB = if let Some((len, table)) = Rn_exclaim_WB::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Rn_exclaim,
+                stbrace,
+                Rn_exclaim_WB,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4298:1"]
+#[derive(Clone, Debug)]
+struct instructionVar357 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect4: RnIndirect4,
+}
+impl instructionVar357 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect4.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 12 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect4 = if let Some((len, table)) = RnIndirect4::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect4,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4310:1"]
+#[derive(Clone, Debug)]
+struct instructionVar358 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Sprel8Indirect: Sprel8Indirect,
+}
+impl instructionVar358 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("str")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Sprel8Indirect.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 18 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Sprel8Indirect = if let Some((len, table)) = Sprel8Indirect::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Sprel8Indirect,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4317:1"]
+#[derive(Clone, Debug)]
+struct instructionVar359 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect1: RnIndirect1,
+}
+impl instructionVar359 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("strb")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect1.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 14 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect1 = if let Some((len, table)) = RnIndirect1::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect1,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4331:1"]
+#[derive(Clone, Debug)]
+struct instructionVar360 {
+    Rd0002: TokenField_Rd0002,
+    ItCond: ItCond,
+    RnIndirect2: RnIndirect2,
+}
+impl instructionVar360 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] =
+            [DisplayElement::Literal("strh")];
+        display.extend_from_slice(&extend);
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0002.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.RnIndirect2.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 16 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let RnIndirect2 = if let Some((len, table)) = RnIndirect2::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0002 = token_parser.Rd0002();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                RnIndirect2,
+                Rd0002,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:4510:1"]
+#[derive(Clone, Debug)]
+struct instructionVar361 {
+    Rd0810: TokenField_Rd0810,
+    ItCond: ItCond,
+    Immed8: Immed8,
+    CheckInIT_CZNO: CheckInIT_CZNO,
+}
+impl instructionVar361 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("sub")];
+        display.extend_from_slice(&extend);
+        self.CheckInIT_CZNO.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        self.ItCond.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("\t"),
+            self.Rd0810.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.Immed8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op11().disassembly() != 7 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Immed8 = if let Some((len, table)) =
+            Immed8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let CheckInIT_CZNO = if let Some((len, table)) = CheckInIT_CZNO::parse(
+            tokens_current,
+            &mut context_instance,
+            inst_start,
+        ) {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let Rd0810 = token_parser.Rd0810();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                Immed8,
+                CheckInIT_CZNO,
+                Rd0810,
+            },
+        ))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1312:1"]
+#[derive(Clone, Debug)]
+struct instructionVar362 {
+    ItCond: ItCond,
+    thcc: thcc,
+    Addr8: Addr8,
+}
+impl instructionVar362 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.thcc.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("\t")];
+        display.extend_from_slice(&extend);
+        self.Addr8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 2u64 as u32;
+        let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
+        if context_instance.register().read_TMode_disassembly() != 1 {
+            return None;
+        }
+        if token_parser.op12().disassembly() != 13 {
+            return None;
+        }
+        let ItCond = if let Some((len, table)) =
+            ItCond::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let thcc = if let Some((len, table)) =
+            thcc::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let mut sub_pattern_c10 = |tokens: &[u8], context_param: &mut T| {
+            let mut pattern_len = 0 as u32;
+            let mut context_instance = context_param.clone();
+            let mut tokens = tokens;
+            let block_0 = |tokens_param: &[u8], context_param: &mut T| {
+                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
+                if token_parser.thc1515().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(2u64).unwrap()));
+                }
+                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
+                if token_parser.thc1414().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(2u64).unwrap()));
+                }
+                let token_parser = <TokenParser<2usize>>::new(tokens_param)?;
+                if token_parser.thc1313().disassembly() == 0 {
+                    return Some(((), (), u32::try_from(2u64).unwrap()));
+                }
+                None
+            };
+            let ((), (), block_0_len) = block_0(tokens, &mut context_instance)?;
+            pattern_len += block_0_len;
+            tokens = &tokens[usize::try_from(block_0_len).unwrap()..];
+            *context_param = context_instance;
+            Some(((), (), pattern_len))
+        };
+        let ((), (), sub_len) =
+            sub_pattern_c10(tokens_current, &mut context_instance)?;
+        block_0_len = block_0_len.max(sub_len);
+        let Addr8 = if let Some((len, table)) =
+            Addr8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((
+            pattern_len,
+            Self {
+                ItCond,
+                thcc,
+                Addr8,
             },
         ))
     }
@@ -50680,6 +53199,8 @@ enum instruction {
     Var358(instructionVar358),
     Var359(instructionVar359),
     Var360(instructionVar360),
+    Var361(instructionVar361),
+    Var362(instructionVar362),
 }
 impl instruction {
     fn display_extend<T>(
@@ -53214,6 +55735,20 @@ impl instruction {
                 global_set_param,
             ),
             Self::Var360(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var361(x) => x.display_extend(
+                display,
+                context,
+                inst_start,
+                inst_next,
+                global_set_param,
+            ),
+            Self::Var362(x) => x.display_extend(
                 display,
                 context,
                 inst_start,
@@ -56119,6 +58654,22 @@ impl instruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var360(parsed)));
         }
+        if let Some((inst_len, parsed)) = instructionVar361::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var361(parsed)));
+        }
+        if let Some((inst_len, parsed)) = instructionVar362::parse(
+            tokens_param,
+            &mut context_current,
+            inst_start,
+        ) {
+            *context_param = context_current;
+            return Some((inst_len, Self::Var362(parsed)));
+        }
         None
     }
 }
@@ -56444,7 +58995,7 @@ impl CheckInIT_ZN {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:604:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:626:1"]
 #[derive(Clone, Debug)]
 struct rnVar0 {}
 impl rnVar0 {
@@ -56484,7 +59035,7 @@ impl rnVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:605:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:627:1"]
 #[derive(Clone, Debug)]
 struct rnVar1 {
     Rn: TokenField_Rn,
@@ -56580,7 +59131,7 @@ impl rn {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:607:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:629:1"]
 #[derive(Clone, Debug)]
 struct rmVar0 {}
 impl rmVar0 {
@@ -56620,7 +59171,7 @@ impl rmVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:608:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:630:1"]
 #[derive(Clone, Debug)]
 struct rmVar1 {
     Rm: TokenField_Rm,
@@ -56716,7 +59267,7 @@ impl rm {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:610:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:632:1"]
 #[derive(Clone, Debug)]
 struct rsVar0 {}
 impl rsVar0 {
@@ -56756,7 +59307,7 @@ impl rsVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:611:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:633:1"]
 #[derive(Clone, Debug)]
 struct rsVar1 {
     Rs: TokenField_Rs,
@@ -56852,7 +59403,7 @@ impl rs {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:613:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:635:1"]
 #[derive(Clone, Debug)]
 struct ccVar0 {}
 impl ccVar0 {
@@ -56891,7 +59442,7 @@ impl ccVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:614:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:636:1"]
 #[derive(Clone, Debug)]
 struct ccVar1 {}
 impl ccVar1 {
@@ -56930,7 +59481,7 @@ impl ccVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:615:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:637:1"]
 #[derive(Clone, Debug)]
 struct ccVar2 {}
 impl ccVar2 {
@@ -56969,7 +59520,7 @@ impl ccVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:616:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:638:1"]
 #[derive(Clone, Debug)]
 struct ccVar3 {}
 impl ccVar3 {
@@ -57008,7 +59559,7 @@ impl ccVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:617:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:639:1"]
 #[derive(Clone, Debug)]
 struct ccVar4 {}
 impl ccVar4 {
@@ -57047,7 +59598,7 @@ impl ccVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:618:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:640:1"]
 #[derive(Clone, Debug)]
 struct ccVar5 {}
 impl ccVar5 {
@@ -57086,7 +59637,7 @@ impl ccVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:619:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:641:1"]
 #[derive(Clone, Debug)]
 struct ccVar6 {}
 impl ccVar6 {
@@ -57125,7 +59676,7 @@ impl ccVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:620:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:642:1"]
 #[derive(Clone, Debug)]
 struct ccVar7 {}
 impl ccVar7 {
@@ -57164,7 +59715,7 @@ impl ccVar7 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:621:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:643:1"]
 #[derive(Clone, Debug)]
 struct ccVar8 {}
 impl ccVar8 {
@@ -57203,7 +59754,7 @@ impl ccVar8 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:622:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:644:1"]
 #[derive(Clone, Debug)]
 struct ccVar9 {}
 impl ccVar9 {
@@ -57242,7 +59793,7 @@ impl ccVar9 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:623:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:645:1"]
 #[derive(Clone, Debug)]
 struct ccVar10 {}
 impl ccVar10 {
@@ -57281,7 +59832,7 @@ impl ccVar10 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:624:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:646:1"]
 #[derive(Clone, Debug)]
 struct ccVar11 {}
 impl ccVar11 {
@@ -57320,7 +59871,7 @@ impl ccVar11 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:625:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:647:1"]
 #[derive(Clone, Debug)]
 struct ccVar12 {}
 impl ccVar12 {
@@ -57359,7 +59910,7 @@ impl ccVar12 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:626:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:648:1"]
 #[derive(Clone, Debug)]
 struct ccVar13 {}
 impl ccVar13 {
@@ -57623,7 +60174,7 @@ impl cc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:628:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:650:1"]
 #[derive(Clone, Debug)]
 struct CONDVar0 {
     cc: cc,
@@ -57672,7 +60223,7 @@ impl CONDVar0 {
         Some((pattern_len, Self { cc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:629:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:651:1"]
 #[derive(Clone, Debug)]
 struct CONDVar1 {}
 impl CONDVar1 {
@@ -57769,7 +60320,7 @@ impl COND {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:637:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:659:1"]
 #[derive(Clone, Debug)]
 struct SBIT_CZNOVar0 {}
 impl SBIT_CZNOVar0 {
@@ -57806,7 +60357,7 @@ impl SBIT_CZNOVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:638:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:660:1"]
 #[derive(Clone, Debug)]
 struct SBIT_CZNOVar1 {}
 impl SBIT_CZNOVar1 {
@@ -57902,7 +60453,7 @@ impl SBIT_CZNO {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:639:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:661:1"]
 #[derive(Clone, Debug)]
 struct SBIT_ZNVar0 {}
 impl SBIT_ZNVar0 {
@@ -57939,7 +60490,7 @@ impl SBIT_ZNVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:640:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:662:1"]
 #[derive(Clone, Debug)]
 struct SBIT_ZNVar1 {}
 impl SBIT_ZNVar1 {
@@ -58035,7 +60586,7 @@ impl SBIT_ZN {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:642:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:664:1"]
 #[derive(Clone, Debug)]
 struct Addr24Var0 {
     addr24: TokenField_addr24,
@@ -58122,7 +60673,7 @@ impl Addr24 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:668:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:690:1"]
 #[derive(Clone, Debug)]
 struct shift1Var0 {
     immed: TokenField_immed,
@@ -58226,7 +60777,7 @@ impl shift1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:781:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:803:1"]
 #[derive(Clone, Debug)]
 struct mcrOperandsVar0 {
     cpn: TokenField_cpn,
@@ -58342,7 +60893,7 @@ impl mcrOperands {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:787:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:809:1"]
 #[derive(Clone, Debug)]
 struct shift2Var0 {
     rm: rm,
@@ -58398,7 +60949,7 @@ impl shift2Var0 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:797:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:819:1"]
 #[derive(Clone, Debug)]
 struct shift2Var1 {
     rm: rm,
@@ -58459,7 +61010,7 @@ impl shift2Var1 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:807:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:829:1"]
 #[derive(Clone, Debug)]
 struct shift2Var2 {
     rm: rm,
@@ -58520,7 +61071,7 @@ impl shift2Var2 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:817:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:839:1"]
 #[derive(Clone, Debug)]
 struct shift2Var3 {
     rm: rm,
@@ -58578,7 +61129,7 @@ impl shift2Var3 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:792:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:814:1"]
 #[derive(Clone, Debug)]
 struct shift2Var4 {
     sftimm: TokenField_sftimm,
@@ -58639,7 +61190,7 @@ impl shift2Var4 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:802:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:824:1"]
 #[derive(Clone, Debug)]
 struct shift2Var5 {
     sftimm: TokenField_sftimm,
@@ -58700,7 +61251,7 @@ impl shift2Var5 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:812:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:834:1"]
 #[derive(Clone, Debug)]
 struct shift2Var6 {
     sftimm: TokenField_sftimm,
@@ -58761,7 +61312,7 @@ impl shift2Var6 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:822:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:844:1"]
 #[derive(Clone, Debug)]
 struct shift2Var7 {
     sftimm: TokenField_sftimm,
@@ -58963,7 +61514,7 @@ impl shift2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:831:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:853:1"]
 #[derive(Clone, Debug)]
 struct shift3Var0 {
     rs: rs,
@@ -59033,7 +61584,7 @@ impl shift3Var0 {
         Some((pattern_len, Self { rs, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:836:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:858:1"]
 #[derive(Clone, Debug)]
 struct shift3Var1 {
     rs: rs,
@@ -59103,7 +61654,7 @@ impl shift3Var1 {
         Some((pattern_len, Self { rs, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:841:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:863:1"]
 #[derive(Clone, Debug)]
 struct shift3Var2 {
     rs: rs,
@@ -59173,7 +61724,7 @@ impl shift3Var2 {
         Some((pattern_len, Self { rs, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:846:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:868:1"]
 #[derive(Clone, Debug)]
 struct shift3Var3 {
     rs: rs,
@@ -59328,7 +61879,7 @@ impl shift3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:918:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:940:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar0 {
     rm: rm,
@@ -59378,7 +61929,7 @@ impl addr2shiftVar0 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:921:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:943:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar1 {
     rm: rm,
@@ -59439,7 +61990,7 @@ impl addr2shiftVar1 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:923:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:945:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar2 {
     rm: rm,
@@ -59500,7 +62051,7 @@ impl addr2shiftVar2 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:925:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:947:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar3 {
     rm: rm,
@@ -59559,7 +62110,7 @@ impl addr2shiftVar3 {
         Some((pattern_len, Self { rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:919:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:941:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar4 {
     sftimm: TokenField_sftimm,
@@ -59620,7 +62171,7 @@ impl addr2shiftVar4 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:920:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:942:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar5 {
     sftimm: TokenField_sftimm,
@@ -59681,7 +62232,7 @@ impl addr2shiftVar5 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:922:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:944:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar6 {
     sftimm: TokenField_sftimm,
@@ -59742,7 +62293,7 @@ impl addr2shiftVar6 {
         Some((pattern_len, Self { rm, sftimm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:924:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:946:1"]
 #[derive(Clone, Debug)]
 struct addr2shiftVar7 {
     sftimm: TokenField_sftimm,
@@ -59960,7 +62511,7 @@ impl addr2shift {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:929:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:951:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var0 {
     offset_12: TokenField_offset_12,
@@ -60024,7 +62575,7 @@ impl addrmode2Var0 {
         Some((pattern_len, Self { offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:935:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:957:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var1 {
     offset_12: TokenField_offset_12,
@@ -60088,7 +62639,7 @@ impl addrmode2Var1 {
         Some((pattern_len, Self { offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:941:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:963:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var2 {
     offset_12: TokenField_offset_12,
@@ -60158,7 +62709,7 @@ impl addrmode2Var2 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:942:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:964:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var3 {
     offset_12: TokenField_offset_12,
@@ -60232,7 +62783,7 @@ impl addrmode2Var3 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:943:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:965:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var4 {
     rn: rn,
@@ -60309,7 +62860,7 @@ impl addrmode2Var4 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:944:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:966:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var5 {
     rn: rn,
@@ -60386,7 +62937,7 @@ impl addrmode2Var5 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:946:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:968:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var6 {
     offset_12: TokenField_offset_12,
@@ -60456,7 +63007,7 @@ impl addrmode2Var6 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:947:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:969:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var7 {
     offset_12: TokenField_offset_12,
@@ -60530,7 +63081,7 @@ impl addrmode2Var7 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:948:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:970:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var8 {
     rn: rn,
@@ -60607,7 +63158,7 @@ impl addrmode2Var8 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:949:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:971:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var9 {
     rn: rn,
@@ -60684,7 +63235,7 @@ impl addrmode2Var9 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:951:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:973:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var10 {
     offset_12: TokenField_offset_12,
@@ -60753,7 +63304,7 @@ impl addrmode2Var10 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:952:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:974:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var11 {
     offset_12: TokenField_offset_12,
@@ -60826,7 +63377,7 @@ impl addrmode2Var11 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:953:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:975:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var12 {
     rn: rn,
@@ -60901,7 +63452,7 @@ impl addrmode2Var12 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:954:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:976:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var13 {
     rn: rn,
@@ -60976,7 +63527,7 @@ impl addrmode2Var13 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:956:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:978:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var14 {
     offset_12: TokenField_offset_12,
@@ -61045,7 +63596,7 @@ impl addrmode2Var14 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:957:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:979:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var15 {
     offset_12: TokenField_offset_12,
@@ -61118,7 +63669,7 @@ impl addrmode2Var15 {
         Some((pattern_len, Self { rn, offset_12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:958:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:980:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var16 {
     rn: rn,
@@ -61193,7 +63744,7 @@ impl addrmode2Var16 {
         Some((pattern_len, Self { rn, addr2shift }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:959:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:981:1"]
 #[derive(Clone, Debug)]
 struct addrmode2Var17 {
     rn: rn,
@@ -61565,7 +64116,7 @@ impl addrmode2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:968:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:990:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var0 {
     immedH: TokenField_immedH,
@@ -61617,12 +64168,6 @@ impl addrmode3Var0 {
         if token_parser.c1619().disassembly() != 15 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let mut reloff: i64 = 0;
         reloff = ((i64::try_from(inst_start).unwrap() + (8u64 as i64))
             + ((token_parser.immedH().disassembly() << (4u64 as i64))
@@ -61636,7 +64181,7 @@ impl addrmode3Var0 {
         Some((pattern_len, Self { immedH, immedL }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:974:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:996:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var1 {
     immedH: TokenField_immedH,
@@ -61689,12 +64234,6 @@ impl addrmode3Var1 {
         if token_parser.c1619().disassembly() != 15 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let mut reloff: i64 = 0;
         reloff = (i64::try_from(inst_start).unwrap()
             + ((8u64 as i64)
@@ -61709,7 +64248,7 @@ impl addrmode3Var1 {
         Some((pattern_len, Self { immedH, immedL }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:992:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1014:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var2 {
     rn: rn,
@@ -61763,12 +64302,6 @@ impl addrmode3Var2 {
         if token_parser.c0811().disassembly() != 0 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let rn = if let Some((len, table)) =
             rn::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -61792,7 +64325,7 @@ impl addrmode3Var2 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:997:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1019:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var3 {
     rn: rn,
@@ -61846,12 +64379,6 @@ impl addrmode3Var3 {
         if token_parser.c0811().disassembly() != 0 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let rn = if let Some((len, table)) =
             rn::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -61875,7 +64402,7 @@ impl addrmode3Var3 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1014:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1036:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var4 {
     rn: rn,
@@ -61929,12 +64456,6 @@ impl addrmode3Var4 {
         if token_parser.c0811().disassembly() != 0 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let rn = if let Some((len, table)) =
             rn::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -61958,7 +64479,7 @@ impl addrmode3Var4 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1019:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1041:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var5 {
     rn: rn,
@@ -62012,12 +64533,6 @@ impl addrmode3Var5 {
         if token_parser.c0811().disassembly() != 0 {
             return None;
         }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
         let rn = if let Some((len, table)) =
             rn::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -62041,13 +64556,313 @@ impl addrmode3Var5 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1036:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1002:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var6 {
+    immedH: TokenField_immedH,
+    immedL: TokenField_immedL,
+    rn: rn,
+}
+impl addrmode3Var6 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut off8: i64 = 0;
+        off8 = ((self.immedH.disassembly() << (4u64 as i64))
+            | self.immedL.disassembly());
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
+        display.extend_from_slice(&extend);
+        self.rn.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, off8),
+            DisplayElement::Literal("]"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if token_parser.P24().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.U23().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.c2122().disassembly() != 2 {
+            return None;
+        }
+        let mut off8: i64 = 0;
+        off8 = ((token_parser.immedH().disassembly() << (4u64 as i64))
+            | token_parser.immedL().disassembly());
+        let rn = if let Some((len, table)) =
+            rn::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let immedH = token_parser.immedH();
+        let immedL = token_parser.immedL();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { rn, immedH, immedL }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1008:1"]
+#[derive(Clone, Debug)]
+struct addrmode3Var7 {
+    immedH: TokenField_immedH,
+    immedL: TokenField_immedL,
+    rn: rn,
+}
+impl addrmode3Var7 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut noff8: i64 = 0;
+        noff8 = (-((self.immedH.disassembly() << (4u64 as i64))
+            | self.immedL.disassembly()));
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
+        display.extend_from_slice(&extend);
+        self.rn.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, noff8),
+            DisplayElement::Literal("]"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if token_parser.P24().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.U23().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.c2122().disassembly() != 2 {
+            return None;
+        }
+        let mut noff8: i64 = 0;
+        noff8 = (-((token_parser.immedH().disassembly() << (4u64 as i64))
+            | token_parser.immedL().disassembly()));
+        let rn = if let Some((len, table)) =
+            rn::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let immedH = token_parser.immedH();
+        let immedL = token_parser.immedL();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { rn, immedH, immedL }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1024:1"]
+#[derive(Clone, Debug)]
+struct addrmode3Var8 {
+    immedH: TokenField_immedH,
+    immedL: TokenField_immedL,
+    rn: rn,
+}
+impl addrmode3Var8 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut off8: i64 = 0;
+        off8 = ((self.immedH.disassembly() << (4u64 as i64))
+            | self.immedL.disassembly());
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
+        display.extend_from_slice(&extend);
+        self.rn.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, off8),
+            DisplayElement::Literal("]!"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if token_parser.P24().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.U23().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.c2122().disassembly() != 3 {
+            return None;
+        }
+        let mut off8: i64 = 0;
+        off8 = ((token_parser.immedH().disassembly() << (4u64 as i64))
+            | token_parser.immedL().disassembly());
+        let rn = if let Some((len, table)) =
+            rn::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let immedH = token_parser.immedH();
+        let immedL = token_parser.immedL();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { rn, immedH, immedL }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1030:1"]
+#[derive(Clone, Debug)]
+struct addrmode3Var9 {
+    immedH: TokenField_immedH,
+    immedL: TokenField_immedL,
+    rn: rn,
+}
+impl addrmode3Var9 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let mut noff8: i64 = 0;
+        noff8 = (-((self.immedH.disassembly() << (4u64 as i64))
+            | self.immedL.disassembly()));
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
+        display.extend_from_slice(&extend);
+        self.rn.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal(","),
+            DisplayElement::Literal("#"),
+            DisplayElement::Number(true, noff8),
+            DisplayElement::Literal("]!"),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if token_parser.P24().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.U23().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.c2122().disassembly() != 3 {
+            return None;
+        }
+        let mut noff8: i64 = 0;
+        noff8 = (-((token_parser.immedH().disassembly() << (4u64 as i64))
+            | token_parser.immedL().disassembly()));
+        let rn = if let Some((len, table)) =
+            rn::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let immedH = token_parser.immedH();
+        let immedL = token_parser.immedL();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { rn, immedH, immedL }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1058:1"]
+#[derive(Clone, Debug)]
+struct addrmode3Var10 {
     rn: rn,
     rm: rm,
 }
-impl addrmode3Var6 {
+impl addrmode3Var10 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -62087,16 +64902,10 @@ impl addrmode3Var6 {
         if token_parser.U23().disassembly() != 1 {
             return None;
         }
-        if token_parser.c2122().disassembly() != 0 {
+        if token_parser.c2222().disassembly() != 0 {
             return None;
         }
         if token_parser.c0811().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
             return None;
         }
         let rn = if let Some((len, table)) =
@@ -62122,13 +64931,13 @@ impl addrmode3Var6 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1041:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1063:1"]
 #[derive(Clone, Debug)]
-struct addrmode3Var7 {
+struct addrmode3Var11 {
     rn: rn,
     rm: rm,
 }
-impl addrmode3Var7 {
+impl addrmode3Var11 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -62168,16 +64977,10 @@ impl addrmode3Var7 {
         if token_parser.U23().disassembly() != 0 {
             return None;
         }
-        if token_parser.c2122().disassembly() != 0 {
+        if token_parser.c2222().disassembly() != 0 {
             return None;
         }
         if token_parser.c0811().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
             return None;
         }
         let rn = if let Some((len, table)) =
@@ -62203,331 +65006,7 @@ impl addrmode3Var7 {
         Some((pattern_len, Self { rn, rm }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:980:1"]
-#[derive(Clone, Debug)]
-struct addrmode3Var8 {
-    immedH: TokenField_immedH,
-    immedL: TokenField_immedL,
-    rn: rn,
-}
-impl addrmode3Var8 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut off8: i64 = 0;
-        off8 = ((self.immedH.disassembly() << (4u64 as i64))
-            | self.immedL.disassembly());
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
-        display.extend_from_slice(&extend);
-        self.rn.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, off8),
-            DisplayElement::Literal("]"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if token_parser.P24().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.U23().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c2122().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
-        let mut off8: i64 = 0;
-        off8 = ((token_parser.immedH().disassembly() << (4u64 as i64))
-            | token_parser.immedL().disassembly());
-        let rn = if let Some((len, table)) =
-            rn::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let immedH = token_parser.immedH();
-        let immedL = token_parser.immedL();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { rn, immedH, immedL }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:986:1"]
-#[derive(Clone, Debug)]
-struct addrmode3Var9 {
-    immedH: TokenField_immedH,
-    immedL: TokenField_immedL,
-    rn: rn,
-}
-impl addrmode3Var9 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut noff8: i64 = 0;
-        noff8 = (-((self.immedH.disassembly() << (4u64 as i64))
-            | self.immedL.disassembly()));
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
-        display.extend_from_slice(&extend);
-        self.rn.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, noff8),
-            DisplayElement::Literal("]"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if token_parser.P24().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.U23().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.c2122().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
-        let mut noff8: i64 = 0;
-        noff8 = (-((token_parser.immedH().disassembly() << (4u64 as i64))
-            | token_parser.immedL().disassembly()));
-        let rn = if let Some((len, table)) =
-            rn::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let immedH = token_parser.immedH();
-        let immedL = token_parser.immedL();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { rn, immedH, immedL }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1002:1"]
-#[derive(Clone, Debug)]
-struct addrmode3Var10 {
-    immedH: TokenField_immedH,
-    immedL: TokenField_immedL,
-    rn: rn,
-}
-impl addrmode3Var10 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut off8: i64 = 0;
-        off8 = ((self.immedH.disassembly() << (4u64 as i64))
-            | self.immedL.disassembly());
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
-        display.extend_from_slice(&extend);
-        self.rn.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, off8),
-            DisplayElement::Literal("]!"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if token_parser.P24().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.U23().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c2122().disassembly() != 3 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
-        let mut off8: i64 = 0;
-        off8 = ((token_parser.immedH().disassembly() << (4u64 as i64))
-            | token_parser.immedL().disassembly());
-        let rn = if let Some((len, table)) =
-            rn::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let immedH = token_parser.immedH();
-        let immedL = token_parser.immedL();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { rn, immedH, immedL }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1008:1"]
-#[derive(Clone, Debug)]
-struct addrmode3Var11 {
-    immedH: TokenField_immedH,
-    immedL: TokenField_immedL,
-    rn: rn,
-}
-impl addrmode3Var11 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let mut noff8: i64 = 0;
-        noff8 = (-((self.immedH.disassembly() << (4u64 as i64))
-            | self.immedL.disassembly()));
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("[")];
-        display.extend_from_slice(&extend);
-        self.rn.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal(","),
-            DisplayElement::Literal("#"),
-            DisplayElement::Number(true, noff8),
-            DisplayElement::Literal("]!"),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if token_parser.P24().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.U23().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.c2122().disassembly() != 3 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
-            return None;
-        }
-        let mut noff8: i64 = 0;
-        noff8 = (-((token_parser.immedH().disassembly() << (4u64 as i64))
-            | token_parser.immedL().disassembly()));
-        let rn = if let Some((len, table)) =
-            rn::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let immedH = token_parser.immedH();
-        let immedL = token_parser.immedL();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { rn, immedH, immedL }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1024:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1046:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var12 {
     immedH: TokenField_immedH,
@@ -62578,13 +65057,7 @@ impl addrmode3Var12 {
         if token_parser.U23().disassembly() != 1 {
             return None;
         }
-        if token_parser.c2122().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
+        if token_parser.c2222().disassembly() != 1 {
             return None;
         }
         let mut off8: i64 = 0;
@@ -62607,7 +65080,7 @@ impl addrmode3Var12 {
         Some((pattern_len, Self { rn, immedH, immedL }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1030:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1052:1"]
 #[derive(Clone, Debug)]
 struct addrmode3Var13 {
     immedH: TokenField_immedH,
@@ -62658,13 +65131,7 @@ impl addrmode3Var13 {
         if token_parser.U23().disassembly() != 0 {
             return None;
         }
-        if token_parser.c2122().disassembly() != 2 {
-            return None;
-        }
-        if token_parser.c0707().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.c0404().disassembly() != 1 {
+        if token_parser.c2222().disassembly() != 1 {
             return None;
         }
         let mut noff8: i64 = 0;
@@ -62920,7 +65387,7 @@ impl addrmode3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1052:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1074:1"]
 #[derive(Clone, Debug)]
 struct linc15Var0 {}
 impl linc15Var0 {
@@ -62960,7 +65427,7 @@ impl linc15Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1053:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1075:1"]
 #[derive(Clone, Debug)]
 struct linc15Var1 {}
 impl linc15Var1 {
@@ -63054,7 +65521,7 @@ impl linc15 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1055:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1077:1"]
 #[derive(Clone, Debug)]
 struct linc14Var0 {}
 impl linc14Var0 {
@@ -63097,7 +65564,7 @@ impl linc14Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1054:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1076:1"]
 #[derive(Clone, Debug)]
 struct linc14Var1 {
     linc15: linc15,
@@ -63152,7 +65619,7 @@ impl linc14Var1 {
         Some((pattern_len, Self { linc15 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1056:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1078:1"]
 #[derive(Clone, Debug)]
 struct linc14Var2 {
     linc15: linc15,
@@ -63273,7 +65740,7 @@ impl linc14 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1058:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1080:1"]
 #[derive(Clone, Debug)]
 struct linc13Var0 {}
 impl linc13Var0 {
@@ -63316,7 +65783,7 @@ impl linc13Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1057:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1079:1"]
 #[derive(Clone, Debug)]
 struct linc13Var1 {
     linc14: linc14,
@@ -63371,7 +65838,7 @@ impl linc13Var1 {
         Some((pattern_len, Self { linc14 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1059:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1081:1"]
 #[derive(Clone, Debug)]
 struct linc13Var2 {
     linc14: linc14,
@@ -63492,7 +65959,7 @@ impl linc13 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1061:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1083:1"]
 #[derive(Clone, Debug)]
 struct linc12Var0 {}
 impl linc12Var0 {
@@ -63535,7 +66002,7 @@ impl linc12Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1060:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1082:1"]
 #[derive(Clone, Debug)]
 struct linc12Var1 {
     linc13: linc13,
@@ -63590,7 +66057,7 @@ impl linc12Var1 {
         Some((pattern_len, Self { linc13 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1062:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1084:1"]
 #[derive(Clone, Debug)]
 struct linc12Var2 {
     linc13: linc13,
@@ -63711,7 +66178,7 @@ impl linc12 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1064:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1086:1"]
 #[derive(Clone, Debug)]
 struct linc11Var0 {}
 impl linc11Var0 {
@@ -63754,7 +66221,7 @@ impl linc11Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1063:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1085:1"]
 #[derive(Clone, Debug)]
 struct linc11Var1 {
     linc12: linc12,
@@ -63809,7 +66276,7 @@ impl linc11Var1 {
         Some((pattern_len, Self { linc12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1065:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1087:1"]
 #[derive(Clone, Debug)]
 struct linc11Var2 {
     linc12: linc12,
@@ -63930,7 +66397,7 @@ impl linc11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1067:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1089:1"]
 #[derive(Clone, Debug)]
 struct linc10Var0 {}
 impl linc10Var0 {
@@ -63973,7 +66440,7 @@ impl linc10Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1066:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1088:1"]
 #[derive(Clone, Debug)]
 struct linc10Var1 {
     linc11: linc11,
@@ -64028,7 +66495,7 @@ impl linc10Var1 {
         Some((pattern_len, Self { linc11 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1068:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1090:1"]
 #[derive(Clone, Debug)]
 struct linc10Var2 {
     linc11: linc11,
@@ -64149,7 +66616,7 @@ impl linc10 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1070:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1092:1"]
 #[derive(Clone, Debug)]
 struct linc9Var0 {}
 impl linc9Var0 {
@@ -64192,7 +66659,7 @@ impl linc9Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1069:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1091:1"]
 #[derive(Clone, Debug)]
 struct linc9Var1 {
     linc10: linc10,
@@ -64247,7 +66714,7 @@ impl linc9Var1 {
         Some((pattern_len, Self { linc10 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1071:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1093:1"]
 #[derive(Clone, Debug)]
 struct linc9Var2 {
     linc10: linc10,
@@ -64368,7 +66835,7 @@ impl linc9 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1073:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1095:1"]
 #[derive(Clone, Debug)]
 struct linc8Var0 {}
 impl linc8Var0 {
@@ -64411,7 +66878,7 @@ impl linc8Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1072:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1094:1"]
 #[derive(Clone, Debug)]
 struct linc8Var1 {
     linc9: linc9,
@@ -64466,7 +66933,7 @@ impl linc8Var1 {
         Some((pattern_len, Self { linc9 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1074:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1096:1"]
 #[derive(Clone, Debug)]
 struct linc8Var2 {
     linc9: linc9,
@@ -64587,7 +67054,7 @@ impl linc8 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1076:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1098:1"]
 #[derive(Clone, Debug)]
 struct linc7Var0 {}
 impl linc7Var0 {
@@ -64630,7 +67097,7 @@ impl linc7Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1075:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1097:1"]
 #[derive(Clone, Debug)]
 struct linc7Var1 {
     linc8: linc8,
@@ -64685,7 +67152,7 @@ impl linc7Var1 {
         Some((pattern_len, Self { linc8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1077:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1099:1"]
 #[derive(Clone, Debug)]
 struct linc7Var2 {
     linc8: linc8,
@@ -64806,7 +67273,7 @@ impl linc7 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1079:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1101:1"]
 #[derive(Clone, Debug)]
 struct linc6Var0 {}
 impl linc6Var0 {
@@ -64849,7 +67316,7 @@ impl linc6Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1078:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1100:1"]
 #[derive(Clone, Debug)]
 struct linc6Var1 {
     linc7: linc7,
@@ -64904,7 +67371,7 @@ impl linc6Var1 {
         Some((pattern_len, Self { linc7 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1080:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1102:1"]
 #[derive(Clone, Debug)]
 struct linc6Var2 {
     linc7: linc7,
@@ -65025,7 +67492,7 @@ impl linc6 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1082:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1104:1"]
 #[derive(Clone, Debug)]
 struct linc5Var0 {}
 impl linc5Var0 {
@@ -65068,7 +67535,7 @@ impl linc5Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1081:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1103:1"]
 #[derive(Clone, Debug)]
 struct linc5Var1 {
     linc6: linc6,
@@ -65123,7 +67590,7 @@ impl linc5Var1 {
         Some((pattern_len, Self { linc6 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1083:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1105:1"]
 #[derive(Clone, Debug)]
 struct linc5Var2 {
     linc6: linc6,
@@ -65244,7 +67711,7 @@ impl linc5 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1085:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1107:1"]
 #[derive(Clone, Debug)]
 struct linc4Var0 {}
 impl linc4Var0 {
@@ -65287,7 +67754,7 @@ impl linc4Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1084:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1106:1"]
 #[derive(Clone, Debug)]
 struct linc4Var1 {
     linc5: linc5,
@@ -65342,7 +67809,7 @@ impl linc4Var1 {
         Some((pattern_len, Self { linc5 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1086:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1108:1"]
 #[derive(Clone, Debug)]
 struct linc4Var2 {
     linc5: linc5,
@@ -65463,7 +67930,7 @@ impl linc4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1088:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1110:1"]
 #[derive(Clone, Debug)]
 struct linc3Var0 {}
 impl linc3Var0 {
@@ -65506,7 +67973,7 @@ impl linc3Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1087:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1109:1"]
 #[derive(Clone, Debug)]
 struct linc3Var1 {
     linc4: linc4,
@@ -65561,7 +68028,7 @@ impl linc3Var1 {
         Some((pattern_len, Self { linc4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1089:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1111:1"]
 #[derive(Clone, Debug)]
 struct linc3Var2 {
     linc4: linc4,
@@ -65682,7 +68149,7 @@ impl linc3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1091:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1113:1"]
 #[derive(Clone, Debug)]
 struct linc2Var0 {}
 impl linc2Var0 {
@@ -65725,7 +68192,7 @@ impl linc2Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1090:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1112:1"]
 #[derive(Clone, Debug)]
 struct linc2Var1 {
     linc3: linc3,
@@ -65780,7 +68247,7 @@ impl linc2Var1 {
         Some((pattern_len, Self { linc3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1092:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1114:1"]
 #[derive(Clone, Debug)]
 struct linc2Var2 {
     linc3: linc3,
@@ -65901,7 +68368,7 @@ impl linc2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1094:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1116:1"]
 #[derive(Clone, Debug)]
 struct linc1Var0 {}
 impl linc1Var0 {
@@ -65944,7 +68411,7 @@ impl linc1Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1093:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1115:1"]
 #[derive(Clone, Debug)]
 struct linc1Var1 {
     linc2: linc2,
@@ -65999,7 +68466,7 @@ impl linc1Var1 {
         Some((pattern_len, Self { linc2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1095:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1117:1"]
 #[derive(Clone, Debug)]
 struct linc1Var2 {
     linc2: linc2,
@@ -66120,7 +68587,7 @@ impl linc1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1097:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1119:1"]
 #[derive(Clone, Debug)]
 struct linc0Var0 {}
 impl linc0Var0 {
@@ -66163,7 +68630,7 @@ impl linc0Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1096:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1118:1"]
 #[derive(Clone, Debug)]
 struct linc0Var1 {
     linc1: linc1,
@@ -66218,7 +68685,7 @@ impl linc0Var1 {
         Some((pattern_len, Self { linc1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1098:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1120:1"]
 #[derive(Clone, Debug)]
 struct linc0Var2 {
     linc1: linc1,
@@ -66339,7 +68806,7 @@ impl linc0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1099:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1121:1"]
 #[derive(Clone, Debug)]
 struct ldlist_incVar0 {
     linc0: linc0,
@@ -66434,7 +68901,7 @@ impl ldlist_inc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1102:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1124:1"]
 #[derive(Clone, Debug)]
 struct sinc15Var0 {}
 impl sinc15Var0 {
@@ -66474,7 +68941,7 @@ impl sinc15Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1103:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1125:1"]
 #[derive(Clone, Debug)]
 struct sinc15Var1 {}
 impl sinc15Var1 {
@@ -66568,7 +69035,7 @@ impl sinc15 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1105:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1127:1"]
 #[derive(Clone, Debug)]
 struct sinc14Var0 {}
 impl sinc14Var0 {
@@ -66611,7 +69078,7 @@ impl sinc14Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1104:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1126:1"]
 #[derive(Clone, Debug)]
 struct sinc14Var1 {
     sinc15: sinc15,
@@ -66666,7 +69133,7 @@ impl sinc14Var1 {
         Some((pattern_len, Self { sinc15 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1106:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1128:1"]
 #[derive(Clone, Debug)]
 struct sinc14Var2 {
     sinc15: sinc15,
@@ -66787,7 +69254,7 @@ impl sinc14 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1108:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1130:1"]
 #[derive(Clone, Debug)]
 struct sinc13Var0 {}
 impl sinc13Var0 {
@@ -66830,7 +69297,7 @@ impl sinc13Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1107:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1129:1"]
 #[derive(Clone, Debug)]
 struct sinc13Var1 {
     sinc14: sinc14,
@@ -66885,7 +69352,7 @@ impl sinc13Var1 {
         Some((pattern_len, Self { sinc14 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1109:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1131:1"]
 #[derive(Clone, Debug)]
 struct sinc13Var2 {
     sinc14: sinc14,
@@ -67006,7 +69473,7 @@ impl sinc13 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1111:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1133:1"]
 #[derive(Clone, Debug)]
 struct sinc12Var0 {}
 impl sinc12Var0 {
@@ -67049,7 +69516,7 @@ impl sinc12Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1110:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1132:1"]
 #[derive(Clone, Debug)]
 struct sinc12Var1 {
     sinc13: sinc13,
@@ -67104,7 +69571,7 @@ impl sinc12Var1 {
         Some((pattern_len, Self { sinc13 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1112:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1134:1"]
 #[derive(Clone, Debug)]
 struct sinc12Var2 {
     sinc13: sinc13,
@@ -67225,7 +69692,7 @@ impl sinc12 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1114:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1136:1"]
 #[derive(Clone, Debug)]
 struct sinc11Var0 {}
 impl sinc11Var0 {
@@ -67268,7 +69735,7 @@ impl sinc11Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1113:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1135:1"]
 #[derive(Clone, Debug)]
 struct sinc11Var1 {
     sinc12: sinc12,
@@ -67323,7 +69790,7 @@ impl sinc11Var1 {
         Some((pattern_len, Self { sinc12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1115:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1137:1"]
 #[derive(Clone, Debug)]
 struct sinc11Var2 {
     sinc12: sinc12,
@@ -67444,7 +69911,7 @@ impl sinc11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1117:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1139:1"]
 #[derive(Clone, Debug)]
 struct sinc10Var0 {}
 impl sinc10Var0 {
@@ -67487,7 +69954,7 @@ impl sinc10Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1116:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1138:1"]
 #[derive(Clone, Debug)]
 struct sinc10Var1 {
     sinc11: sinc11,
@@ -67542,7 +70009,7 @@ impl sinc10Var1 {
         Some((pattern_len, Self { sinc11 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1118:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1140:1"]
 #[derive(Clone, Debug)]
 struct sinc10Var2 {
     sinc11: sinc11,
@@ -67663,7 +70130,7 @@ impl sinc10 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1120:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1142:1"]
 #[derive(Clone, Debug)]
 struct sinc9Var0 {}
 impl sinc9Var0 {
@@ -67706,7 +70173,7 @@ impl sinc9Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1119:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1141:1"]
 #[derive(Clone, Debug)]
 struct sinc9Var1 {
     sinc10: sinc10,
@@ -67761,7 +70228,7 @@ impl sinc9Var1 {
         Some((pattern_len, Self { sinc10 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1121:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1143:1"]
 #[derive(Clone, Debug)]
 struct sinc9Var2 {
     sinc10: sinc10,
@@ -67882,7 +70349,7 @@ impl sinc9 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1123:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1145:1"]
 #[derive(Clone, Debug)]
 struct sinc8Var0 {}
 impl sinc8Var0 {
@@ -67925,7 +70392,7 @@ impl sinc8Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1122:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1144:1"]
 #[derive(Clone, Debug)]
 struct sinc8Var1 {
     sinc9: sinc9,
@@ -67980,7 +70447,7 @@ impl sinc8Var1 {
         Some((pattern_len, Self { sinc9 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1124:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1146:1"]
 #[derive(Clone, Debug)]
 struct sinc8Var2 {
     sinc9: sinc9,
@@ -68101,7 +70568,7 @@ impl sinc8 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1126:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1148:1"]
 #[derive(Clone, Debug)]
 struct sinc7Var0 {}
 impl sinc7Var0 {
@@ -68144,7 +70611,7 @@ impl sinc7Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1125:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1147:1"]
 #[derive(Clone, Debug)]
 struct sinc7Var1 {
     sinc8: sinc8,
@@ -68199,7 +70666,7 @@ impl sinc7Var1 {
         Some((pattern_len, Self { sinc8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1127:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1149:1"]
 #[derive(Clone, Debug)]
 struct sinc7Var2 {
     sinc8: sinc8,
@@ -68320,7 +70787,7 @@ impl sinc7 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1129:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1151:1"]
 #[derive(Clone, Debug)]
 struct sinc6Var0 {}
 impl sinc6Var0 {
@@ -68363,7 +70830,7 @@ impl sinc6Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1128:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1150:1"]
 #[derive(Clone, Debug)]
 struct sinc6Var1 {
     sinc7: sinc7,
@@ -68418,7 +70885,7 @@ impl sinc6Var1 {
         Some((pattern_len, Self { sinc7 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1130:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1152:1"]
 #[derive(Clone, Debug)]
 struct sinc6Var2 {
     sinc7: sinc7,
@@ -68539,7 +71006,7 @@ impl sinc6 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1132:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1154:1"]
 #[derive(Clone, Debug)]
 struct sinc5Var0 {}
 impl sinc5Var0 {
@@ -68582,7 +71049,7 @@ impl sinc5Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1131:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1153:1"]
 #[derive(Clone, Debug)]
 struct sinc5Var1 {
     sinc6: sinc6,
@@ -68637,7 +71104,7 @@ impl sinc5Var1 {
         Some((pattern_len, Self { sinc6 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1133:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1155:1"]
 #[derive(Clone, Debug)]
 struct sinc5Var2 {
     sinc6: sinc6,
@@ -68758,7 +71225,7 @@ impl sinc5 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1135:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1157:1"]
 #[derive(Clone, Debug)]
 struct sinc4Var0 {}
 impl sinc4Var0 {
@@ -68801,7 +71268,7 @@ impl sinc4Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1134:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1156:1"]
 #[derive(Clone, Debug)]
 struct sinc4Var1 {
     sinc5: sinc5,
@@ -68856,7 +71323,7 @@ impl sinc4Var1 {
         Some((pattern_len, Self { sinc5 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1136:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1158:1"]
 #[derive(Clone, Debug)]
 struct sinc4Var2 {
     sinc5: sinc5,
@@ -68977,7 +71444,7 @@ impl sinc4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1138:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1160:1"]
 #[derive(Clone, Debug)]
 struct sinc3Var0 {}
 impl sinc3Var0 {
@@ -69020,7 +71487,7 @@ impl sinc3Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1137:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1159:1"]
 #[derive(Clone, Debug)]
 struct sinc3Var1 {
     sinc4: sinc4,
@@ -69075,7 +71542,7 @@ impl sinc3Var1 {
         Some((pattern_len, Self { sinc4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1139:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1161:1"]
 #[derive(Clone, Debug)]
 struct sinc3Var2 {
     sinc4: sinc4,
@@ -69196,7 +71663,7 @@ impl sinc3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1141:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1163:1"]
 #[derive(Clone, Debug)]
 struct sinc2Var0 {}
 impl sinc2Var0 {
@@ -69239,7 +71706,7 @@ impl sinc2Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1140:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1162:1"]
 #[derive(Clone, Debug)]
 struct sinc2Var1 {
     sinc3: sinc3,
@@ -69294,7 +71761,7 @@ impl sinc2Var1 {
         Some((pattern_len, Self { sinc3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1142:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1164:1"]
 #[derive(Clone, Debug)]
 struct sinc2Var2 {
     sinc3: sinc3,
@@ -69415,7 +71882,7 @@ impl sinc2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1144:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1166:1"]
 #[derive(Clone, Debug)]
 struct sinc1Var0 {}
 impl sinc1Var0 {
@@ -69458,7 +71925,7 @@ impl sinc1Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1143:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1165:1"]
 #[derive(Clone, Debug)]
 struct sinc1Var1 {
     sinc2: sinc2,
@@ -69513,7 +71980,7 @@ impl sinc1Var1 {
         Some((pattern_len, Self { sinc2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1145:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1167:1"]
 #[derive(Clone, Debug)]
 struct sinc1Var2 {
     sinc2: sinc2,
@@ -69634,7 +72101,7 @@ impl sinc1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1147:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1169:1"]
 #[derive(Clone, Debug)]
 struct sinc0Var0 {}
 impl sinc0Var0 {
@@ -69677,7 +72144,7 @@ impl sinc0Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1146:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1168:1"]
 #[derive(Clone, Debug)]
 struct sinc0Var1 {
     sinc1: sinc1,
@@ -69732,7 +72199,7 @@ impl sinc0Var1 {
         Some((pattern_len, Self { sinc1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1148:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1170:1"]
 #[derive(Clone, Debug)]
 struct sinc0Var2 {
     sinc1: sinc1,
@@ -69853,7 +72320,7 @@ impl sinc0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1149:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1171:1"]
 #[derive(Clone, Debug)]
 struct stlist_incVar0 {
     sinc0: sinc0,
@@ -69948,7 +72415,7 @@ impl stlist_inc {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1153:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1175:1"]
 #[derive(Clone, Debug)]
 struct ldec15Var0 {}
 impl ldec15Var0 {
@@ -69988,7 +72455,7 @@ impl ldec15Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1154:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1176:1"]
 #[derive(Clone, Debug)]
 struct ldec15Var1 {}
 impl ldec15Var1 {
@@ -70082,7 +72549,7 @@ impl ldec15 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1156:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1178:1"]
 #[derive(Clone, Debug)]
 struct ldec14Var0 {}
 impl ldec14Var0 {
@@ -70125,7 +72592,7 @@ impl ldec14Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1155:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1177:1"]
 #[derive(Clone, Debug)]
 struct ldec14Var1 {
     ldec15: ldec15,
@@ -70180,7 +72647,7 @@ impl ldec14Var1 {
         Some((pattern_len, Self { ldec15 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1157:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1179:1"]
 #[derive(Clone, Debug)]
 struct ldec14Var2 {
     ldec15: ldec15,
@@ -70301,7 +72768,7 @@ impl ldec14 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1159:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1181:1"]
 #[derive(Clone, Debug)]
 struct ldec13Var0 {}
 impl ldec13Var0 {
@@ -70344,7 +72811,7 @@ impl ldec13Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1158:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1180:1"]
 #[derive(Clone, Debug)]
 struct ldec13Var1 {
     ldec14: ldec14,
@@ -70399,7 +72866,7 @@ impl ldec13Var1 {
         Some((pattern_len, Self { ldec14 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1160:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1182:1"]
 #[derive(Clone, Debug)]
 struct ldec13Var2 {
     ldec14: ldec14,
@@ -70520,7 +72987,7 @@ impl ldec13 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1162:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1184:1"]
 #[derive(Clone, Debug)]
 struct ldec12Var0 {}
 impl ldec12Var0 {
@@ -70563,7 +73030,7 @@ impl ldec12Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1161:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1183:1"]
 #[derive(Clone, Debug)]
 struct ldec12Var1 {
     ldec13: ldec13,
@@ -70618,7 +73085,7 @@ impl ldec12Var1 {
         Some((pattern_len, Self { ldec13 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1163:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1185:1"]
 #[derive(Clone, Debug)]
 struct ldec12Var2 {
     ldec13: ldec13,
@@ -70739,7 +73206,7 @@ impl ldec12 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1165:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1187:1"]
 #[derive(Clone, Debug)]
 struct ldec11Var0 {}
 impl ldec11Var0 {
@@ -70782,7 +73249,7 @@ impl ldec11Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1164:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1186:1"]
 #[derive(Clone, Debug)]
 struct ldec11Var1 {
     ldec12: ldec12,
@@ -70837,7 +73304,7 @@ impl ldec11Var1 {
         Some((pattern_len, Self { ldec12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1166:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1188:1"]
 #[derive(Clone, Debug)]
 struct ldec11Var2 {
     ldec12: ldec12,
@@ -70958,7 +73425,7 @@ impl ldec11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1168:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1190:1"]
 #[derive(Clone, Debug)]
 struct ldec10Var0 {}
 impl ldec10Var0 {
@@ -71001,7 +73468,7 @@ impl ldec10Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1167:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1189:1"]
 #[derive(Clone, Debug)]
 struct ldec10Var1 {
     ldec11: ldec11,
@@ -71056,7 +73523,7 @@ impl ldec10Var1 {
         Some((pattern_len, Self { ldec11 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1169:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1191:1"]
 #[derive(Clone, Debug)]
 struct ldec10Var2 {
     ldec11: ldec11,
@@ -71177,7 +73644,7 @@ impl ldec10 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1171:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1193:1"]
 #[derive(Clone, Debug)]
 struct ldec9Var0 {}
 impl ldec9Var0 {
@@ -71220,7 +73687,7 @@ impl ldec9Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1170:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1192:1"]
 #[derive(Clone, Debug)]
 struct ldec9Var1 {
     ldec10: ldec10,
@@ -71275,7 +73742,7 @@ impl ldec9Var1 {
         Some((pattern_len, Self { ldec10 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1172:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1194:1"]
 #[derive(Clone, Debug)]
 struct ldec9Var2 {
     ldec10: ldec10,
@@ -71396,7 +73863,7 @@ impl ldec9 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1174:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1196:1"]
 #[derive(Clone, Debug)]
 struct ldec8Var0 {}
 impl ldec8Var0 {
@@ -71439,7 +73906,7 @@ impl ldec8Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1173:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1195:1"]
 #[derive(Clone, Debug)]
 struct ldec8Var1 {
     ldec9: ldec9,
@@ -71494,7 +73961,7 @@ impl ldec8Var1 {
         Some((pattern_len, Self { ldec9 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1175:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1197:1"]
 #[derive(Clone, Debug)]
 struct ldec8Var2 {
     ldec9: ldec9,
@@ -71615,7 +74082,7 @@ impl ldec8 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1177:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1199:1"]
 #[derive(Clone, Debug)]
 struct ldec7Var0 {}
 impl ldec7Var0 {
@@ -71658,7 +74125,7 @@ impl ldec7Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1176:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1198:1"]
 #[derive(Clone, Debug)]
 struct ldec7Var1 {
     ldec8: ldec8,
@@ -71713,7 +74180,7 @@ impl ldec7Var1 {
         Some((pattern_len, Self { ldec8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1178:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1200:1"]
 #[derive(Clone, Debug)]
 struct ldec7Var2 {
     ldec8: ldec8,
@@ -71834,7 +74301,7 @@ impl ldec7 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1180:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1202:1"]
 #[derive(Clone, Debug)]
 struct ldec6Var0 {}
 impl ldec6Var0 {
@@ -71877,7 +74344,7 @@ impl ldec6Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1179:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1201:1"]
 #[derive(Clone, Debug)]
 struct ldec6Var1 {
     ldec7: ldec7,
@@ -71932,7 +74399,7 @@ impl ldec6Var1 {
         Some((pattern_len, Self { ldec7 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1181:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1203:1"]
 #[derive(Clone, Debug)]
 struct ldec6Var2 {
     ldec7: ldec7,
@@ -72053,7 +74520,7 @@ impl ldec6 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1183:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1205:1"]
 #[derive(Clone, Debug)]
 struct ldec5Var0 {}
 impl ldec5Var0 {
@@ -72096,7 +74563,7 @@ impl ldec5Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1182:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1204:1"]
 #[derive(Clone, Debug)]
 struct ldec5Var1 {
     ldec6: ldec6,
@@ -72151,7 +74618,7 @@ impl ldec5Var1 {
         Some((pattern_len, Self { ldec6 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1184:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1206:1"]
 #[derive(Clone, Debug)]
 struct ldec5Var2 {
     ldec6: ldec6,
@@ -72272,7 +74739,7 @@ impl ldec5 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1186:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1208:1"]
 #[derive(Clone, Debug)]
 struct ldec4Var0 {}
 impl ldec4Var0 {
@@ -72315,7 +74782,7 @@ impl ldec4Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1185:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1207:1"]
 #[derive(Clone, Debug)]
 struct ldec4Var1 {
     ldec5: ldec5,
@@ -72370,7 +74837,7 @@ impl ldec4Var1 {
         Some((pattern_len, Self { ldec5 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1187:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1209:1"]
 #[derive(Clone, Debug)]
 struct ldec4Var2 {
     ldec5: ldec5,
@@ -72491,7 +74958,7 @@ impl ldec4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1189:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1211:1"]
 #[derive(Clone, Debug)]
 struct ldec3Var0 {}
 impl ldec3Var0 {
@@ -72534,7 +75001,7 @@ impl ldec3Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1188:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1210:1"]
 #[derive(Clone, Debug)]
 struct ldec3Var1 {
     ldec4: ldec4,
@@ -72589,7 +75056,7 @@ impl ldec3Var1 {
         Some((pattern_len, Self { ldec4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1190:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1212:1"]
 #[derive(Clone, Debug)]
 struct ldec3Var2 {
     ldec4: ldec4,
@@ -72710,7 +75177,7 @@ impl ldec3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1192:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1214:1"]
 #[derive(Clone, Debug)]
 struct ldec2Var0 {}
 impl ldec2Var0 {
@@ -72753,7 +75220,7 @@ impl ldec2Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1191:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1213:1"]
 #[derive(Clone, Debug)]
 struct ldec2Var1 {
     ldec3: ldec3,
@@ -72808,7 +75275,7 @@ impl ldec2Var1 {
         Some((pattern_len, Self { ldec3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1193:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1215:1"]
 #[derive(Clone, Debug)]
 struct ldec2Var2 {
     ldec3: ldec3,
@@ -72929,7 +75396,7 @@ impl ldec2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1195:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1217:1"]
 #[derive(Clone, Debug)]
 struct ldec1Var0 {}
 impl ldec1Var0 {
@@ -72972,7 +75439,7 @@ impl ldec1Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1194:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1216:1"]
 #[derive(Clone, Debug)]
 struct ldec1Var1 {
     ldec2: ldec2,
@@ -73027,7 +75494,7 @@ impl ldec1Var1 {
         Some((pattern_len, Self { ldec2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1196:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1218:1"]
 #[derive(Clone, Debug)]
 struct ldec1Var2 {
     ldec2: ldec2,
@@ -73148,7 +75615,7 @@ impl ldec1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1198:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1220:1"]
 #[derive(Clone, Debug)]
 struct ldec0Var0 {}
 impl ldec0Var0 {
@@ -73191,7 +75658,7 @@ impl ldec0Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1197:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1219:1"]
 #[derive(Clone, Debug)]
 struct ldec0Var1 {
     ldec1: ldec1,
@@ -73246,7 +75713,7 @@ impl ldec0Var1 {
         Some((pattern_len, Self { ldec1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1199:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1221:1"]
 #[derive(Clone, Debug)]
 struct ldec0Var2 {
     ldec1: ldec1,
@@ -73367,7 +75834,7 @@ impl ldec0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1200:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1222:1"]
 #[derive(Clone, Debug)]
 struct ldlist_decVar0 {
     ldec0: ldec0,
@@ -73462,7 +75929,7 @@ impl ldlist_dec {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1203:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1225:1"]
 #[derive(Clone, Debug)]
 struct sdec15Var0 {}
 impl sdec15Var0 {
@@ -73502,7 +75969,7 @@ impl sdec15Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1204:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1226:1"]
 #[derive(Clone, Debug)]
 struct sdec15Var1 {}
 impl sdec15Var1 {
@@ -73596,7 +76063,7 @@ impl sdec15 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1206:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1228:1"]
 #[derive(Clone, Debug)]
 struct sdec14Var0 {}
 impl sdec14Var0 {
@@ -73639,7 +76106,7 @@ impl sdec14Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1205:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1227:1"]
 #[derive(Clone, Debug)]
 struct sdec14Var1 {
     sdec15: sdec15,
@@ -73694,7 +76161,7 @@ impl sdec14Var1 {
         Some((pattern_len, Self { sdec15 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1207:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1229:1"]
 #[derive(Clone, Debug)]
 struct sdec14Var2 {
     sdec15: sdec15,
@@ -73815,7 +76282,7 @@ impl sdec14 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1209:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1231:1"]
 #[derive(Clone, Debug)]
 struct sdec13Var0 {}
 impl sdec13Var0 {
@@ -73858,7 +76325,7 @@ impl sdec13Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1208:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1230:1"]
 #[derive(Clone, Debug)]
 struct sdec13Var1 {
     sdec14: sdec14,
@@ -73913,7 +76380,7 @@ impl sdec13Var1 {
         Some((pattern_len, Self { sdec14 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1210:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1232:1"]
 #[derive(Clone, Debug)]
 struct sdec13Var2 {
     sdec14: sdec14,
@@ -74034,7 +76501,7 @@ impl sdec13 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1212:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1234:1"]
 #[derive(Clone, Debug)]
 struct sdec12Var0 {}
 impl sdec12Var0 {
@@ -74077,7 +76544,7 @@ impl sdec12Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1211:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1233:1"]
 #[derive(Clone, Debug)]
 struct sdec12Var1 {
     sdec13: sdec13,
@@ -74132,7 +76599,7 @@ impl sdec12Var1 {
         Some((pattern_len, Self { sdec13 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1213:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1235:1"]
 #[derive(Clone, Debug)]
 struct sdec12Var2 {
     sdec13: sdec13,
@@ -74253,7 +76720,7 @@ impl sdec12 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1215:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1237:1"]
 #[derive(Clone, Debug)]
 struct sdec11Var0 {}
 impl sdec11Var0 {
@@ -74296,7 +76763,7 @@ impl sdec11Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1214:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1236:1"]
 #[derive(Clone, Debug)]
 struct sdec11Var1 {
     sdec12: sdec12,
@@ -74351,7 +76818,7 @@ impl sdec11Var1 {
         Some((pattern_len, Self { sdec12 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1216:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1238:1"]
 #[derive(Clone, Debug)]
 struct sdec11Var2 {
     sdec12: sdec12,
@@ -74472,7 +76939,7 @@ impl sdec11 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1218:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1240:1"]
 #[derive(Clone, Debug)]
 struct sdec10Var0 {}
 impl sdec10Var0 {
@@ -74515,7 +76982,7 @@ impl sdec10Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1217:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1239:1"]
 #[derive(Clone, Debug)]
 struct sdec10Var1 {
     sdec11: sdec11,
@@ -74570,7 +77037,7 @@ impl sdec10Var1 {
         Some((pattern_len, Self { sdec11 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1219:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1241:1"]
 #[derive(Clone, Debug)]
 struct sdec10Var2 {
     sdec11: sdec11,
@@ -74691,7 +77158,7 @@ impl sdec10 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1221:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1243:1"]
 #[derive(Clone, Debug)]
 struct sdec9Var0 {}
 impl sdec9Var0 {
@@ -74734,7 +77201,7 @@ impl sdec9Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1220:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1242:1"]
 #[derive(Clone, Debug)]
 struct sdec9Var1 {
     sdec10: sdec10,
@@ -74789,7 +77256,7 @@ impl sdec9Var1 {
         Some((pattern_len, Self { sdec10 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1222:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1244:1"]
 #[derive(Clone, Debug)]
 struct sdec9Var2 {
     sdec10: sdec10,
@@ -74910,7 +77377,7 @@ impl sdec9 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1224:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1246:1"]
 #[derive(Clone, Debug)]
 struct sdec8Var0 {}
 impl sdec8Var0 {
@@ -74953,7 +77420,7 @@ impl sdec8Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1223:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1245:1"]
 #[derive(Clone, Debug)]
 struct sdec8Var1 {
     sdec9: sdec9,
@@ -75008,7 +77475,7 @@ impl sdec8Var1 {
         Some((pattern_len, Self { sdec9 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1225:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1247:1"]
 #[derive(Clone, Debug)]
 struct sdec8Var2 {
     sdec9: sdec9,
@@ -75129,7 +77596,7 @@ impl sdec8 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1227:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1249:1"]
 #[derive(Clone, Debug)]
 struct sdec7Var0 {}
 impl sdec7Var0 {
@@ -75172,7 +77639,7 @@ impl sdec7Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1226:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1248:1"]
 #[derive(Clone, Debug)]
 struct sdec7Var1 {
     sdec8: sdec8,
@@ -75227,7 +77694,7 @@ impl sdec7Var1 {
         Some((pattern_len, Self { sdec8 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1228:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1250:1"]
 #[derive(Clone, Debug)]
 struct sdec7Var2 {
     sdec8: sdec8,
@@ -75348,7 +77815,7 @@ impl sdec7 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1230:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1252:1"]
 #[derive(Clone, Debug)]
 struct sdec6Var0 {}
 impl sdec6Var0 {
@@ -75391,7 +77858,7 @@ impl sdec6Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1229:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1251:1"]
 #[derive(Clone, Debug)]
 struct sdec6Var1 {
     sdec7: sdec7,
@@ -75446,7 +77913,7 @@ impl sdec6Var1 {
         Some((pattern_len, Self { sdec7 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1231:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1253:1"]
 #[derive(Clone, Debug)]
 struct sdec6Var2 {
     sdec7: sdec7,
@@ -75567,7 +78034,7 @@ impl sdec6 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1233:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1255:1"]
 #[derive(Clone, Debug)]
 struct sdec5Var0 {}
 impl sdec5Var0 {
@@ -75610,7 +78077,7 @@ impl sdec5Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1232:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1254:1"]
 #[derive(Clone, Debug)]
 struct sdec5Var1 {
     sdec6: sdec6,
@@ -75665,7 +78132,7 @@ impl sdec5Var1 {
         Some((pattern_len, Self { sdec6 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1234:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1256:1"]
 #[derive(Clone, Debug)]
 struct sdec5Var2 {
     sdec6: sdec6,
@@ -75786,7 +78253,7 @@ impl sdec5 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1236:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1258:1"]
 #[derive(Clone, Debug)]
 struct sdec4Var0 {}
 impl sdec4Var0 {
@@ -75829,7 +78296,7 @@ impl sdec4Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1235:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1257:1"]
 #[derive(Clone, Debug)]
 struct sdec4Var1 {
     sdec5: sdec5,
@@ -75884,7 +78351,7 @@ impl sdec4Var1 {
         Some((pattern_len, Self { sdec5 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1237:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1259:1"]
 #[derive(Clone, Debug)]
 struct sdec4Var2 {
     sdec5: sdec5,
@@ -76005,7 +78472,7 @@ impl sdec4 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1239:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1261:1"]
 #[derive(Clone, Debug)]
 struct sdec3Var0 {}
 impl sdec3Var0 {
@@ -76048,7 +78515,7 @@ impl sdec3Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1238:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1260:1"]
 #[derive(Clone, Debug)]
 struct sdec3Var1 {
     sdec4: sdec4,
@@ -76103,7 +78570,7 @@ impl sdec3Var1 {
         Some((pattern_len, Self { sdec4 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1240:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1262:1"]
 #[derive(Clone, Debug)]
 struct sdec3Var2 {
     sdec4: sdec4,
@@ -76224,7 +78691,7 @@ impl sdec3 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1242:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1264:1"]
 #[derive(Clone, Debug)]
 struct sdec2Var0 {}
 impl sdec2Var0 {
@@ -76267,7 +78734,7 @@ impl sdec2Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1241:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1263:1"]
 #[derive(Clone, Debug)]
 struct sdec2Var1 {
     sdec3: sdec3,
@@ -76322,7 +78789,7 @@ impl sdec2Var1 {
         Some((pattern_len, Self { sdec3 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1243:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1265:1"]
 #[derive(Clone, Debug)]
 struct sdec2Var2 {
     sdec3: sdec3,
@@ -76443,7 +78910,7 @@ impl sdec2 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1245:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1267:1"]
 #[derive(Clone, Debug)]
 struct sdec1Var0 {}
 impl sdec1Var0 {
@@ -76486,7 +78953,7 @@ impl sdec1Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1244:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1266:1"]
 #[derive(Clone, Debug)]
 struct sdec1Var1 {
     sdec2: sdec2,
@@ -76541,7 +79008,7 @@ impl sdec1Var1 {
         Some((pattern_len, Self { sdec2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1246:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1268:1"]
 #[derive(Clone, Debug)]
 struct sdec1Var2 {
     sdec2: sdec2,
@@ -76662,7 +79129,7 @@ impl sdec1 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1248:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1270:1"]
 #[derive(Clone, Debug)]
 struct sdec0Var0 {}
 impl sdec0Var0 {
@@ -76705,7 +79172,7 @@ impl sdec0Var0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1247:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1269:1"]
 #[derive(Clone, Debug)]
 struct sdec0Var1 {
     sdec1: sdec1,
@@ -76760,7 +79227,7 @@ impl sdec0Var1 {
         Some((pattern_len, Self { sdec1 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1249:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1271:1"]
 #[derive(Clone, Debug)]
 struct sdec0Var2 {
     sdec1: sdec1,
@@ -76881,7 +79348,7 @@ impl sdec0 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1251:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1273:1"]
 #[derive(Clone, Debug)]
 struct stlist_decVar0 {
     sdec0: sdec0,
@@ -76976,7 +79443,7 @@ impl stlist_dec {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1256:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1278:1"]
 #[derive(Clone, Debug)]
 struct reglistVar0 {
     rn: rn,
@@ -77052,7 +79519,7 @@ impl reglistVar0 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1261:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1283:1"]
 #[derive(Clone, Debug)]
 struct reglistVar1 {
     rn: rn,
@@ -77130,7 +79597,7 @@ impl reglistVar1 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1266:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1288:1"]
 #[derive(Clone, Debug)]
 struct reglistVar2 {
     rn: rn,
@@ -77206,7 +79673,7 @@ impl reglistVar2 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1271:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1293:1"]
 #[derive(Clone, Debug)]
 struct reglistVar3 {
     rn: rn,
@@ -77284,7 +79751,7 @@ impl reglistVar3 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1276:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1298:1"]
 #[derive(Clone, Debug)]
 struct reglistVar4 {
     rn: rn,
@@ -77360,7 +79827,7 @@ impl reglistVar4 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1281:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1303:1"]
 #[derive(Clone, Debug)]
 struct reglistVar5 {
     rn: rn,
@@ -77438,7 +79905,7 @@ impl reglistVar5 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1286:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1308:1"]
 #[derive(Clone, Debug)]
 struct reglistVar6 {
     rn: rn,
@@ -77514,7 +79981,7 @@ impl reglistVar6 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1291:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1313:1"]
 #[derive(Clone, Debug)]
 struct reglistVar7 {
     rn: rn,
@@ -77592,7 +80059,7 @@ impl reglistVar7 {
         Some((pattern_len, Self { rn, ldlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1296:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1318:1"]
 #[derive(Clone, Debug)]
 struct reglistVar8 {
     rn: rn,
@@ -77668,7 +80135,7 @@ impl reglistVar8 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1301:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1323:1"]
 #[derive(Clone, Debug)]
 struct reglistVar9 {
     rn: rn,
@@ -77746,7 +80213,7 @@ impl reglistVar9 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1306:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1328:1"]
 #[derive(Clone, Debug)]
 struct reglistVar10 {
     rn: rn,
@@ -77822,7 +80289,7 @@ impl reglistVar10 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1311:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1333:1"]
 #[derive(Clone, Debug)]
 struct reglistVar11 {
     rn: rn,
@@ -77900,7 +80367,7 @@ impl reglistVar11 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1316:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1338:1"]
 #[derive(Clone, Debug)]
 struct reglistVar12 {
     rn: rn,
@@ -77976,7 +80443,7 @@ impl reglistVar12 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1321:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1343:1"]
 #[derive(Clone, Debug)]
 struct reglistVar13 {
     rn: rn,
@@ -78054,7 +80521,7 @@ impl reglistVar13 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1326:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1348:1"]
 #[derive(Clone, Debug)]
 struct reglistVar14 {
     rn: rn,
@@ -78130,7 +80597,7 @@ impl reglistVar14 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1331:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1353:1"]
 #[derive(Clone, Debug)]
 struct reglistVar15 {
     rn: rn,
@@ -78208,7 +80675,7 @@ impl reglistVar15 {
         Some((pattern_len, Self { rn, ldlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1336:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1358:1"]
 #[derive(Clone, Debug)]
 struct reglistVar16 {
     rn: rn,
@@ -78284,7 +80751,7 @@ impl reglistVar16 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1341:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1363:1"]
 #[derive(Clone, Debug)]
 struct reglistVar17 {
     rn: rn,
@@ -78362,7 +80829,7 @@ impl reglistVar17 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1352:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1374:1"]
 #[derive(Clone, Debug)]
 struct reglistVar18 {
     rn: rn,
@@ -78440,7 +80907,7 @@ impl reglistVar18 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1358:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1380:1"]
 #[derive(Clone, Debug)]
 struct reglistVar19 {
     rn: rn,
@@ -78516,7 +80983,7 @@ impl reglistVar19 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1363:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1385:1"]
 #[derive(Clone, Debug)]
 struct reglistVar20 {
     rn: rn,
@@ -78592,7 +81059,7 @@ impl reglistVar20 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1368:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1390:1"]
 #[derive(Clone, Debug)]
 struct reglistVar21 {
     rn: rn,
@@ -78670,7 +81137,7 @@ impl reglistVar21 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1373:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1395:1"]
 #[derive(Clone, Debug)]
 struct reglistVar22 {
     rn: rn,
@@ -78746,7 +81213,7 @@ impl reglistVar22 {
         Some((pattern_len, Self { rn, stlist_inc }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1378:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1400:1"]
 #[derive(Clone, Debug)]
 struct reglistVar23 {
     rn: rn,
@@ -78822,7 +81289,7 @@ impl reglistVar23 {
         Some((pattern_len, Self { rn, stlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1383:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1405:1"]
 #[derive(Clone, Debug)]
 struct reglistVar24 {
     rn: rn,
@@ -78900,7 +81367,7 @@ impl reglistVar24 {
         Some((pattern_len, Self { rn, stlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1388:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1410:1"]
 #[derive(Clone, Debug)]
 struct reglistVar25 {
     rn: rn,
@@ -78976,7 +81443,7 @@ impl reglistVar25 {
         Some((pattern_len, Self { rn, stlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1393:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1415:1"]
 #[derive(Clone, Debug)]
 struct reglistVar26 {
     rn: rn,
@@ -79052,7 +81519,7 @@ impl reglistVar26 {
         Some((pattern_len, Self { rn, stlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1398:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1420:1"]
 #[derive(Clone, Debug)]
 struct reglistVar27 {
     rn: rn,
@@ -79130,7 +81597,7 @@ impl reglistVar27 {
         Some((pattern_len, Self { rn, stlist_dec }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1403:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1425:1"]
 #[derive(Clone, Debug)]
 struct reglistVar28 {
     rn: rn,
@@ -79641,7 +82108,7 @@ impl reglist {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1409:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1431:1"]
 #[derive(Clone, Debug)]
 struct mdirVar0 {}
 impl mdirVar0 {
@@ -79683,7 +82150,7 @@ impl mdirVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1410:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1432:1"]
 #[derive(Clone, Debug)]
 struct mdirVar1 {}
 impl mdirVar1 {
@@ -79725,7 +82192,7 @@ impl mdirVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1411:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1433:1"]
 #[derive(Clone, Debug)]
 struct mdirVar2 {}
 impl mdirVar2 {
@@ -79767,7 +82234,7 @@ impl mdirVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1412:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1434:1"]
 #[derive(Clone, Debug)]
 struct mdirVar3 {}
 impl mdirVar3 {
@@ -79894,7 +82361,7 @@ impl mdir {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1417:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1439:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var0 {
     immed: TokenField_immed,
@@ -79965,7 +82432,7 @@ impl addrmode5Var0 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1418:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1440:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var1 {
     immed: TokenField_immed,
@@ -80036,7 +82503,7 @@ impl addrmode5Var1 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1419:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1441:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var2 {
     immed: TokenField_immed,
@@ -80107,7 +82574,7 @@ impl addrmode5Var2 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1420:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1442:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var3 {
     immed: TokenField_immed,
@@ -80178,7 +82645,7 @@ impl addrmode5Var3 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1421:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1443:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var4 {
     immed: TokenField_immed,
@@ -80248,7 +82715,7 @@ impl addrmode5Var4 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1422:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1444:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var5 {
     immed: TokenField_immed,
@@ -80318,7 +82785,7 @@ impl addrmode5Var5 {
         Some((pattern_len, Self { rn, immed }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1423:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1445:1"]
 #[derive(Clone, Debug)]
 struct addrmode5Var6 {
     immed: TokenField_immed,
@@ -80511,7 +82978,7 @@ impl addrmode5 {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1427:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1449:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar0 {}
 impl cpsrmaskVar0 {
@@ -80548,7 +83015,7 @@ impl cpsrmaskVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1428:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1450:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar1 {}
 impl cpsrmaskVar1 {
@@ -80588,7 +83055,7 @@ impl cpsrmaskVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1429:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1451:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar2 {}
 impl cpsrmaskVar2 {
@@ -80628,7 +83095,7 @@ impl cpsrmaskVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1430:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1452:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar3 {}
 impl cpsrmaskVar3 {
@@ -80668,7 +83135,7 @@ impl cpsrmaskVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1431:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1453:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar4 {}
 impl cpsrmaskVar4 {
@@ -80708,7 +83175,7 @@ impl cpsrmaskVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1432:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1454:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar5 {}
 impl cpsrmaskVar5 {
@@ -80748,7 +83215,7 @@ impl cpsrmaskVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1433:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1455:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar6 {}
 impl cpsrmaskVar6 {
@@ -80788,7 +83255,7 @@ impl cpsrmaskVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1434:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1456:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar7 {}
 impl cpsrmaskVar7 {
@@ -80828,7 +83295,7 @@ impl cpsrmaskVar7 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1435:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1457:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar8 {}
 impl cpsrmaskVar8 {
@@ -80868,7 +83335,7 @@ impl cpsrmaskVar8 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1436:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1458:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar9 {}
 impl cpsrmaskVar9 {
@@ -80908,7 +83375,7 @@ impl cpsrmaskVar9 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1437:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1459:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar10 {}
 impl cpsrmaskVar10 {
@@ -80948,7 +83415,7 @@ impl cpsrmaskVar10 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1438:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1460:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar11 {}
 impl cpsrmaskVar11 {
@@ -80988,7 +83455,7 @@ impl cpsrmaskVar11 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1439:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1461:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar12 {}
 impl cpsrmaskVar12 {
@@ -81028,7 +83495,7 @@ impl cpsrmaskVar12 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1440:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1462:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar13 {}
 impl cpsrmaskVar13 {
@@ -81068,7 +83535,7 @@ impl cpsrmaskVar13 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1441:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1463:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar14 {}
 impl cpsrmaskVar14 {
@@ -81108,7 +83575,7 @@ impl cpsrmaskVar14 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1442:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1464:1"]
 #[derive(Clone, Debug)]
 struct cpsrmaskVar15 {}
 impl cpsrmaskVar15 {
@@ -81401,7 +83868,7 @@ impl cpsrmask {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1446:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1468:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar0 {}
 impl spsrmaskVar0 {
@@ -81438,7 +83905,7 @@ impl spsrmaskVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1447:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1469:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar1 {}
 impl spsrmaskVar1 {
@@ -81478,7 +83945,7 @@ impl spsrmaskVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1448:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1470:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar2 {}
 impl spsrmaskVar2 {
@@ -81518,7 +83985,7 @@ impl spsrmaskVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1449:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1471:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar3 {}
 impl spsrmaskVar3 {
@@ -81558,7 +84025,7 @@ impl spsrmaskVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1450:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1472:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar4 {}
 impl spsrmaskVar4 {
@@ -81598,7 +84065,7 @@ impl spsrmaskVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1451:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1473:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar5 {}
 impl spsrmaskVar5 {
@@ -81638,7 +84105,7 @@ impl spsrmaskVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1452:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1474:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar6 {}
 impl spsrmaskVar6 {
@@ -81678,7 +84145,7 @@ impl spsrmaskVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1453:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1475:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar7 {}
 impl spsrmaskVar7 {
@@ -81718,7 +84185,7 @@ impl spsrmaskVar7 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1454:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1476:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar8 {}
 impl spsrmaskVar8 {
@@ -81758,7 +84225,7 @@ impl spsrmaskVar8 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1455:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1477:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar9 {}
 impl spsrmaskVar9 {
@@ -81798,7 +84265,7 @@ impl spsrmaskVar9 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1456:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1478:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar10 {}
 impl spsrmaskVar10 {
@@ -81838,7 +84305,7 @@ impl spsrmaskVar10 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1457:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1479:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar11 {}
 impl spsrmaskVar11 {
@@ -81878,7 +84345,7 @@ impl spsrmaskVar11 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1458:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1480:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar12 {}
 impl spsrmaskVar12 {
@@ -81918,7 +84385,7 @@ impl spsrmaskVar12 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1459:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1481:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar13 {}
 impl spsrmaskVar13 {
@@ -81958,7 +84425,7 @@ impl spsrmaskVar13 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1460:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1482:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar14 {}
 impl spsrmaskVar14 {
@@ -81998,7 +84465,7 @@ impl spsrmaskVar14 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1461:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1483:1"]
 #[derive(Clone, Debug)]
 struct spsrmaskVar15 {}
 impl spsrmaskVar15 {
@@ -82291,7 +84758,7 @@ impl spsrmask {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1968:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1984:1"]
 #[derive(Clone, Debug)]
 struct ArmPCRelImmed12Var0 {
     immed: TokenField_immed,
@@ -82332,6 +84799,9 @@ impl ArmPCRelImmed12Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.U23().disassembly() != 1 {
             return None;
         }
@@ -82354,7 +84824,7 @@ impl ArmPCRelImmed12Var0 {
         Some((pattern_len, Self { immed, rotate }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1974:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMinstructions.sinc:1990:1"]
 #[derive(Clone, Debug)]
 struct ArmPCRelImmed12Var1 {
     immed: TokenField_immed,
@@ -82396,6 +84866,9 @@ impl ArmPCRelImmed12Var1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.U23().disassembly() != 0 {
             return None;
         }
@@ -99940,7 +102413,7 @@ impl thSRSMode {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1483:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1480:1"]
 #[derive(Clone, Debug)]
 struct bxnsVar0 {}
 impl bxnsVar0 {
@@ -99969,6 +102442,9 @@ impl bxnsVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0002().disassembly() != 4 {
             return None;
         }
@@ -99979,7 +102455,7 @@ impl bxnsVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1482:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:1479:1"]
 #[derive(Clone, Debug)]
 struct bxnsVar1 {}
 impl bxnsVar1 {
@@ -100009,6 +102485,9 @@ impl bxnsVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         let thc0003 = token_parser.thc0003();
         pattern_len += block_0_len;
         tokens_current =
@@ -100074,7 +102553,7 @@ impl bxns {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3819:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3816:1"]
 #[derive(Clone, Debug)]
 struct thXBITVar0 {}
 impl thXBITVar0 {
@@ -100103,6 +102582,9 @@ impl thXBITVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         let Rn0003 = token_parser.Rn0003();
         pattern_len += block_0_len;
         tokens_current =
@@ -100119,7 +102601,7 @@ impl thXBITVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3820:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3817:1"]
 #[derive(Clone, Debug)]
 struct thXBITVar1 {}
 impl thXBITVar1 {
@@ -100148,6 +102630,9 @@ impl thXBITVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         let Rn0003 = token_parser.Rn0003();
         pattern_len += block_0_len;
         tokens_current =
@@ -100221,7 +102706,7 @@ impl thXBIT {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3822:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3819:1"]
 #[derive(Clone, Debug)]
 struct thYBITVar0 {}
 impl thYBITVar0 {
@@ -100250,6 +102735,9 @@ impl thYBITVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 0 {
             return None;
         }
@@ -100261,7 +102749,7 @@ impl thYBITVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3823:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3820:1"]
 #[derive(Clone, Debug)]
 struct thYBITVar1 {}
 impl thYBITVar1 {
@@ -100290,6 +102778,9 @@ impl thYBITVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 1 {
             return None;
         }
@@ -100358,7 +102849,7 @@ impl thYBIT {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3833:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3830:1"]
 #[derive(Clone, Debug)]
 struct thdXbotVar0 {}
 impl thdXbotVar0 {
@@ -100388,6 +102879,9 @@ impl thdXbotVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 0 {
             return None;
         }
@@ -100399,7 +102893,7 @@ impl thdXbotVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3834:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3831:1"]
 #[derive(Clone, Debug)]
 struct thdXbotVar1 {}
 impl thdXbotVar1 {
@@ -100428,6 +102922,9 @@ impl thdXbotVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 1 {
             return None;
         }
@@ -100496,7 +102993,7 @@ impl thdXbot {
         None
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3836:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3833:1"]
 #[derive(Clone, Debug)]
 struct thdXtopVar0 {}
 impl thdXtopVar0 {
@@ -100526,6 +103023,9 @@ impl thdXtopVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 0 {
             return None;
         }
@@ -100537,7 +103037,7 @@ impl thdXtopVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3837:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/ARM/data/languages/ARMTHUMBinstructions.sinc:3834:1"]
 #[derive(Clone, Debug)]
 struct thdXtopVar1 {}
 impl thdXtopVar1 {
@@ -100566,6 +103066,9 @@ impl thdXtopVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        if context_instance.register().read_ARMcondCk_disassembly() != 1 {
+            return None;
+        }
         if token_parser.thc0404().disassembly() != 1 {
             return None;
         }
