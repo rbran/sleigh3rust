@@ -5,3 +5,10 @@ version = 3
 [[package]]
 name = "data_be_64"
 version = "0.1.0"
+dependencies = [
+ "sleigh4rust",
+]
+
+[[package]]
+name = "sleigh4rust"
+version = "0.1.0"

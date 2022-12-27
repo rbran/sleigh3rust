@@ -7,130 +7,70 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 pub mod disassembler;
+use crate::disassembler::*;
 
-#[cfg(test)]
-mod test {
-    use crate::disassembler::*;
+use std::fmt::Write;
 
-    pub struct GlobalSetDummy {}
-    #[allow(non_snake_case)]
-    #[allow(unused_variables)]
-    impl GlobalSetTrait for GlobalSetDummy {
-        fn set_reg2Num(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
+pub struct GlobalSetDummy;
+#[allow(non_snake_case)]
+impl GlobalSetTrait for GlobalSetDummy {
+    fn set_reg2Num(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_regNum(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_cond_base(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_regInc(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_ISA_MODE(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_REToverride(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_T(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_counter(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_cond_mask(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_cond_shft(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_cond_true(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_itmode(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_TEEMode(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_ARMcond(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_CALLoverride(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_LowBitCodeMode(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_TMode(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_ARMcondCk(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_counter2(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_LRset(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_condit(&mut self, _address: Option<u32>, _value: i64) {}
+    fn set_cond_full(&mut self, _address: Option<u32>, _value: i64) {}
+}
 
-        fn set_regNum(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_cond_base(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_regInc(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_ISA_MODE(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_REToverride(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_T(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_counter(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_cond_mask(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_cond_shft(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_cond_true(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_itmode(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_TEEMode(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_ARMcond(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_CALLoverride(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_LowBitCodeMode(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_TMode(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_ARMcondCk(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_counter2(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_LRset(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_condit(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
-
-        fn set_cond_full(&mut self, address: Option<u32>, value: i64) {
-            ()
-        }
+#[no_mangle]
+pub fn parse_default(tokens: &[u8], inst_start: u32) -> Option<(u32, String)> {
+    let mut context = SpacesStruct {
+        register: ContextregisterStruct { chunk_0x0: [0; 8] },
+    };
+    let (addr, parsed) = parse_instruction(
+        tokens,
+        &mut context,
+        inst_start,
+        &mut GlobalSetDummy,
+    )?;
+    let mut output = String::new();
+    for ele in parsed.into_iter() {
+        write!(&mut output, "{}", ele).unwrap();
     }
+    Some((addr, output))
+}
 
-    #[test]
-    fn disassembler_simple1() {
-        let tokens: &[(u32, &str, &[u8])] = &[
-            (0x10000, "b 0x1000c", &[0x01, 0x00, 0x00, 0xea]),
-            (0x10004, "b 0x1000c", &[0x00, 0x00, 0x00, 0xea]),
-            (0x10008, "b 0x1000c", &[0xff, 0xff, 0xff, 0xea]),
-            (0x1000c, "cpy r0,r0", &[0x00, 0x00, 0xa0, 0xe1]),
-        ];
-        let context = SpacesStruct {
-            register: ContextregisterStruct { chunk_0x0: [0; 8] },
-        };
-        let mut global_set = GlobalSetDummy {};
-        for &(addr, output, token) in tokens.iter() {
-            let mut context = context.clone();
-            let parsed =
-                parse_instruction(token, &mut context, addr, &mut global_set);
-            match parsed {
-                None => panic!("Instruction invalid"),
-                Some((_inst_next, instruction)) => {
-                    let display: String = instruction
-                        .into_iter()
-                        .map(|x| x.to_string())
-                        .collect();
-                    assert_eq!(&display, output);
-                }
-            }
-        }
+#[no_mangle]
+pub fn parse_thumb(tokens: &[u8], inst_start: u32) -> Option<(u32, String)> {
+    let mut context = SpacesStruct {
+        register: ContextregisterStruct { chunk_0x0: [0; 8] },
+    };
+    context.register_mut().write_TMode_raw(1);
+    let (addr, parsed) = parse_instruction(
+        tokens,
+        &mut context,
+        inst_start,
+        &mut GlobalSetDummy,
+    )?;
+    let mut output = String::new();
+    for ele in parsed.into_iter() {
+        write!(&mut output, "{}", ele).unwrap();
     }
+    Some((addr, output))
 }
