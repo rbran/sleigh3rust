@@ -15,8 +15,11 @@ struct GlobalSetDummy;
 impl GlobalSetTrait for GlobalSetDummy {}
 
 #[no_mangle]
-pub fn parse_default(tokens: &[u8], inst_start: u64) -> Option<(u64, String)> {
-    let mut context = SpacesStruct{};
+pub fn parse_default(
+    tokens: &[u8],
+    inst_start: AddrType,
+) -> Option<(AddrType, String)> {
+    let mut context = SpacesStruct::default();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,

@@ -13,16 +13,15 @@ use std::fmt::Write;
 
 struct GlobalSetDummy;
 impl GlobalSetTrait for GlobalSetDummy {
-    fn set_test(&mut self, _address: Option<u64>, _value: i64) {}
+    fn set_test(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
 }
 
 #[no_mangle]
-pub fn parse_default(tokens: &[u8], inst_start: u64) -> Option<(u64, String)> {
-    let mut context = SpacesStruct {
-        register: ContextregisterStruct {
-            chunk_0x0: [0u8; 4],
-        },
-    };
+pub fn parse_default(
+    tokens: &[u8],
+    inst_start: AddrType,
+) -> Option<(AddrType, String)> {
+    let mut context = SpacesStruct::default();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,

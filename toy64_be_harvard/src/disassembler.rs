@@ -1,3 +1,4 @@
+pub type AddrType = u64;
 macro_rules! impl_read_to_type {
     ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
         const fn $read_unsigned<const BIG_ENDIAN: bool>(
@@ -94,7 +95,7 @@ pub trait MemoryWrite {
     fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
 }
 pub trait ContextTrait {}
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {}
 impl ContextTrait for SpacesStruct {}
 fn meaning_number<T>(hex: bool, num: T) -> DisplayElement

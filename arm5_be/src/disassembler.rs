@@ -1,3 +1,4 @@
+pub type AddrType = u32;
 macro_rules! impl_read_to_type {
     ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
         const fn $read_unsigned<const BIG_ENDIAN: bool>(
@@ -403,7 +404,7 @@ pub trait ContextTrait {
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct ContextregisterStruct {
     pub chunk_0x0: [u8; 8u64 as usize],
 }
@@ -442,7 +443,7 @@ impl MemoryWrite for ContextregisterStruct {
         }
     }
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
     pub register: ContextregisterStruct,
 }

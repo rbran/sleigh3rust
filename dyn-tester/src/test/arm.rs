@@ -178,19 +178,18 @@ fn arm() {
             .filter(|(check, _)| (check)(lib.version))
             .map(|(_, instructions)| instructions.iter())
             .flatten()
-            .filter_map(|(instr, out)| {
-                match (instr.thumb_mode(), lib.thumb) {
-                    (true, true) => {
-                        Some((parse_thumb_fun.as_ref().unwrap(), instr, out))
-                    }
-                    (true, false) => None,
-                    (false, _) => Some((&parse_arm_fun, instr, out)),
+            .filter_map(|(instr, out)| match (instr.thumb_mode(), lib.thumb) {
+                (true, true) => {
+                    Some((parse_thumb_fun.as_ref().unwrap(), instr, out))
                 }
+                (true, false) => None,
+                (false, _) => Some((&parse_arm_fun, instr, out)),
             });
 
         for (parse_fun, instruction, output) in instruction_and_parser {
             let token = instruction.to_tokens(lib.endian);
-            let (_next_addr, parsed_output) = parse_fun(&token, 0).expect(&output);
+            let (_next_addr, parsed_output) =
+                parse_fun(&token, 0).expect(&output);
             assert_eq!(&remove_spaces(&parsed_output), output);
         }
     }

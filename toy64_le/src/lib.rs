@@ -12,7 +12,7 @@ mod disassembler;
 mod tests {
     use crate::disassembler::*;
 
-    pub struct GlobalSetDummy {}
+    pub struct GlobalSetDummy;
     #[allow(non_snake_case)]
     #[allow(unused_variables)]
     impl GlobalSetTrait for GlobalSetDummy {}
@@ -22,12 +22,15 @@ mod tests {
         let tokens: &[(u64, &str, &[u8])] = &[
             //TODO: bin code
         ];
-        let context = SpacesStruct {};
-        let mut global_set = GlobalSetDummy {};
+        let context = SpacesStruct::default();
         for &(addr, output, token) in tokens.iter() {
             let mut context = context.clone();
-            let parsed =
-                parse_instruction(token, &mut context, addr, &mut global_set);
+            let parsed = parse_instruction(
+                token,
+                &mut context,
+                addr,
+                &mut GlobalSetDummy,
+            );
             match parsed {
                 None => panic!("Instruction invalid"),
                 Some((_inst_next, instruction)) => {

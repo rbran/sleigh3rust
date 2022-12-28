@@ -68,10 +68,74 @@ name = "arm8_le"
 version = "0.1.0"
 
 [[package]]
+name = "avr8"
+version = "0.1.0"
+
+[[package]]
+name = "avr8e"
+version = "0.1.0"
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "cp1600"
+version = "0.1.0"
+
+[[package]]
+name = "cr16b"
+version = "0.1.0"
+
+[[package]]
+name = "cr16c"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_base"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_android10"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_android11"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_android12"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_kitkat"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_lollipop"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_marshmallow"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_nougat"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_oreo"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_dex_pie"
+version = "0.1.0"
+
+[[package]]
+name = "dalvik_odex_kitkat"
+version = "0.1.0"
 
 [[package]]
 name = "data_be_64"
@@ -82,6 +146,50 @@ name = "data_le_64"
 version = "0.1.0"
 
 [[package]]
+name = "dspic30f"
+version = "0.1.0"
+
+[[package]]
+name = "dspic33c"
+version = "0.1.0"
+
+[[package]]
+name = "dspic33e"
+version = "0.1.0"
+
+[[package]]
+name = "dspic33f"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_65c02"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_6805"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_6809"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_80251"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_80390"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_8051"
+version = "0.1.0"
+
+[[package]]
+name = "dylib_8085"
+version = "0.1.0"
+
+[[package]]
 name = "dyn-tester"
 version = "0.1.0"
 dependencies = [
@@ -89,6 +197,26 @@ dependencies = [
  "libloading",
  "regex",
 ]
+
+[[package]]
+name = "h6309"
+version = "0.1.0"
+
+[[package]]
+name = "hc05"
+version = "0.1.0"
+
+[[package]]
+name = "hc08"
+version = "0.1.0"
+
+[[package]]
+name = "hcs08"
+version = "0.1.0"
+
+[[package]]
+name = "hcs12"
+version = "0.1.0"
 
 [[package]]
 name = "lazy_static"
@@ -107,17 +235,113 @@ dependencies = [
 ]
 
 [[package]]
+name = "m8c"
+version = "0.1.0"
+
+[[package]]
+name = "mcs96"
+version = "0.1.0"
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
+name = "mx51"
+version = "0.1.0"
+
+[[package]]
+name = "pa_risc32be"
+version = "0.1.0"
+
+[[package]]
 name = "pic12c5xx"
 version = "0.1.0"
 
 [[package]]
+name = "pic16"
+version = "0.1.0"
+
+[[package]]
 name = "pic16c5x"
+version = "0.1.0"
+
+[[package]]
+name = "pic16f"
+version = "0.1.0"
+
+[[package]]
+name = "pic18"
+version = "0.1.0"
+
+[[package]]
+name = "pic24e"
+version = "0.1.0"
+
+[[package]]
+name = "pic24f"
+version = "0.1.0"
+
+[[package]]
+name = "pic24h"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_4xx_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_4xx_le"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_le"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_quicciii_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_32_quicciii_le"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_altivec_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_altivec_le"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_altivec_vle_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_le"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_isa_vle_be"
+version = "0.1.0"
+
+[[package]]
+name = "ppc_64_le"
 version = "0.1.0"
 
 [[package]]
@@ -138,11 +362,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
+name = "riscv_ilp32d"
+version = "0.1.0"
+
+[[package]]
+name = "riscv_lp64d"
+version = "0.1.0"
+
+[[package]]
+name = "sh_1"
+version = "0.1.0"
+
+[[package]]
+name = "sh_2"
+version = "0.1.0"
+
+[[package]]
+name = "sh_2a"
+version = "0.1.0"
+
+[[package]]
+name = "sparcv9_32"
+version = "0.1.0"
+
+[[package]]
+name = "sparcv9_64"
+version = "0.1.0"
+
+[[package]]
 name = "superh4_be"
 version = "0.1.0"
 
 [[package]]
 name = "superh4_le"
+version = "0.1.0"
+
+[[package]]
+name = "test_6502"
 version = "0.1.0"
 
 [[package]]
@@ -194,6 +450,14 @@ name = "toy_wsz_le"
 version = "0.1.0"
 
 [[package]]
+name = "tricore"
+version = "0.1.0"
+
+[[package]]
+name = "v850"
+version = "0.1.0"
+
+[[package]]
 name = "winapi"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -214,3 +478,11 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "z180"
+version = "0.1.0"
+
+[[package]]
+name = "z80"
+version = "0.1.0"

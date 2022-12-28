@@ -12,11 +12,16 @@ use crate::disassembler::*;
 use std::fmt::Write;
 
 struct GlobalSetDummy;
+#[allow(non_snake_case)]
+#[allow(unused_variables)]
 impl GlobalSetTrait for GlobalSetDummy {}
 
 #[no_mangle]
-pub fn parse_default(tokens: &[u8], inst_start: u16) -> Option<(u16, String)> {
-    let mut context = SpacesStruct{};
+pub fn parse_default(
+    tokens: &[u8],
+    inst_start: AddrType,
+) -> Option<(AddrType, String)> {
+    let mut context = SpacesStruct::default();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
