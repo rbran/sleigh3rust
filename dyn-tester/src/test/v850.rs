@@ -12,14 +12,6 @@ impl Instruction {
         }
     }
 }
-impl std::fmt::Debug for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Instruction::Two(x) => write!(f, "Instruction::Two(0x{:04x})", x),
-            Instruction::Four(x) => write!(f, "Instruction::Four(0x{:08x})", x),
-        }
-    }
-}
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
 const V850: &[(u32, Instruction, &str)] = &[

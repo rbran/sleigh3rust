@@ -21,3 +21,6 @@ mod pic;
 mod superh4;
 mod z80;
 mod v850;
+//TODO mod tricore;
+mod sparcv9_32;
+mod sparcv9_64;
