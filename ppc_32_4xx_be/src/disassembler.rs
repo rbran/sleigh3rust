@@ -30207,12 +30207,96 @@ impl instructionVar13 {
         Some((pattern_len, Self { CC }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:507:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:500:1"]
 #[derive(Clone, Debug)]
 struct instructionVar14 {
+    BH: TokenField_BH,
     CC: CC,
 }
 impl instructionVar14 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("ctr"),
+            DisplayElement::Literal(" "),
+            self.BH.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_vle_disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP().disassembly() != 19 {
+            return None;
+        }
+        if token_parser.BO_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BO_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BI_CR().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BH_BITS().disassembly() == 0 {
+            return None;
+        }
+        if token_parser.LK().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BITS_13_15().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.XOP_1_10().disassembly() != 528 {
+            return None;
+        }
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let BH = token_parser.BH();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, BH }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:507:1"]
+#[derive(Clone, Debug)]
+struct instructionVar15 {
+    CC: CC,
+}
+impl instructionVar15 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30294,12 +30378,104 @@ impl instructionVar14 {
         Some((pattern_len, Self { CC }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:585:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:514:1"]
 #[derive(Clone, Debug)]
-struct instructionVar15 {
+struct instructionVar16 {
+    BH: TokenField_BH,
     CC: CC,
 }
-impl instructionVar15 {
+impl instructionVar16 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_linkreg(
+            Some(inst_start),
+            context.register().read_linkreg_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("ctrl"),
+            DisplayElement::Literal(" "),
+            self.BH.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_vle_disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP().disassembly() != 19 {
+            return None;
+        }
+        if token_parser.BO_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BO_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BI_CR().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BH_BITS().disassembly() == 0 {
+            return None;
+        }
+        if token_parser.LK().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BITS_13_15().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.XOP_1_10().disassembly() != 528 {
+            return None;
+        }
+        let tmp = (0u64 as i64);
+        context_instance
+            .register_mut()
+            .write_linkreg_disassembly(tmp);
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let BH = token_parser.BH();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, BH }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:585:1"]
+#[derive(Clone, Debug)]
+struct instructionVar17 {
+    CC: CC,
+}
+impl instructionVar17 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30380,12 +30556,104 @@ impl instructionVar15 {
         Some((pattern_len, Self { CC }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:599:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:591:1"]
 #[derive(Clone, Debug)]
-struct instructionVar16 {
+struct instructionVar18 {
+    BH: TokenField_BH,
     CC: CC,
 }
-impl instructionVar16 {
+impl instructionVar18 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_linkreg(
+            Some(inst_start),
+            context.register().read_linkreg_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("lr"),
+            DisplayElement::Literal(" "),
+            self.BH.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_vle_disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP().disassembly() != 19 {
+            return None;
+        }
+        if token_parser.BO_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BO_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BI_CR().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BH_BITS().disassembly() == 0 {
+            return None;
+        }
+        if token_parser.LK().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BITS_13_15().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.XOP_1_10().disassembly() != 16 {
+            return None;
+        }
+        let tmp = (0u64 as i64);
+        context_instance
+            .register_mut()
+            .write_linkreg_disassembly(tmp);
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let BH = token_parser.BH();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, BH }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:599:1"]
+#[derive(Clone, Debug)]
+struct instructionVar19 {
+    CC: CC,
+}
+impl instructionVar19 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30466,10 +30734,102 @@ impl instructionVar16 {
         Some((pattern_len, Self { CC }))
     }
 }
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:607:1"]
+#[derive(Clone, Debug)]
+struct instructionVar20 {
+    BH: TokenField_BH,
+    CC: CC,
+}
+impl instructionVar20 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_linkreg(
+            Some(inst_start),
+            context.register().read_linkreg_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("lrl"),
+            DisplayElement::Literal(" "),
+            self.BH.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_vle_disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP().disassembly() != 19 {
+            return None;
+        }
+        if token_parser.BO_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BO_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BI_CR().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BH_BITS().disassembly() == 0 {
+            return None;
+        }
+        if token_parser.LK().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BITS_13_15().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.XOP_1_10().disassembly() != 16 {
+            return None;
+        }
+        let tmp = (0u64 as i64);
+        context_instance
+            .register_mut()
+            .write_linkreg_disassembly(tmp);
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let BH = token_parser.BH();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, BH }))
+    }
+}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:461:1"]
 #[derive(Clone, Debug)]
-struct instructionVar17 {}
-impl instructionVar17 {
+struct instructionVar21 {}
+impl instructionVar21 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30529,8 +30889,8 @@ impl instructionVar17 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:466:1"]
 #[derive(Clone, Debug)]
-struct instructionVar18 {}
-impl instructionVar18 {
+struct instructionVar22 {}
+impl instructionVar22 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30601,8 +30961,8 @@ impl instructionVar18 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:481:1"]
 #[derive(Clone, Debug)]
-struct instructionVar19 {}
-impl instructionVar19 {
+struct instructionVar23 {}
+impl instructionVar23 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30670,11 +31030,11 @@ impl instructionVar19 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:523:1"]
 #[derive(Clone, Debug)]
-struct instructionVar20 {
+struct instructionVar24 {
     BI_CR: TokenField_BI_CR,
     CC: CC,
 }
-impl instructionVar20 {
+impl instructionVar24 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30751,11 +31111,11 @@ impl instructionVar20 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:537:1"]
 #[derive(Clone, Debug)]
-struct instructionVar21 {
+struct instructionVar25 {
     BI_CR: TokenField_BI_CR,
     CC: CC,
 }
-impl instructionVar21 {
+impl instructionVar25 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30840,8 +31200,8 @@ impl instructionVar21 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:559:1"]
 #[derive(Clone, Debug)]
-struct instructionVar22 {}
-impl instructionVar22 {
+struct instructionVar26 {}
+impl instructionVar26 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30900,8 +31260,8 @@ impl instructionVar22 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:569:1"]
 #[derive(Clone, Debug)]
-struct instructionVar23 {}
-impl instructionVar23 {
+struct instructionVar27 {}
+impl instructionVar27 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -30969,11 +31329,11 @@ impl instructionVar23 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:617:1"]
 #[derive(Clone, Debug)]
-struct instructionVar24 {
+struct instructionVar28 {
     BI_CR: TokenField_BI_CR,
     CC: CC,
 }
-impl instructionVar24 {
+impl instructionVar28 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31056,13 +31416,106 @@ impl instructionVar24 {
         Some((pattern_len, Self { CC, BI_CR }))
     }
 }
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:625:1"]
+#[derive(Clone, Debug)]
+struct instructionVar29 {
+    BI_CR: TokenField_BI_CR,
+    BH: TokenField_BH,
+    CC: CC,
+}
+impl instructionVar29 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u32,
+        inst_next: u32,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        global_set.set_linkreg(
+            Some(inst_start),
+            context.register().read_linkreg_disassembly(),
+        );
+        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
+        display.extend_from_slice(&extend);
+        self.CC.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 5usize] = [
+            DisplayElement::Literal("lr"),
+            DisplayElement::Literal(" "),
+            self.BI_CR.display(),
+            DisplayElement::Literal(","),
+            self.BH.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u32,
+    ) -> Option<(u32, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u32;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 4u64 as u32;
+        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
+        if context_instance.register().read_vle_disassembly() != 0 {
+            return None;
+        }
+        if token_parser.OP().disassembly() != 19 {
+            return None;
+        }
+        if token_parser.BO_0().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BO_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.BH_BITS().disassembly() == 0 {
+            return None;
+        }
+        if token_parser.LK().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.BITS_13_15().disassembly() != 0 {
+            return None;
+        }
+        if token_parser.XOP_1_10().disassembly() != 16 {
+            return None;
+        }
+        let tmp = (0u64 as i64);
+        context_instance
+            .register_mut()
+            .write_linkreg_disassembly(tmp);
+        let CC = if let Some((len, table)) =
+            CC::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_0_len = block_0_len.max(len as u32);
+            table
+        } else {
+            return None;
+        };
+        let BI_CR = token_parser.BI_CR();
+        let BH = token_parser.BH();
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { CC, BI_CR, BH }))
+    }
+}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:633:1"]
 #[derive(Clone, Debug)]
-struct instructionVar25 {
+struct instructionVar30 {
     BI_CR: TokenField_BI_CR,
     CC: CC,
 }
-impl instructionVar25 {
+impl instructionVar30 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31147,10 +31600,10 @@ impl instructionVar25 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:655:1"]
 #[derive(Clone, Debug)]
-struct instructionVar26 {
+struct instructionVar31 {
     CTR_DEC: CTR_DEC,
 }
-impl instructionVar26 {
+impl instructionVar31 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31230,10 +31683,10 @@ impl instructionVar26 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:669:1"]
 #[derive(Clone, Debug)]
-struct instructionVar27 {
+struct instructionVar32 {
     CTR_DEC: CTR_DEC,
 }
-impl instructionVar27 {
+impl instructionVar32 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31313,12 +31766,12 @@ impl instructionVar27 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:688:1"]
 #[derive(Clone, Debug)]
-struct instructionVar28 {
+struct instructionVar33 {
     CC_TF: CC_TF,
     CTR_DEC: CTR_DEC,
     CC_OP: CC_OP,
 }
-impl instructionVar28 {
+impl instructionVar33 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31428,12 +31881,12 @@ impl instructionVar28 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:706:1"]
 #[derive(Clone, Debug)]
-struct instructionVar29 {
+struct instructionVar34 {
     CC_TF: CC_TF,
     CTR_DEC: CTR_DEC,
     CC_OP: CC_OP,
 }
-impl instructionVar29 {
+impl instructionVar34 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31543,10 +31996,10 @@ impl instructionVar29 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:2960:1"]
 #[derive(Clone, Debug)]
-struct instructionVar30 {
+struct instructionVar35 {
     CRFD: TokenField_CRFD,
 }
-impl instructionVar30 {
+impl instructionVar35 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31598,11 +32051,11 @@ impl instructionVar30 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:2948:1"]
 #[derive(Clone, Debug)]
-struct instructionVar31 {
+struct instructionVar36 {
     CRFD: TokenField_CRFD,
     CRFS: TokenField_CRFS,
 }
-impl instructionVar31 {
+impl instructionVar36 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31657,12 +32110,12 @@ impl instructionVar31 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:2954:1"]
 #[derive(Clone, Debug)]
-struct instructionVar32 {
+struct instructionVar37 {
     CRFD: TokenField_CRFD,
     CRFS: TokenField_CRFS,
     FPSCR_CRFS: FPSCR_CRFS,
 }
-impl instructionVar32 {
+impl instructionVar37 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31738,10 +32191,10 @@ impl instructionVar32 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:2969:1"]
 #[derive(Clone, Debug)]
-struct instructionVar33 {
+struct instructionVar38 {
     D: TokenField_D,
 }
-impl instructionVar33 {
+impl instructionVar38 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31793,10 +32246,10 @@ impl instructionVar33 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:2997:1"]
 #[derive(Clone, Debug)]
-struct instructionVar34 {
+struct instructionVar39 {
     fD: TokenField_fD,
 }
-impl instructionVar34 {
+impl instructionVar39 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31851,10 +32304,10 @@ impl instructionVar34 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3005:1"]
 #[derive(Clone, Debug)]
-struct instructionVar35 {
+struct instructionVar40 {
     fD: TokenField_fD,
 }
-impl instructionVar35 {
+impl instructionVar40 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31909,10 +32362,10 @@ impl instructionVar35 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3063:1"]
 #[derive(Clone, Debug)]
-struct instructionVar36 {
+struct instructionVar41 {
     CRBD: TokenField_CRBD,
 }
-impl instructionVar36 {
+impl instructionVar41 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -31967,10 +32420,10 @@ impl instructionVar36 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3068:1"]
 #[derive(Clone, Debug)]
-struct instructionVar37 {
+struct instructionVar42 {
     CRBD: TokenField_CRBD,
 }
-impl instructionVar37 {
+impl instructionVar42 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32025,10 +32478,10 @@ impl instructionVar37 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3074:1"]
 #[derive(Clone, Debug)]
-struct instructionVar38 {
+struct instructionVar43 {
     CRBD: TokenField_CRBD,
 }
-impl instructionVar38 {
+impl instructionVar43 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32083,10 +32536,10 @@ impl instructionVar38 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3079:1"]
 #[derive(Clone, Debug)]
-struct instructionVar39 {
+struct instructionVar44 {
     CRBD: TokenField_CRBD,
 }
-impl instructionVar39 {
+impl instructionVar44 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32141,10 +32594,10 @@ impl instructionVar39 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_embedded.sinc:88:1"]
 #[derive(Clone, Debug)]
-struct instructionVar40 {
+struct instructionVar45 {
     D: TokenField_D,
 }
-impl instructionVar40 {
+impl instructionVar45 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32196,10 +32649,10 @@ impl instructionVar40 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_embedded.sinc:100:1"]
 #[derive(Clone, Debug)]
-struct instructionVar41 {
+struct instructionVar46 {
     D: TokenField_D,
 }
-impl instructionVar41 {
+impl instructionVar46 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32256,10 +32709,10 @@ impl instructionVar41 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_embedded.sinc:105:1"]
 #[derive(Clone, Debug)]
-struct instructionVar42 {
+struct instructionVar47 {
     D: TokenField_D,
 }
-impl instructionVar42 {
+impl instructionVar47 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32316,10 +32769,10 @@ impl instructionVar42 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_embedded.sinc:117:1"]
 #[derive(Clone, Debug)]
-struct instructionVar43 {
+struct instructionVar48 {
     S: TokenField_S,
 }
-impl instructionVar43 {
+impl instructionVar48 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32378,10 +32831,10 @@ impl instructionVar43 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_embedded.sinc:136:1"]
 #[derive(Clone, Debug)]
-struct instructionVar44 {
+struct instructionVar49 {
     S: TokenField_S,
 }
-impl instructionVar44 {
+impl instructionVar49 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32440,11 +32893,11 @@ impl instructionVar44 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3015:1"]
 #[derive(Clone, Debug)]
-struct instructionVar45 {
+struct instructionVar50 {
     D: TokenField_D,
     B: TokenField_B,
 }
-impl instructionVar45 {
+impl instructionVar50 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32506,11 +32959,11 @@ impl instructionVar45 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3208:1"]
 #[derive(Clone, Debug)]
-struct instructionVar46 {
+struct instructionVar51 {
     SR: TokenField_SR,
     S: TokenField_S,
 }
-impl instructionVar46 {
+impl instructionVar51 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32572,11 +33025,11 @@ impl instructionVar46 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:3218:1"]
 #[derive(Clone, Debug)]
-struct instructionVar47 {
+struct instructionVar52 {
     SR: TokenField_SR,
     S: TokenField_S,
 }
-impl instructionVar47 {
+impl instructionVar52 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32637,11 +33090,11 @@ impl instructionVar47 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:181:1"]
 #[derive(Clone, Debug)]
-struct instructionVar48 {
+struct instructionVar53 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar48 {
+impl instructionVar53 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32699,11 +33152,11 @@ impl instructionVar48 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:190:1"]
 #[derive(Clone, Debug)]
-struct instructionVar49 {
+struct instructionVar54 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar49 {
+impl instructionVar54 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32761,11 +33214,11 @@ impl instructionVar49 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:200:1"]
 #[derive(Clone, Debug)]
-struct instructionVar50 {
+struct instructionVar55 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar50 {
+impl instructionVar55 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32823,11 +33276,11 @@ impl instructionVar50 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:210:1"]
 #[derive(Clone, Debug)]
-struct instructionVar51 {
+struct instructionVar56 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar51 {
+impl instructionVar56 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32885,11 +33338,11 @@ impl instructionVar51 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:221:1"]
 #[derive(Clone, Debug)]
-struct instructionVar52 {
+struct instructionVar57 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar52 {
+impl instructionVar57 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -32947,11 +33400,11 @@ impl instructionVar52 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:229:1"]
 #[derive(Clone, Debug)]
-struct instructionVar53 {
+struct instructionVar58 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar53 {
+impl instructionVar58 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33009,11 +33462,11 @@ impl instructionVar53 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:238:1"]
 #[derive(Clone, Debug)]
-struct instructionVar54 {
+struct instructionVar59 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar54 {
+impl instructionVar59 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33071,11 +33524,11 @@ impl instructionVar54 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:247:1"]
 #[derive(Clone, Debug)]
-struct instructionVar55 {
+struct instructionVar60 {
     D: TokenField_D,
     A: TokenField_A,
 }
-impl instructionVar55 {
+impl instructionVar60 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33131,372 +33584,12 @@ impl instructionVar55 {
         Some((pattern_len, Self { D, A }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:500:1"]
-#[derive(Clone, Debug)]
-struct instructionVar56 {
-    BH: TokenField_BH,
-    CC: CC,
-}
-impl instructionVar56 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.CC.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("ctr"),
-            DisplayElement::Literal(" "),
-            self.BH.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_vle_disassembly() != 0 {
-            return None;
-        }
-        if token_parser.OP().disassembly() != 19 {
-            return None;
-        }
-        if token_parser.BO_0().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BO_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BI_CR().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BH_BITS().disassembly() == 0 {
-            return None;
-        }
-        if token_parser.LK().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BITS_13_15().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.XOP_1_10().disassembly() != 528 {
-            return None;
-        }
-        let CC = if let Some((len, table)) =
-            CC::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let BH = token_parser.BH();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { CC, BH }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:514:1"]
-#[derive(Clone, Debug)]
-struct instructionVar57 {
-    BH: TokenField_BH,
-    CC: CC,
-}
-impl instructionVar57 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_linkreg(
-            Some(inst_start),
-            context.register().read_linkreg_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.CC.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("ctrl"),
-            DisplayElement::Literal(" "),
-            self.BH.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_vle_disassembly() != 0 {
-            return None;
-        }
-        if token_parser.OP().disassembly() != 19 {
-            return None;
-        }
-        if token_parser.BO_0().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BO_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BI_CR().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BH_BITS().disassembly() == 0 {
-            return None;
-        }
-        if token_parser.LK().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BITS_13_15().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.XOP_1_10().disassembly() != 528 {
-            return None;
-        }
-        let tmp = (0u64 as i64);
-        context_instance
-            .register_mut()
-            .write_linkreg_disassembly(tmp);
-        let CC = if let Some((len, table)) =
-            CC::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let BH = token_parser.BH();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { CC, BH }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:591:1"]
-#[derive(Clone, Debug)]
-struct instructionVar58 {
-    BH: TokenField_BH,
-    CC: CC,
-}
-impl instructionVar58 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_linkreg(
-            Some(inst_start),
-            context.register().read_linkreg_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.CC.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("lr"),
-            DisplayElement::Literal(" "),
-            self.BH.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_vle_disassembly() != 0 {
-            return None;
-        }
-        if token_parser.OP().disassembly() != 19 {
-            return None;
-        }
-        if token_parser.BO_0().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BO_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BI_CR().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BH_BITS().disassembly() == 0 {
-            return None;
-        }
-        if token_parser.LK().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BITS_13_15().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.XOP_1_10().disassembly() != 16 {
-            return None;
-        }
-        let tmp = (0u64 as i64);
-        context_instance
-            .register_mut()
-            .write_linkreg_disassembly(tmp);
-        let CC = if let Some((len, table)) =
-            CC::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let BH = token_parser.BH();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { CC, BH }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:607:1"]
-#[derive(Clone, Debug)]
-struct instructionVar59 {
-    BH: TokenField_BH,
-    CC: CC,
-}
-impl instructionVar59 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_linkreg(
-            Some(inst_start),
-            context.register().read_linkreg_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.CC.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("lrl"),
-            DisplayElement::Literal(" "),
-            self.BH.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_vle_disassembly() != 0 {
-            return None;
-        }
-        if token_parser.OP().disassembly() != 19 {
-            return None;
-        }
-        if token_parser.BO_0().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BO_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BI_CR().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BH_BITS().disassembly() == 0 {
-            return None;
-        }
-        if token_parser.LK().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BITS_13_15().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.XOP_1_10().disassembly() != 16 {
-            return None;
-        }
-        let tmp = (0u64 as i64);
-        context_instance
-            .register_mut()
-            .write_linkreg_disassembly(tmp);
-        let CC = if let Some((len, table)) =
-            CC::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let BH = token_parser.BH();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { CC, BH }))
-    }
-}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:475:1"]
 #[derive(Clone, Debug)]
-struct instructionVar60 {
+struct instructionVar61 {
     BH: TokenField_BH,
 }
-impl instructionVar60 {
+impl instructionVar61 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33557,10 +33650,10 @@ impl instructionVar60 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:487:1"]
 #[derive(Clone, Debug)]
-struct instructionVar61 {
+struct instructionVar62 {
     BH: TokenField_BH,
 }
-impl instructionVar61 {
+impl instructionVar62 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33629,12 +33722,12 @@ impl instructionVar61 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:530:1"]
 #[derive(Clone, Debug)]
-struct instructionVar62 {
+struct instructionVar63 {
     BI_CR: TokenField_BI_CR,
     BH: TokenField_BH,
     CC: CC,
 }
-impl instructionVar62 {
+impl instructionVar63 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33711,12 +33804,12 @@ impl instructionVar62 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:546:1"]
 #[derive(Clone, Debug)]
-struct instructionVar63 {
+struct instructionVar64 {
     BI_CR: TokenField_BI_CR,
     BH: TokenField_BH,
     CC: CC,
 }
-impl instructionVar63 {
+impl instructionVar64 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33801,10 +33894,10 @@ impl instructionVar63 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:563:1"]
 #[derive(Clone, Debug)]
-struct instructionVar64 {
+struct instructionVar65 {
     BH: TokenField_BH,
 }
-impl instructionVar64 {
+impl instructionVar65 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33865,10 +33958,10 @@ impl instructionVar64 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:576:1"]
 #[derive(Clone, Debug)]
-struct instructionVar65 {
+struct instructionVar66 {
     BH: TokenField_BH,
 }
-impl instructionVar65 {
+impl instructionVar66 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -33933,99 +34026,6 @@ impl instructionVar65 {
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         *context = context_instance;
         Some((pattern_len, Self { BH }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:625:1"]
-#[derive(Clone, Debug)]
-struct instructionVar66 {
-    BI_CR: TokenField_BI_CR,
-    BH: TokenField_BH,
-    CC: CC,
-}
-impl instructionVar66 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u32,
-        inst_next: u32,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        global_set.set_linkreg(
-            Some(inst_start),
-            context.register().read_linkreg_disassembly(),
-        );
-        let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("b")];
-        display.extend_from_slice(&extend);
-        self.CC.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 5usize] = [
-            DisplayElement::Literal("lr"),
-            DisplayElement::Literal(" "),
-            self.BI_CR.display(),
-            DisplayElement::Literal(","),
-            self.BH.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u32,
-    ) -> Option<(u32, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u32;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 4u64 as u32;
-        let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_vle_disassembly() != 0 {
-            return None;
-        }
-        if token_parser.OP().disassembly() != 19 {
-            return None;
-        }
-        if token_parser.BO_0().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BO_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.BH_BITS().disassembly() == 0 {
-            return None;
-        }
-        if token_parser.LK().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.BITS_13_15().disassembly() != 0 {
-            return None;
-        }
-        if token_parser.XOP_1_10().disassembly() != 16 {
-            return None;
-        }
-        let tmp = (0u64 as i64);
-        context_instance
-            .register_mut()
-            .write_linkreg_disassembly(tmp);
-        let CC = if let Some((len, table)) =
-            CC::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_0_len = block_0_len.max(len as u32);
-            table
-        } else {
-            return None;
-        };
-        let BI_CR = token_parser.BI_CR();
-        let BH = token_parser.BH();
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { CC, BI_CR, BH }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/PowerPC/data/languages/ppc_instructions.sinc:643:1"]

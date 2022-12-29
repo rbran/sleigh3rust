@@ -4173,10 +4173,316 @@ impl instructionVar65 {
         Some((pattern_len, Self { reg3_3, reg0_3 }))
     }
 }
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:388:1"]
+#[derive(Clone, Debug)]
+struct instructionVar66 {
+    reg3_3: TokenField_reg3_3,
+    ixMem8: ixMem8,
+}
+impl instructionVar66 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u16,
+        inst_next: u16,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("LD"),
+            DisplayElement::Literal(" "),
+            self.reg3_3.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.ixMem8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u16,
+    ) -> Option<(u16, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u16;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op0_8().disassembly() != 221 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op6_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.bits3_3().disassembly() == 6 {
+            return None;
+        }
+        if token_parser.bits0_3().disassembly() != 6 {
+            return None;
+        }
+        let reg3_3 = token_parser.reg3_3();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        let mut block_2_len = 0u64 as u16;
+        let ixMem8 = if let Some((len, table)) =
+            ixMem8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_2_len = block_2_len.max(len as u16);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_2_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_2_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ixMem8, reg3_3 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:392:1"]
+#[derive(Clone, Debug)]
+struct instructionVar67 {
+    reg3_3: TokenField_reg3_3,
+    iyMem8: iyMem8,
+}
+impl instructionVar67 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u16,
+        inst_next: u16,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 4usize] = [
+            DisplayElement::Literal("LD"),
+            DisplayElement::Literal(" "),
+            self.reg3_3.display(),
+            DisplayElement::Literal(","),
+        ];
+        display.extend_from_slice(&extend);
+        self.iyMem8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u16,
+    ) -> Option<(u16, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u16;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op0_8().disassembly() != 253 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op6_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.bits3_3().disassembly() == 6 {
+            return None;
+        }
+        if token_parser.bits0_3().disassembly() != 6 {
+            return None;
+        }
+        let reg3_3 = token_parser.reg3_3();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        let mut block_2_len = 0u64 as u16;
+        let iyMem8 = if let Some((len, table)) =
+            iyMem8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_2_len = block_2_len.max(len as u16);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_2_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_2_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { iyMem8, reg3_3 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:400:1"]
+#[derive(Clone, Debug)]
+struct instructionVar68 {
+    reg0_3: TokenField_reg0_3,
+    ixMem8: ixMem8,
+}
+impl instructionVar68 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u16,
+        inst_next: u16,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal("LD"), DisplayElement::Literal(" ")];
+        display.extend_from_slice(&extend);
+        self.ixMem8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal(","), self.reg0_3.display()];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u16,
+    ) -> Option<(u16, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u16;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op0_8().disassembly() != 221 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op6_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.bits3_3().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.bits0_3().disassembly() == 6 {
+            return None;
+        }
+        let reg0_3 = token_parser.reg0_3();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        let mut block_2_len = 0u64 as u16;
+        let ixMem8 = if let Some((len, table)) =
+            ixMem8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_2_len = block_2_len.max(len as u16);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_2_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_2_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { ixMem8, reg0_3 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:404:1"]
+#[derive(Clone, Debug)]
+struct instructionVar69 {
+    reg0_3: TokenField_reg0_3,
+    iyMem8: iyMem8,
+}
+impl instructionVar69 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u16,
+        inst_next: u16,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal("LD"), DisplayElement::Literal(" ")];
+        display.extend_from_slice(&extend);
+        self.iyMem8.display_extend(
+            display, context, inst_start, inst_next, global_set,
+        );
+        let extend: [DisplayElement; 2usize] =
+            [DisplayElement::Literal(","), self.reg0_3.display()];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u16,
+    ) -> Option<(u16, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u16;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op0_8().disassembly() != 253 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op6_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.bits3_3().disassembly() != 6 {
+            return None;
+        }
+        if token_parser.bits0_3().disassembly() == 6 {
+            return None;
+        }
+        let reg0_3 = token_parser.reg0_3();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        let mut block_2_len = 0u64 as u16;
+        let iyMem8 = if let Some((len, table)) =
+            iyMem8::parse(tokens_current, &mut context_instance, inst_start)
+        {
+            block_2_len = block_2_len.max(len as u16);
+            table
+        } else {
+            return None;
+        };
+        pattern_len += block_2_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_2_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { iyMem8, reg0_3 }))
+    }
+}
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:445:1"]
 #[derive(Clone, Debug)]
-struct instructionVar66 {}
-impl instructionVar66 {
+struct instructionVar70 {}
+impl instructionVar70 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4228,8 +4534,8 @@ impl instructionVar66 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:453:1"]
 #[derive(Clone, Debug)]
-struct instructionVar67 {}
-impl instructionVar67 {
+struct instructionVar71 {}
+impl instructionVar71 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4281,8 +4587,8 @@ impl instructionVar67 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:461:1"]
 #[derive(Clone, Debug)]
-struct instructionVar68 {}
-impl instructionVar68 {
+struct instructionVar72 {}
+impl instructionVar72 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4334,8 +4640,8 @@ impl instructionVar68 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:465:1"]
 #[derive(Clone, Debug)]
-struct instructionVar69 {}
-impl instructionVar69 {
+struct instructionVar73 {}
+impl instructionVar73 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4387,10 +4693,10 @@ impl instructionVar69 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:489:1"]
 #[derive(Clone, Debug)]
-struct instructionVar70 {
+struct instructionVar74 {
     Mem16: Mem16,
 }
-impl instructionVar70 {
+impl instructionVar74 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4456,10 +4762,10 @@ impl instructionVar70 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:493:1"]
 #[derive(Clone, Debug)]
-struct instructionVar71 {
+struct instructionVar75 {
     Mem16: Mem16,
 }
-impl instructionVar71 {
+impl instructionVar75 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4525,10 +4831,10 @@ impl instructionVar71 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:505:1"]
 #[derive(Clone, Debug)]
-struct instructionVar72 {
+struct instructionVar76 {
     Mem16: Mem16,
 }
-impl instructionVar72 {
+impl instructionVar76 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4595,10 +4901,10 @@ impl instructionVar72 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:509:1"]
 #[derive(Clone, Debug)]
-struct instructionVar73 {
+struct instructionVar77 {
     Mem16: Mem16,
 }
-impl instructionVar73 {
+impl instructionVar77 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4665,8 +4971,8 @@ impl instructionVar73 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:517:1"]
 #[derive(Clone, Debug)]
-struct instructionVar74 {}
-impl instructionVar74 {
+struct instructionVar78 {}
+impl instructionVar78 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4718,8 +5024,8 @@ impl instructionVar74 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:521:1"]
 #[derive(Clone, Debug)]
-struct instructionVar75 {}
-impl instructionVar75 {
+struct instructionVar79 {}
+impl instructionVar79 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4771,8 +5077,8 @@ impl instructionVar75 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:529:1"]
 #[derive(Clone, Debug)]
-struct instructionVar76 {}
-impl instructionVar76 {
+struct instructionVar80 {}
+impl instructionVar80 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4822,8 +5128,8 @@ impl instructionVar76 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:533:1"]
 #[derive(Clone, Debug)]
-struct instructionVar77 {}
-impl instructionVar77 {
+struct instructionVar81 {}
+impl instructionVar81 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4873,8 +5179,8 @@ impl instructionVar77 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:541:1"]
 #[derive(Clone, Debug)]
-struct instructionVar78 {}
-impl instructionVar78 {
+struct instructionVar82 {}
+impl instructionVar82 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4924,8 +5230,8 @@ impl instructionVar78 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:546:1"]
 #[derive(Clone, Debug)]
-struct instructionVar79 {}
-impl instructionVar79 {
+struct instructionVar83 {}
+impl instructionVar83 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4975,8 +5281,8 @@ impl instructionVar79 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:578:1"]
 #[derive(Clone, Debug)]
-struct instructionVar80 {}
-impl instructionVar80 {
+struct instructionVar84 {}
+impl instructionVar84 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5028,8 +5334,8 @@ impl instructionVar80 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:582:1"]
 #[derive(Clone, Debug)]
-struct instructionVar81 {}
-impl instructionVar81 {
+struct instructionVar85 {}
+impl instructionVar85 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5081,8 +5387,8 @@ impl instructionVar81 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:587:1"]
 #[derive(Clone, Debug)]
-struct instructionVar82 {}
-impl instructionVar82 {
+struct instructionVar86 {}
+impl instructionVar86 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5128,8 +5434,8 @@ impl instructionVar82 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:599:1"]
 #[derive(Clone, Debug)]
-struct instructionVar83 {}
-impl instructionVar83 {
+struct instructionVar87 {}
+impl instructionVar87 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5176,8 +5482,8 @@ impl instructionVar83 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:612:1"]
 #[derive(Clone, Debug)]
-struct instructionVar84 {}
-impl instructionVar84 {
+struct instructionVar88 {}
+impl instructionVar88 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5223,8 +5529,8 @@ impl instructionVar84 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:621:1"]
 #[derive(Clone, Debug)]
-struct instructionVar85 {}
-impl instructionVar85 {
+struct instructionVar89 {}
+impl instructionVar89 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5271,8 +5577,8 @@ impl instructionVar85 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:634:1"]
 #[derive(Clone, Debug)]
-struct instructionVar86 {}
-impl instructionVar86 {
+struct instructionVar90 {}
+impl instructionVar90 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5318,8 +5624,8 @@ impl instructionVar86 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:648:1"]
 #[derive(Clone, Debug)]
-struct instructionVar87 {}
-impl instructionVar87 {
+struct instructionVar91 {}
+impl instructionVar91 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5366,8 +5672,8 @@ impl instructionVar87 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:664:1"]
 #[derive(Clone, Debug)]
-struct instructionVar88 {}
-impl instructionVar88 {
+struct instructionVar92 {}
+impl instructionVar92 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5413,8 +5719,8 @@ impl instructionVar88 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:678:1"]
 #[derive(Clone, Debug)]
-struct instructionVar89 {}
-impl instructionVar89 {
+struct instructionVar93 {}
+impl instructionVar93 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5461,10 +5767,10 @@ impl instructionVar89 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:721:1"]
 #[derive(Clone, Debug)]
-struct instructionVar90 {
+struct instructionVar94 {
     ixMem8: ixMem8,
 }
-impl instructionVar90 {
+impl instructionVar94 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5530,10 +5836,10 @@ impl instructionVar90 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:730:1"]
 #[derive(Clone, Debug)]
-struct instructionVar91 {
+struct instructionVar95 {
     iyMem8: iyMem8,
 }
-impl instructionVar91 {
+impl instructionVar95 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5599,10 +5905,10 @@ impl instructionVar91 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:756:1"]
 #[derive(Clone, Debug)]
-struct instructionVar92 {
+struct instructionVar96 {
     ixMem8: ixMem8,
 }
-impl instructionVar92 {
+impl instructionVar96 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5668,10 +5974,10 @@ impl instructionVar92 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:761:1"]
 #[derive(Clone, Debug)]
-struct instructionVar93 {
+struct instructionVar97 {
     iyMem8: iyMem8,
 }
-impl instructionVar93 {
+impl instructionVar97 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5737,10 +6043,10 @@ impl instructionVar93 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:793:1"]
 #[derive(Clone, Debug)]
-struct instructionVar94 {
+struct instructionVar98 {
     ixMem8: ixMem8,
 }
-impl instructionVar94 {
+impl instructionVar98 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5802,10 +6108,10 @@ impl instructionVar94 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:802:1"]
 #[derive(Clone, Debug)]
-struct instructionVar95 {
+struct instructionVar99 {
     iyMem8: iyMem8,
 }
-impl instructionVar95 {
+impl instructionVar99 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5867,10 +6173,10 @@ impl instructionVar95 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:828:1"]
 #[derive(Clone, Debug)]
-struct instructionVar96 {
+struct instructionVar100 {
     ixMem8: ixMem8,
 }
-impl instructionVar96 {
+impl instructionVar100 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -5936,10 +6242,10 @@ impl instructionVar96 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:834:1"]
 #[derive(Clone, Debug)]
-struct instructionVar97 {
+struct instructionVar101 {
     iyMem8: iyMem8,
 }
-impl instructionVar97 {
+impl instructionVar101 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6005,10 +6311,10 @@ impl instructionVar97 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:869:1"]
 #[derive(Clone, Debug)]
-struct instructionVar98 {
+struct instructionVar102 {
     ixMem8: ixMem8,
 }
-impl instructionVar98 {
+impl instructionVar102 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6070,10 +6376,10 @@ impl instructionVar98 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:878:1"]
 #[derive(Clone, Debug)]
-struct instructionVar99 {
+struct instructionVar103 {
     iyMem8: iyMem8,
 }
-impl instructionVar99 {
+impl instructionVar103 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6135,10 +6441,10 @@ impl instructionVar99 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:916:1"]
 #[derive(Clone, Debug)]
-struct instructionVar100 {
+struct instructionVar104 {
     ixMem8: ixMem8,
 }
-impl instructionVar100 {
+impl instructionVar104 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6200,10 +6506,10 @@ impl instructionVar100 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:925:1"]
 #[derive(Clone, Debug)]
-struct instructionVar101 {
+struct instructionVar105 {
     iyMem8: iyMem8,
 }
-impl instructionVar101 {
+impl instructionVar105 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6265,10 +6571,10 @@ impl instructionVar101 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:963:1"]
 #[derive(Clone, Debug)]
-struct instructionVar102 {
+struct instructionVar106 {
     ixMem8: ixMem8,
 }
-impl instructionVar102 {
+impl instructionVar106 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6330,10 +6636,10 @@ impl instructionVar102 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:972:1"]
 #[derive(Clone, Debug)]
-struct instructionVar103 {
+struct instructionVar107 {
     iyMem8: iyMem8,
 }
-impl instructionVar103 {
+impl instructionVar107 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6395,10 +6701,10 @@ impl instructionVar103 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1002:1"]
 #[derive(Clone, Debug)]
-struct instructionVar104 {
+struct instructionVar108 {
     ixMem8: ixMem8,
 }
-impl instructionVar104 {
+impl instructionVar108 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6460,10 +6766,10 @@ impl instructionVar104 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1010:1"]
 #[derive(Clone, Debug)]
-struct instructionVar105 {
+struct instructionVar109 {
     iyMem8: iyMem8,
 }
-impl instructionVar105 {
+impl instructionVar109 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6525,10 +6831,10 @@ impl instructionVar105 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1037:1"]
 #[derive(Clone, Debug)]
-struct instructionVar106 {
+struct instructionVar110 {
     ixMem8: ixMem8,
 }
-impl instructionVar106 {
+impl instructionVar110 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6590,10 +6896,10 @@ impl instructionVar106 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1047:1"]
 #[derive(Clone, Debug)]
-struct instructionVar107 {
+struct instructionVar111 {
     iyMem8: iyMem8,
 }
-impl instructionVar107 {
+impl instructionVar111 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6655,10 +6961,10 @@ impl instructionVar107 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1076:1"]
 #[derive(Clone, Debug)]
-struct instructionVar108 {
+struct instructionVar112 {
     ixMem8: ixMem8,
 }
-impl instructionVar108 {
+impl instructionVar112 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6720,10 +7026,10 @@ impl instructionVar108 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1086:1"]
 #[derive(Clone, Debug)]
-struct instructionVar109 {
+struct instructionVar113 {
     iyMem8: iyMem8,
 }
-impl instructionVar109 {
+impl instructionVar113 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6785,8 +7091,8 @@ impl instructionVar109 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1196:1"]
 #[derive(Clone, Debug)]
-struct instructionVar110 {}
-impl instructionVar110 {
+struct instructionVar114 {}
+impl instructionVar114 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6832,8 +7138,8 @@ impl instructionVar110 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1234:1"]
 #[derive(Clone, Debug)]
-struct instructionVar111 {}
-impl instructionVar111 {
+struct instructionVar115 {}
+impl instructionVar115 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6880,8 +7186,8 @@ impl instructionVar111 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1238:1"]
 #[derive(Clone, Debug)]
-struct instructionVar112 {}
-impl instructionVar112 {
+struct instructionVar116 {}
+impl instructionVar116 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6928,8 +7234,8 @@ impl instructionVar112 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1242:1"]
 #[derive(Clone, Debug)]
-struct instructionVar113 {}
-impl instructionVar113 {
+struct instructionVar117 {}
+impl instructionVar117 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -6976,8 +7282,8 @@ impl instructionVar113 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1288:1"]
 #[derive(Clone, Debug)]
-struct instructionVar114 {}
-impl instructionVar114 {
+struct instructionVar118 {}
+impl instructionVar118 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7027,8 +7333,8 @@ impl instructionVar114 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1292:1"]
 #[derive(Clone, Debug)]
-struct instructionVar115 {}
-impl instructionVar115 {
+struct instructionVar119 {}
+impl instructionVar119 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7078,8 +7384,8 @@ impl instructionVar115 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1300:1"]
 #[derive(Clone, Debug)]
-struct instructionVar116 {}
-impl instructionVar116 {
+struct instructionVar120 {}
+impl instructionVar120 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7129,8 +7435,8 @@ impl instructionVar116 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1304:1"]
 #[derive(Clone, Debug)]
-struct instructionVar117 {}
-impl instructionVar117 {
+struct instructionVar121 {}
+impl instructionVar121 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7180,8 +7486,8 @@ impl instructionVar117 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1347:1"]
 #[derive(Clone, Debug)]
-struct instructionVar118 {}
-impl instructionVar118 {
+struct instructionVar122 {}
+impl instructionVar122 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7232,8 +7538,8 @@ impl instructionVar118 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1390:1"]
 #[derive(Clone, Debug)]
-struct instructionVar119 {}
-impl instructionVar119 {
+struct instructionVar123 {}
+impl instructionVar123 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7284,8 +7590,8 @@ impl instructionVar119 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1436:1"]
 #[derive(Clone, Debug)]
-struct instructionVar120 {}
-impl instructionVar120 {
+struct instructionVar124 {}
+impl instructionVar124 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7336,8 +7642,8 @@ impl instructionVar120 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1480:1"]
 #[derive(Clone, Debug)]
-struct instructionVar121 {}
-impl instructionVar121 {
+struct instructionVar125 {}
+impl instructionVar125 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7388,8 +7694,8 @@ impl instructionVar121 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1526:1"]
 #[derive(Clone, Debug)]
-struct instructionVar122 {}
-impl instructionVar122 {
+struct instructionVar126 {}
+impl instructionVar126 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7440,8 +7746,8 @@ impl instructionVar122 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1569:1"]
 #[derive(Clone, Debug)]
-struct instructionVar123 {}
-impl instructionVar123 {
+struct instructionVar127 {}
+impl instructionVar127 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7492,8 +7798,8 @@ impl instructionVar123 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1612:1"]
 #[derive(Clone, Debug)]
-struct instructionVar124 {}
-impl instructionVar124 {
+struct instructionVar128 {}
+impl instructionVar128 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7544,8 +7850,8 @@ impl instructionVar124 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1646:1"]
 #[derive(Clone, Debug)]
-struct instructionVar125 {}
-impl instructionVar125 {
+struct instructionVar129 {}
+impl instructionVar129 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7591,8 +7897,8 @@ impl instructionVar125 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1664:1"]
 #[derive(Clone, Debug)]
-struct instructionVar126 {}
-impl instructionVar126 {
+struct instructionVar130 {}
+impl instructionVar130 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7638,8 +7944,8 @@ impl instructionVar126 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1787:1"]
 #[derive(Clone, Debug)]
-struct instructionVar127 {}
-impl instructionVar127 {
+struct instructionVar131 {}
+impl instructionVar131 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7690,8 +7996,8 @@ impl instructionVar127 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1792:1"]
 #[derive(Clone, Debug)]
-struct instructionVar128 {}
-impl instructionVar128 {
+struct instructionVar132 {}
+impl instructionVar132 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7742,8 +8048,8 @@ impl instructionVar128 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1826:1"]
 #[derive(Clone, Debug)]
-struct instructionVar129 {}
-impl instructionVar129 {
+struct instructionVar133 {}
+impl instructionVar133 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7790,8 +8096,8 @@ impl instructionVar129 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1832:1"]
 #[derive(Clone, Debug)]
-struct instructionVar130 {}
-impl instructionVar130 {
+struct instructionVar134 {}
+impl instructionVar134 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7838,10 +8144,10 @@ impl instructionVar130 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1856:1"]
 #[derive(Clone, Debug)]
-struct instructionVar131 {
+struct instructionVar135 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar131 {
+impl instructionVar135 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7895,10 +8201,10 @@ impl instructionVar131 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1866:1"]
 #[derive(Clone, Debug)]
-struct instructionVar132 {
+struct instructionVar136 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar132 {
+impl instructionVar136 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -7953,10 +8259,10 @@ impl instructionVar132 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1877:1"]
 #[derive(Clone, Debug)]
-struct instructionVar133 {
+struct instructionVar137 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar133 {
+impl instructionVar137 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8010,10 +8316,10 @@ impl instructionVar133 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1887:1"]
 #[derive(Clone, Debug)]
-struct instructionVar134 {
+struct instructionVar138 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar134 {
+impl instructionVar138 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8068,10 +8374,10 @@ impl instructionVar134 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1906:1"]
 #[derive(Clone, Debug)]
-struct instructionVar135 {
+struct instructionVar139 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar135 {
+impl instructionVar139 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8126,10 +8432,10 @@ impl instructionVar135 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1916:1"]
 #[derive(Clone, Debug)]
-struct instructionVar136 {
+struct instructionVar140 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar136 {
+impl instructionVar140 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8184,10 +8490,10 @@ impl instructionVar136 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1927:1"]
 #[derive(Clone, Debug)]
-struct instructionVar137 {
+struct instructionVar141 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar137 {
+impl instructionVar141 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8242,10 +8548,10 @@ impl instructionVar137 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1937:1"]
 #[derive(Clone, Debug)]
-struct instructionVar138 {
+struct instructionVar142 {
     IOAddrC: IOAddrC,
 }
-impl instructionVar138 {
+impl instructionVar142 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8300,10 +8606,10 @@ impl instructionVar138 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1964:1"]
 #[derive(Clone, Debug)]
-struct instructionVar139 {
+struct instructionVar143 {
     hlMem8: hlMem8,
 }
-impl instructionVar139 {
+impl instructionVar143 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8361,11 +8667,11 @@ impl instructionVar139 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1984:1"]
 #[derive(Clone, Debug)]
-struct instructionVar140 {
+struct instructionVar144 {
     Flag: Flag,
     IOAddr8: IOAddr8,
 }
-impl instructionVar140 {
+impl instructionVar144 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8446,11 +8752,11 @@ impl instructionVar140 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2005:1"]
 #[derive(Clone, Debug)]
-struct instructionVar141 {
+struct instructionVar145 {
     hlMem8: hlMem8,
     IOAddrC: IOAddrC,
 }
-impl instructionVar141 {
+impl instructionVar145 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8513,11 +8819,11 @@ impl instructionVar141 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2017:1"]
 #[derive(Clone, Debug)]
-struct instructionVar142 {
+struct instructionVar146 {
     hlMem8: hlMem8,
     IOAddrC: IOAddrC,
 }
-impl instructionVar142 {
+impl instructionVar146 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8580,10 +8886,10 @@ impl instructionVar142 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2032:1"]
 #[derive(Clone, Debug)]
-struct instructionVar143 {
+struct instructionVar147 {
     IOAddr8: IOAddr8,
 }
-impl instructionVar143 {
+impl instructionVar147 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8647,11 +8953,11 @@ impl instructionVar143 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2043:1"]
 #[derive(Clone, Debug)]
-struct instructionVar144 {
+struct instructionVar148 {
     hlMem8: hlMem8,
     IOAddrC: IOAddrC,
 }
-impl instructionVar144 {
+impl instructionVar148 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8714,11 +9020,11 @@ impl instructionVar144 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2058:1"]
 #[derive(Clone, Debug)]
-struct instructionVar145 {
+struct instructionVar149 {
     hlMem8: hlMem8,
     IOAddrC: IOAddrC,
 }
-impl instructionVar145 {
+impl instructionVar149 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8781,8 +9087,8 @@ impl instructionVar145 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:2073:1"]
 #[derive(Clone, Debug)]
-struct instructionVar146 {}
-impl instructionVar146 {
+struct instructionVar150 {}
+impl instructionVar150 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8828,11 +9134,11 @@ impl instructionVar146 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:485:1"]
 #[derive(Clone, Debug)]
-struct instructionVar147 {
+struct instructionVar151 {
     dRegPair4_2: TokenField_dRegPair4_2,
     Mem16: Mem16,
 }
-impl instructionVar147 {
+impl instructionVar151 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8902,11 +9208,11 @@ impl instructionVar147 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:501:1"]
 #[derive(Clone, Debug)]
-struct instructionVar148 {
+struct instructionVar152 {
     dRegPair4_2: TokenField_dRegPair4_2,
     Mem16: Mem16,
 }
-impl instructionVar148 {
+impl instructionVar152 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -8975,10 +9281,10 @@ impl instructionVar148 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1254:1"]
 #[derive(Clone, Debug)]
-struct instructionVar149 {
+struct instructionVar153 {
     sRegPair4_2: TokenField_sRegPair4_2,
 }
-impl instructionVar149 {
+impl instructionVar153 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9034,10 +9340,10 @@ impl instructionVar149 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1263:1"]
 #[derive(Clone, Debug)]
-struct instructionVar150 {
+struct instructionVar154 {
     sRegPair4_2: TokenField_sRegPair4_2,
 }
-impl instructionVar150 {
+impl instructionVar154 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9093,10 +9399,10 @@ impl instructionVar150 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1268:1"]
 #[derive(Clone, Debug)]
-struct instructionVar151 {
+struct instructionVar155 {
     pRegPair4_2: TokenField_pRegPair4_2,
 }
-impl instructionVar151 {
+impl instructionVar155 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9152,10 +9458,10 @@ impl instructionVar151 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1276:1"]
 #[derive(Clone, Debug)]
-struct instructionVar152 {
+struct instructionVar156 {
     pRegPair4_2: TokenField_pRegPair4_2,
 }
-impl instructionVar152 {
+impl instructionVar156 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9209,375 +9515,12 @@ impl instructionVar152 {
         Some((pattern_len, Self { pRegPair4_2 }))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1949:1"]
-#[derive(Clone, Debug)]
-struct instructionVar153 {
-    qRegPair4_2: TokenField_qRegPair4_2,
-}
-impl instructionVar153 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u16,
-        inst_next: u16,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 3usize] = [
-            DisplayElement::Literal("MLT"),
-            DisplayElement::Literal(" "),
-            self.qRegPair4_2.display(),
-        ];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u16,
-    ) -> Option<(u16, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u16;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op0_8().disassembly() != 237 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op6_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.bits0_4().disassembly() != 12 {
-            return None;
-        }
-        let qRegPair4_2 = token_parser.qRegPair4_2();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { qRegPair4_2 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:388:1"]
-#[derive(Clone, Debug)]
-struct instructionVar154 {
-    reg3_3: TokenField_reg3_3,
-    ixMem8: ixMem8,
-}
-impl instructionVar154 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u16,
-        inst_next: u16,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("LD"),
-            DisplayElement::Literal(" "),
-            self.reg3_3.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.ixMem8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u16,
-    ) -> Option<(u16, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u16;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op0_8().disassembly() != 221 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op6_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.bits3_3().disassembly() == 6 {
-            return None;
-        }
-        if token_parser.bits0_3().disassembly() != 6 {
-            return None;
-        }
-        let reg3_3 = token_parser.reg3_3();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        let mut block_2_len = 0u64 as u16;
-        let ixMem8 = if let Some((len, table)) =
-            ixMem8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_2_len = block_2_len.max(len as u16);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_2_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_2_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ixMem8, reg3_3 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:392:1"]
-#[derive(Clone, Debug)]
-struct instructionVar155 {
-    reg3_3: TokenField_reg3_3,
-    iyMem8: iyMem8,
-}
-impl instructionVar155 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u16,
-        inst_next: u16,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 4usize] = [
-            DisplayElement::Literal("LD"),
-            DisplayElement::Literal(" "),
-            self.reg3_3.display(),
-            DisplayElement::Literal(","),
-        ];
-        display.extend_from_slice(&extend);
-        self.iyMem8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u16,
-    ) -> Option<(u16, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u16;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op0_8().disassembly() != 253 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op6_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.bits3_3().disassembly() == 6 {
-            return None;
-        }
-        if token_parser.bits0_3().disassembly() != 6 {
-            return None;
-        }
-        let reg3_3 = token_parser.reg3_3();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        let mut block_2_len = 0u64 as u16;
-        let iyMem8 = if let Some((len, table)) =
-            iyMem8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_2_len = block_2_len.max(len as u16);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_2_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_2_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { iyMem8, reg3_3 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:400:1"]
-#[derive(Clone, Debug)]
-struct instructionVar156 {
-    reg0_3: TokenField_reg0_3,
-    ixMem8: ixMem8,
-}
-impl instructionVar156 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u16,
-        inst_next: u16,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal("LD"), DisplayElement::Literal(" ")];
-        display.extend_from_slice(&extend);
-        self.ixMem8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal(","), self.reg0_3.display()];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u16,
-    ) -> Option<(u16, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u16;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op0_8().disassembly() != 221 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op6_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.bits3_3().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.bits0_3().disassembly() == 6 {
-            return None;
-        }
-        let reg0_3 = token_parser.reg0_3();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        let mut block_2_len = 0u64 as u16;
-        let ixMem8 = if let Some((len, table)) =
-            ixMem8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_2_len = block_2_len.max(len as u16);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_2_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_2_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { ixMem8, reg0_3 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:404:1"]
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1338:1"]
 #[derive(Clone, Debug)]
 struct instructionVar157 {
     reg0_3: TokenField_reg0_3,
-    iyMem8: iyMem8,
 }
 impl instructionVar157 {
-    fn display_extend<T>(
-        &self,
-        display: &mut Vec<DisplayElement>,
-        context: &T,
-        inst_start: u16,
-        inst_next: u16,
-        global_set: &mut impl GlobalSetTrait,
-    ) where
-        T: ContextTrait + Clone,
-    {
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal("LD"), DisplayElement::Literal(" ")];
-        display.extend_from_slice(&extend);
-        self.iyMem8.display_extend(
-            display, context, inst_start, inst_next, global_set,
-        );
-        let extend: [DisplayElement; 2usize] =
-            [DisplayElement::Literal(","), self.reg0_3.display()];
-        display.extend_from_slice(&extend);
-    }
-    fn parse<T>(
-        mut tokens_current: &[u8],
-        context: &mut T,
-        inst_start: u16,
-    ) -> Option<(u16, Self)>
-    where
-        T: ContextTrait + Clone,
-    {
-        let mut pattern_len = 0 as u16;
-        let mut context_instance = context.clone();
-        let mut block_0_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op0_8().disassembly() != 253 {
-            return None;
-        }
-        pattern_len += block_0_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_0_len).unwrap()..];
-        let mut block_1_len = 1u64 as u16;
-        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if token_parser.op6_2().disassembly() != 1 {
-            return None;
-        }
-        if token_parser.bits3_3().disassembly() != 6 {
-            return None;
-        }
-        if token_parser.bits0_3().disassembly() == 6 {
-            return None;
-        }
-        let reg0_3 = token_parser.reg0_3();
-        pattern_len += block_1_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_1_len).unwrap()..];
-        let mut block_2_len = 0u64 as u16;
-        let iyMem8 = if let Some((len, table)) =
-            iyMem8::parse(tokens_current, &mut context_instance, inst_start)
-        {
-            block_2_len = block_2_len.max(len as u16);
-            table
-        } else {
-            return None;
-        };
-        pattern_len += block_2_len;
-        tokens_current =
-            &tokens_current[usize::try_from(block_2_len).unwrap()..];
-        *context = context_instance;
-        Some((pattern_len, Self { iyMem8, reg0_3 }))
-    }
-}
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1338:1"]
-#[derive(Clone, Debug)]
-struct instructionVar158 {
-    reg0_3: TokenField_reg0_3,
-}
-impl instructionVar158 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9631,10 +9574,10 @@ impl instructionVar158 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1380:1"]
 #[derive(Clone, Debug)]
-struct instructionVar159 {
+struct instructionVar158 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar159 {
+impl instructionVar158 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9688,10 +9631,10 @@ impl instructionVar159 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1427:1"]
 #[derive(Clone, Debug)]
-struct instructionVar160 {
+struct instructionVar159 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar160 {
+impl instructionVar159 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9745,10 +9688,10 @@ impl instructionVar160 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1470:1"]
 #[derive(Clone, Debug)]
-struct instructionVar161 {
+struct instructionVar160 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar161 {
+impl instructionVar160 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9802,10 +9745,10 @@ impl instructionVar161 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1517:1"]
 #[derive(Clone, Debug)]
-struct instructionVar162 {
+struct instructionVar161 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar162 {
+impl instructionVar161 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9859,10 +9802,10 @@ impl instructionVar162 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1560:1"]
 #[derive(Clone, Debug)]
-struct instructionVar163 {
+struct instructionVar162 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar163 {
+impl instructionVar162 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9916,10 +9859,10 @@ impl instructionVar163 {
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1603:1"]
 #[derive(Clone, Debug)]
-struct instructionVar164 {
+struct instructionVar163 {
     reg0_3: TokenField_reg0_3,
 }
-impl instructionVar164 {
+impl instructionVar163 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -9969,6 +9912,63 @@ impl instructionVar164 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         *context = context_instance;
         Some((pattern_len, Self { reg0_3 }))
+    }
+}
+#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1949:1"]
+#[derive(Clone, Debug)]
+struct instructionVar164 {
+    qRegPair4_2: TokenField_qRegPair4_2,
+}
+impl instructionVar164 {
+    fn display_extend<T>(
+        &self,
+        display: &mut Vec<DisplayElement>,
+        context: &T,
+        inst_start: u16,
+        inst_next: u16,
+        global_set: &mut impl GlobalSetTrait,
+    ) where
+        T: ContextTrait + Clone,
+    {
+        let extend: [DisplayElement; 3usize] = [
+            DisplayElement::Literal("MLT"),
+            DisplayElement::Literal(" "),
+            self.qRegPair4_2.display(),
+        ];
+        display.extend_from_slice(&extend);
+    }
+    fn parse<T>(
+        mut tokens_current: &[u8],
+        context: &mut T,
+        inst_start: u16,
+    ) -> Option<(u16, Self)>
+    where
+        T: ContextTrait + Clone,
+    {
+        let mut pattern_len = 0 as u16;
+        let mut context_instance = context.clone();
+        let mut block_0_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op0_8().disassembly() != 237 {
+            return None;
+        }
+        pattern_len += block_0_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_0_len).unwrap()..];
+        let mut block_1_len = 1u64 as u16;
+        let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        if token_parser.op6_2().disassembly() != 1 {
+            return None;
+        }
+        if token_parser.bits0_4().disassembly() != 12 {
+            return None;
+        }
+        let qRegPair4_2 = token_parser.qRegPair4_2();
+        pattern_len += block_1_len;
+        tokens_current =
+            &tokens_current[usize::try_from(block_1_len).unwrap()..];
+        *context = context_instance;
+        Some((pattern_len, Self { qRegPair4_2 }))
     }
 }
 #[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/Z80/data/languages/z80.slaspec:1689:1"]
