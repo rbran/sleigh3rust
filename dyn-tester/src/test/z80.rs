@@ -15,7 +15,7 @@ impl Instruction {
     }
 }
 //Thanks CpuVille: http://cpuville.com/Code/Z80.html
-const SUPERH4: &[(u16, Instruction, &str)] = &[
+const Z80: &[(u16, Instruction, &str)] = &[
     (0x00, Instruction::Three(0xc3, 0x63, 0x04), "JP 0x463"),
     (0x03, Instruction::Two(0x3e, 0x4e), "LD A,0x4e"),
     (0x05, Instruction::Two(0xd3, 0x03), "OUT (0x3),A"),
@@ -121,7 +121,7 @@ const SUPERH4: &[(u16, Instruction, &str)] = &[
     (0xad, Instruction::One(0xc9), "RET"),
 ];
 
-const LIBS: &[&'static str] = &["z80"];
+const LIBS: &[&'static str] = &["z80", "z180"];
 
 #[test]
 fn z80() {
@@ -133,7 +133,7 @@ fn z80() {
         let parse_fun: libloading::Symbol<
             fn(&'_ [u8], u16) -> Option<(u16, String)>,
         > = unsafe { ld_lib.get(b"parse_default\0").unwrap() };
-        for (addr, instruction, output) in SUPERH4 {
+        for (addr, instruction, output) in Z80 {
             let token = instruction.to_tokens();
             let (_next_addr, parsed_output) =
                 parse_fun(&token, *addr).expect(&output);
