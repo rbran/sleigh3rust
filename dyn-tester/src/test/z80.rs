@@ -1,0 +1,143 @@
+use crate::test::remove_spaces;
+
+enum Instruction {
+    One(u8),
+    Two(u8, u8),
+    Three(u8, u8, u8),
+}
+impl Instruction {
+    fn to_tokens(&self) -> Vec<u8> {
+        match self {
+            Instruction::One(x) => vec![*x],
+            Instruction::Two(x, y) => vec![*x, *y],
+            Instruction::Three(x, y, z) => vec![*x, *y, *z],
+        }
+    }
+}
+//Thanks CpuVille: http://cpuville.com/Code/Z80.html
+const SUPERH4: &[(u16, Instruction, &str)] = &[
+    (0x00, Instruction::Three(0xc3, 0x63, 0x04), "JP 0x463"),
+    (0x03, Instruction::Two(0x3e, 0x4e), "LD A,0x4e"),
+    (0x05, Instruction::Two(0xd3, 0x03), "OUT (0x3),A"),
+    (0x07, Instruction::Two(0x3e, 0x37), "LD A,0x37"),
+    (0x09, Instruction::Two(0xd3, 0x03), "OUT (0x3),A"),
+    (0x0b, Instruction::One(0xc9), "RET"),
+    (0x0c, Instruction::One(0x47), "LD B,A"),
+    (0x0d, Instruction::Two(0xdb, 0x03), "IN A,(0x3)"),
+    (0x0f, Instruction::Two(0xe6, 0x01), "AND 0x1"),
+    (0x11, Instruction::Three(0xca, 0x0d, 0x00), "JP Z,0xd"),
+    (0x14, Instruction::One(0x78), "LD A,B"),
+    (0x15, Instruction::Two(0xd3, 0x02), "OUT (0x2),A"),
+    (0x17, Instruction::One(0xc9), "RET"),
+    (0x18, Instruction::Two(0xdb, 0x03), "IN A,(0x3)"),
+    (0x1a, Instruction::Two(0xe6, 0x01), "AND 0x1"),
+    (0x1c, Instruction::Three(0xca, 0x18, 0x00), "JP Z,0x18"),
+    (0x1f, Instruction::One(0x7e), "LD A,(HL)"),
+    (0x20, Instruction::One(0xa7), "AND A"),
+    (0x21, Instruction::One(0xc8), "RET Z"),
+    (0x22, Instruction::Two(0xd3, 0x02), "OUT (0x2),A"),
+    (0x24, Instruction::One(0x23), "INC HL"),
+    (0x25, Instruction::Three(0xc3, 0x18, 0x00), "JP 0x18"),
+    (0x28, Instruction::Two(0xdb, 0x03), "IN A,(0x3)"),
+    (0x2a, Instruction::Two(0xe6, 0x02), "AND 0x2"),
+    (0x2c, Instruction::Three(0xca, 0x28, 0x00), "JP Z,0x28"),
+    (0x2f, Instruction::Two(0xdb, 0x02), "IN A,(0x2)"),
+    (0x31, Instruction::One(0x77), "LD (HL),A"),
+    (0x32, Instruction::One(0x23), "INC HL"),
+    (0x33, Instruction::One(0x0b), "DEC BC"),
+    (0x34, Instruction::One(0x78), "LD A,B"),
+    (0x35, Instruction::One(0xb1), "OR C"),
+    (0x36, Instruction::Three(0xc2, 0x28, 0x00), "JP NZ,0x28"),
+    (0x39, Instruction::One(0xc9), "RET"),
+    (0x3a, Instruction::Two(0xdb, 0x03), "IN A,(0x3)"),
+    (0x3c, Instruction::Two(0xe6, 0x01), "AND 0x1"),
+    (0x3e, Instruction::Three(0xca, 0x3a, 0x00), "JP Z,0x3a"),
+    (0x41, Instruction::One(0x7e), "LD A,(HL)"),
+    (0x42, Instruction::Two(0xd3, 0x02), "OUT (0x2),A"),
+    (0x44, Instruction::One(0x23), "INC HL"),
+    (0x45, Instruction::One(0x0b), "DEC BC"),
+    (0x46, Instruction::One(0x78), "LD A,B"),
+    (0x47, Instruction::One(0xb1), "OR C"),
+    (0x48, Instruction::Three(0xc2, 0x3a, 0x00), "JP NZ,0x3a"),
+    (0x4b, Instruction::One(0xc9), "RET"),
+    (0x4c, Instruction::Two(0x0e, 0x00), "LD C,0x0"),
+    (0x4e, Instruction::One(0x7c), "LD A,H"),
+    (0x4f, Instruction::One(0x57), "LD D,A"),
+    (0x50, Instruction::One(0x7d), "LD A,L"),
+    (0x51, Instruction::One(0x5f), "LD E,A"),
+    (0x52, Instruction::Two(0xdb, 0x03), "IN A,(0x3)"),
+    (0x54, Instruction::Two(0xe6, 0x02), "AND 0x2"),
+    (0x56, Instruction::Three(0xca, 0x52, 0x00), "JP Z,0x52"),
+    (0x59, Instruction::Two(0xdb, 0x02), "IN A,(0x2)"),
+    (0x5b, Instruction::Two(0xfe, 0x0d), "CP 0xd"),
+    (0x5d, Instruction::One(0xc8), "RET Z"),
+    (0x5e, Instruction::Two(0xfe, 0x7f), "CP 0x7f"),
+    (0x60, Instruction::Three(0xca, 0x74, 0x00), "JP Z,0x74"),
+    (0x63, Instruction::Two(0xfe, 0x08), "CP 0x8"),
+    (0x65, Instruction::Three(0xca, 0x74, 0x00), "JP Z,0x74"),
+    (0x68, Instruction::Three(0xcd, 0x0c, 0x00), "CALL 0xc"),
+    (0x6b, Instruction::One(0x12), "LD (DE),A"),
+    (0x6c, Instruction::One(0x13), "INC DE"),
+    (0x6d, Instruction::One(0x0c), "INC C"),
+    (0x6e, Instruction::Two(0x3e, 0x00), "LD A,0x0"),
+    (0x70, Instruction::One(0x12), "LD (DE),A"),
+    (0x71, Instruction::Three(0xc3, 0x52, 0x00), "JP 0x52"),
+    (0x74, Instruction::One(0x79), "LD A,C"),
+    (0x75, Instruction::Two(0xfe, 0x00), "CP 0x0"),
+    (0x77, Instruction::Three(0xca, 0x52, 0x00), "JP Z,0x52"),
+    (0x7a, Instruction::One(0x1b), "DEC DE"),
+    (0x7b, Instruction::One(0x0d), "DEC C"),
+    (0x7c, Instruction::Two(0x3e, 0x00), "LD A,0x0"),
+    (0x7e, Instruction::One(0x12), "LD (DE),A"),
+    (0x7f, Instruction::Three(0x21, 0x84, 0x03), "LD HL,0x384"),
+    (0x82, Instruction::Three(0xcd, 0x18, 0x00), "CALL 0x18"),
+    (0x85, Instruction::Three(0xc3, 0x52, 0x00), "JP 0x52"),
+    (0x88, Instruction::One(0x47), "LD B,A"),
+    (0x89, Instruction::Two(0xcb, 0x3f), "SRL A"),
+    (0x8b, Instruction::Two(0xcb, 0x3f), "SRL A"),
+    (0x8d, Instruction::Two(0xcb, 0x3f), "SRL A"),
+    (0x8f, Instruction::Two(0xcb, 0x3f), "SRL A"),
+    (0x91, Instruction::Two(0x16, 0x00), "LD D,0x0"),
+    (0x93, Instruction::One(0x5f), "LD E,A"),
+    (0x94, Instruction::One(0xe5), "PUSH HL"),
+    (0x95, Instruction::Three(0x21, 0xee, 0x00), "LD HL,0xee"),
+    (0x98, Instruction::One(0x19), "ADD HL,DE"),
+    (0x99, Instruction::One(0x7e), "LD A,(HL)"),
+    (0x9a, Instruction::One(0xe1), "POP HL"),
+    (0x9b, Instruction::One(0x77), "LD (HL),A"),
+    (0x9c, Instruction::One(0x23), "INC HL"),
+    (0x9d, Instruction::One(0x78), "LD A,B"),
+    (0x9e, Instruction::Two(0xe6, 0x0f), "AND 0xf"),
+    (0xa0, Instruction::One(0x5f), "LD E,A"),
+    (0xa1, Instruction::One(0xe5), "PUSH HL"),
+    (0xa2, Instruction::Three(0x21, 0xee, 0x00), "LD HL,0xee"),
+    (0xa5, Instruction::One(0x19), "ADD HL,DE"),
+    (0xa6, Instruction::One(0x7e), "LD A,(HL)"),
+    (0xa7, Instruction::One(0xe1), "POP HL"),
+    (0xa8, Instruction::One(0x77), "LD (HL),A"),
+    (0xa9, Instruction::One(0x23), "INC HL"),
+    (0xaa, Instruction::Two(0x3e, 0x00), "LD A,0x0"),
+    (0xac, Instruction::One(0x77), "LD (HL),A"),
+    (0xad, Instruction::One(0xc9), "RET"),
+];
+
+const LIBS: &[&'static str] = &["z80"];
+
+#[test]
+fn z80() {
+    for lib in LIBS.iter() {
+        let ld_lib = unsafe {
+            libloading::Library::new(format!("../target/debug/lib{}.so", &lib))
+                .unwrap()
+        };
+        let parse_fun: libloading::Symbol<
+            fn(&'_ [u8], u16) -> Option<(u16, String)>,
+        > = unsafe { ld_lib.get(b"parse_default\0").unwrap() };
+        for (addr, instruction, output) in SUPERH4 {
+            let token = instruction.to_tokens();
+            let (_next_addr, parsed_output) =
+                parse_fun(&token, *addr).expect(&output);
+            assert_eq!(&remove_spaces(&parsed_output), output);
+        }
+    }
+}

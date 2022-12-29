@@ -9,6 +9,11 @@ with [sleigh2rust](https://github.com/rbran/sleigh2rust).
 
 This project still in a early PoC (Proof-of-Concept) stage.
 
+Each CPU are located in their own crate, they are compiled as dylib.
+
+The create dyn-test include multiple tests that will load and test
+each cpu architecture.
+
 The objective of this project is to implement and MVP disassembler/emulator.
 Currently the code generated is unecessarelly verbose and slow, because this is
 not the goal at this stage of the project.
