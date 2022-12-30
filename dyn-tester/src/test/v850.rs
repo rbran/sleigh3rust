@@ -14,7 +14,7 @@ impl Instruction {
 }
 
 #[cfg_attr(rustfmt, rustfmt_skip)]
-const V850: &[(u32, Instruction, &str)] = &[
+const BASIC_INSTRUCTIONS: &[(u32, Instruction, &str)] = &[
     (0x0000, Instruction::Four(0xf2505780), "jarl 0xf250, r10"),
     (0x0004, Instruction::Four(0x00115640), "movhi 0x11, r0, r10"),
     (0x0008, Instruction::Four(0x3d45572a), "ld.w 0x3d44[r10], r10"),
@@ -48,6 +48,10 @@ const V850: &[(u32, Instruction, &str)] = &[
     (0x0078, Instruction::Four(0x4000b620), "movea 0x4000, r0, r22"),
     (0x007c, Instruction::Two(0xba01),      "mov 0x1, r23"),
     (0x007e, Instruction::Four(0x2882ce39), "movea 0x2882, r25, r25"),
+];
+#[cfg(feature = "all-tests")]
+#[cfg_attr(rustfmt, rustfmt_skip)]
+const ALL_INSTRUCTIONS: &[(u32, Instruction, &str)] = &[
     (0x0082, Instruction::Two(0x0db5),      "br 0x98"),
     (0x0084, Instruction::Two(0x3a04),      "mov 0x4, r7"),
     (0x0086, Instruction::Two(0x401d),      "mov r29, r8"),
@@ -1614,7 +1618,11 @@ fn v850() {
     let parse_fun: libloading::Symbol<
         fn(&'_ [u8], u32) -> Option<(u32, String)>,
     > = unsafe { ld_lib.get(b"parse_default\0").unwrap() };
-    for (addr, instruction, output) in V850 {
+
+    let instructions = BASIC_INSTRUCTIONS.iter();
+    #[cfg(feature = "all-tests")]
+    let instructions = instructions.chain(ALL_INSTRUCTIONS.iter());
+    for (addr, instruction, output) in instructions {
         let token = instruction.to_tokens();
         let (_next_addr, parsed_output) =
             parse_fun(&token, *addr).expect(&output);

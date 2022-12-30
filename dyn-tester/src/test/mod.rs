@@ -17,6 +17,7 @@ fn remove_spaces(parsed: &str) -> Cow<str> {
 }
 
 mod arm;
+mod aarch64;
 mod pic;
 mod superh4;
 mod z80;

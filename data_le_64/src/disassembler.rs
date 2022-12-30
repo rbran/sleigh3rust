@@ -117,7 +117,7 @@ pub trait ContextregisterTrait:
         i64::try_from(self.read_test_raw()).unwrap()
     }
     fn write_test_disassembly(&mut self, param: i64) {
-        self.write_test_raw(u8::try_from(param).unwrap())
+        self.write_test_raw(param as u8)
     }
     fn read_test_execution(&self) -> u8 {
         self.read_test_raw()
@@ -263,7 +263,7 @@ impl instructionVar0 {
         let mut pattern_len = 0 as u64;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u64;
-        if context_instance.register().read_test_disassembly() != 1 {
+        if context_instance.register().read_test_disassembly() != 1i64 {
             return None;
         }
         pattern_len += block_0_len;
@@ -274,10 +274,10 @@ impl instructionVar0 {
     }
 }
 #[derive(Clone, Debug)]
-enum instruction {
+enum Tableinstruction {
     Var0(instructionVar0),
 }
-impl instruction {
+impl Tableinstruction {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -328,7 +328,7 @@ where
     T: ContextTrait + Clone,
 {
     let (inst_len, instruction) =
-        instruction::parse(tokens, context, inst_start)?;
+        Tableinstruction::parse(tokens, context, inst_start)?;
     let inst_next = inst_start + inst_len;
     let mut display = vec![];
     instruction.display_extend(
