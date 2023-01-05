@@ -7530,10 +7530,10 @@ impl srcREGVar7 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut fv: i64 = 0;
-        fv = 112i64.wrapping_add(self.lf7.disassembly());
+        let mut calc_fv: i64 = 0;
+        calc_fv = 112i64.wrapping_add(self.lf7.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, fv)];
+            [DisplayElement::Number(true, calc_fv)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -7546,13 +7546,14 @@ impl srcREGVar7 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_fv: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFielduf7().disassembly() != 7i64 {
             return None;
         }
-        let mut fv: i64 = 0;
-        fv = 112i64.wrapping_add(token_parser.TokenFieldlf7().disassembly());
+        calc_fv =
+            112i64.wrapping_add(token_parser.TokenFieldlf7().disassembly());
         let lf7 = token_parser.TokenFieldlf7();
         pattern_len += block_0_len;
         tokens_current =

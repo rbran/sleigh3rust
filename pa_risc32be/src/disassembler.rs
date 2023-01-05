@@ -18158,14 +18158,6 @@ impl instructionVar128 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 0i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -18451,18 +18443,6 @@ impl instructionVar131 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 4i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = 1i64;
-        context_instance
-            .register_mut()
-            .write_branchIsReturn_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let RB = if let Some((len, table)) =
             TableRB::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -18696,14 +18676,6 @@ impl instructionVar133 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 4i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let RB = if let Some((len, table)) =
             TableRB::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -18955,14 +18927,6 @@ impl instructionVar135 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 1i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19191,14 +19155,6 @@ impl instructionVar137 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 5i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19447,14 +19403,6 @@ impl instructionVar139 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 0i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19692,14 +19640,6 @@ impl instructionVar141 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19852,14 +19792,6 @@ impl instructionVar142 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -20023,14 +19955,6 @@ impl instructionVar143 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -20183,14 +20107,6 @@ impl instructionVar144 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -20354,14 +20270,6 @@ impl instructionVar145 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20516,14 +20424,6 @@ impl instructionVar146 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20689,14 +20589,6 @@ impl instructionVar147 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20851,14 +20743,6 @@ impl instructionVar148 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -21022,14 +20906,6 @@ impl instructionVar149 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21180,14 +21056,6 @@ impl instructionVar150 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21348,14 +21216,6 @@ impl instructionVar151 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21498,14 +21358,6 @@ impl instructionVar152 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21663,14 +21515,6 @@ impl instructionVar153 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21833,14 +21677,6 @@ impl instructionVar154 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -22014,14 +21850,6 @@ impl instructionVar155 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -22184,14 +22012,6 @@ impl instructionVar156 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -22365,14 +22185,6 @@ impl instructionVar157 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22537,14 +22349,6 @@ impl instructionVar158 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22720,14 +22524,6 @@ impl instructionVar159 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22892,14 +22688,6 @@ impl instructionVar160 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -23072,14 +22860,6 @@ impl instructionVar161 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23230,14 +23010,6 @@ impl instructionVar162 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23398,14 +23170,6 @@ impl instructionVar163 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23548,14 +23312,6 @@ impl instructionVar164 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 2i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23696,14 +23452,6 @@ impl instructionVar165 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 4i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -23931,14 +23679,6 @@ impl instructionVar167 {
         context_instance
             .register_mut()
             .write_branchEnable_disassembly(tmp);
-        let tmp = 5i64;
-        context_instance
-            .register_mut()
-            .write_branchType_disassembly(tmp);
-        let tmp = context_instance.register().read_nullifyEnable_disassembly();
-        context_instance
-            .register_mut()
-            .write_branchCouldBeNullified_disassembly(tmp);
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -33148,8 +32888,8 @@ impl instructionVar245 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut sop: i64 = 0;
-        sop = (self
+        let mut calc_sop: i64 = 0;
+        calc_sop = (self
             .im15
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33168,7 +32908,7 @@ impl instructionVar245 {
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, sop),
+            DisplayElement::Number(true, calc_sop),
         ];
         display.extend_from_slice(&extend);
     }
@@ -33182,6 +32922,7 @@ impl instructionVar245 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if context_instance.register().read_phase_disassembly() != 1i64 {
@@ -33193,8 +32934,7 @@ impl instructionVar245 {
         if token_parser.TokenFieldspecop().disassembly() != 0i64 {
             return None;
         }
-        let mut sop: i64 = 0;
-        sop = (token_parser
+        calc_sop = (token_parser
             .TokenFieldim15()
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33255,8 +32995,8 @@ impl instructionVar246 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut sop: i64 = 0;
-        sop = (self
+        let mut calc_sop: i64 = 0;
+        calc_sop = (self
             .sopim10
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33275,7 +33015,7 @@ impl instructionVar246 {
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, sop),
+            DisplayElement::Number(true, calc_sop),
         ];
         display.extend_from_slice(&extend);
     }
@@ -33289,6 +33029,7 @@ impl instructionVar246 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if context_instance.register().read_phase_disassembly() != 1i64 {
@@ -33300,8 +33041,7 @@ impl instructionVar246 {
         if token_parser.TokenFieldspecop().disassembly() != 1i64 {
             return None;
         }
-        let mut sop: i64 = 0;
-        sop = (token_parser
+        calc_sop = (token_parser
             .TokenFieldsopim10()
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33363,8 +33103,8 @@ impl instructionVar247 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut sop: i64 = 0;
-        sop = (self
+        let mut calc_sop: i64 = 0;
+        calc_sop = (self
             .sopim5
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33383,7 +33123,7 @@ impl instructionVar247 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, sop),
+            DisplayElement::Number(true, calc_sop),
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
@@ -33401,6 +33141,7 @@ impl instructionVar247 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if context_instance.register().read_phase_disassembly() != 1i64 {
@@ -33412,8 +33153,7 @@ impl instructionVar247 {
         if token_parser.TokenFieldspecop().disassembly() != 2i64 {
             return None;
         }
-        let mut sop: i64 = 0;
-        sop = (token_parser
+        calc_sop = (token_parser
             .TokenFieldsopim5()
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33485,8 +33225,8 @@ impl instructionVar248 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut sop: i64 = 0;
-        sop = (self
+        let mut calc_sop: i64 = 0;
+        calc_sop = (self
             .sopim5
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -33505,7 +33245,7 @@ impl instructionVar248 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, sop),
+            DisplayElement::Number(true, calc_sop),
             DisplayElement::Literal(" "),
         ];
         display.extend_from_slice(&extend);
@@ -33528,6 +33268,7 @@ impl instructionVar248 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if context_instance.register().read_phase_disassembly() != 1i64 {
@@ -33539,8 +33280,7 @@ impl instructionVar248 {
         if token_parser.TokenFieldspecop().disassembly() != 3i64 {
             return None;
         }
-        let mut sop: i64 = 0;
-        sop = (token_parser
+        calc_sop = (token_parser
             .TokenFieldsopim5()
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -39053,8 +38793,8 @@ impl instructionVar291 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut sop: i64 = 0;
-        sop = (self
+        let mut calc_sop: i64 = 0;
+        calc_sop = (self
             .sopim17
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -39070,7 +38810,7 @@ impl instructionVar291 {
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal(","),
-            DisplayElement::Number(true, sop),
+            DisplayElement::Number(true, calc_sop),
         ];
         display.extend_from_slice(&extend);
         self.nullifyForSpecial.display_extend(
@@ -39087,6 +38827,7 @@ impl instructionVar291 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if context_instance.register().read_phase_disassembly() != 1i64 {
@@ -39095,8 +38836,7 @@ impl instructionVar291 {
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
             return None;
         }
-        let mut sop: i64 = 0;
-        sop = (token_parser
+        calc_sop = (token_parser
             .TokenFieldsopim17()
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -63349,8 +63089,8 @@ impl displacement2WVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut target: i64 = 0;
-        target = 1i64
+        let mut calc_target: i64 = 0;
+        calc_target = 1i64
             .wrapping_sub(self.w.disassembly().wrapping_mul(2i64))
             .wrapping_mul(
                 ((self.w2.disassembly() & 1i64)
@@ -63364,7 +63104,7 @@ impl displacement2WVar0 {
                         & 1023i64)),
             );
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, target)];
+            [DisplayElement::Number(true, calc_target)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -63377,10 +63117,10 @@ impl displacement2WVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_target: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut target: i64 = 0;
-        target = 1i64
+        calc_target = 1i64
             .wrapping_sub(
                 token_parser.TokenFieldw().disassembly().wrapping_mul(2i64),
             )
@@ -63467,8 +63207,8 @@ impl branchTarget2WVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut target: i64 = 0;
-        target = i64::try_from(inst_start)
+        let mut calc_target: i64 = 0;
+        calc_target = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(8i64)
             .wrapping_add(
@@ -63490,7 +63230,7 @@ impl branchTarget2WVar0 {
             context.register().read_branchImmDest_disassembly(),
         );
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, target)];
+            [DisplayElement::Number(true, calc_target)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -63503,10 +63243,10 @@ impl branchTarget2WVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_target: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut target: i64 = 0;
-        target = i64::try_from(inst_start)
+        calc_target = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(8i64)
             .wrapping_add(
@@ -63527,11 +63267,7 @@ impl branchTarget2WVar0 {
         context_instance
             .register_mut()
             .write_temp32_disassembly(tmp);
-        let tmp = target;
-        context_instance
-            .register_mut()
-            .write_branchImmDest_disassembly(tmp);
-        let tmp = context_instance.register().read_temp32_disassembly();
+        let tmp = calc_target;
         context_instance
             .register_mut()
             .write_branchImmDest_disassembly(tmp);
@@ -63609,8 +63345,8 @@ impl displacement3WVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut target: i64 = 0;
-        target = 4i64.wrapping_mul(
+        let mut calc_target: i64 = 0;
+        calc_target = 4i64.wrapping_mul(
             ((((-1i64)
                 .wrapping_mul(self.w.disassembly())
                 .checked_shl(u32::try_from(16i64).unwrap())
@@ -63628,7 +63364,7 @@ impl displacement3WVar0 {
                 | self.w2less2.disassembly()),
         );
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, target)];
+            [DisplayElement::Number(true, calc_target)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -63641,10 +63377,10 @@ impl displacement3WVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_target: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut target: i64 = 0;
-        target = 4i64.wrapping_mul(
+        calc_target = 4i64.wrapping_mul(
             ((((-1i64)
                 .wrapping_mul(token_parser.TokenFieldw().disassembly())
                 .checked_shl(u32::try_from(16i64).unwrap())
@@ -63744,8 +63480,8 @@ impl branchTarget3WVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut target: i64 = 0;
-        target = i64::try_from(inst_start)
+        let mut calc_target: i64 = 0;
+        calc_target = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(8i64)
             .wrapping_add(
@@ -63772,7 +63508,7 @@ impl branchTarget3WVar0 {
             context.register().read_branchImmDest_disassembly(),
         );
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, target)];
+            [DisplayElement::Number(true, calc_target)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -63785,10 +63521,10 @@ impl branchTarget3WVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_target: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut target: i64 = 0;
-        target = i64::try_from(inst_start)
+        calc_target = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(8i64)
             .wrapping_add(
@@ -63814,11 +63550,7 @@ impl branchTarget3WVar0 {
         context_instance
             .register_mut()
             .write_temp32_disassembly(tmp);
-        let tmp = target;
-        context_instance
-            .register_mut()
-            .write_branchImmDest_disassembly(tmp);
-        let tmp = context_instance.register().read_temp32_disassembly();
+        let tmp = calc_target;
         context_instance
             .register_mut()
             .write_branchImmDest_disassembly(tmp);
@@ -64299,10 +64031,10 @@ impl shiftCVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut shift: i64 = 0;
-        shift = 31i64.wrapping_sub(self.cp.disassembly());
+        let mut calc_shift: i64 = 0;
+        calc_shift = 31i64.wrapping_sub(self.cp.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, shift)];
+            [DisplayElement::Number(true, calc_shift)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64315,10 +64047,11 @@ impl shiftCVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_shift: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut shift: i64 = 0;
-        shift = 31i64.wrapping_sub(token_parser.TokenFieldcp().disassembly());
+        calc_shift =
+            31i64.wrapping_sub(token_parser.TokenFieldcp().disassembly());
         let cp = token_parser.TokenFieldcp();
         pattern_len += block_0_len;
         tokens_current =
@@ -64386,10 +64119,10 @@ impl shiftCLenVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut shift: i64 = 0;
-        shift = 32i64.wrapping_sub(self.im5.disassembly());
+        let mut calc_shift: i64 = 0;
+        calc_shift = 32i64.wrapping_sub(self.im5.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, shift)];
+            [DisplayElement::Number(true, calc_shift)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64402,10 +64135,11 @@ impl shiftCLenVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_shift: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut shift: i64 = 0;
-        shift = 32i64.wrapping_sub(token_parser.TokenFieldim5().disassembly());
+        calc_shift =
+            32i64.wrapping_sub(token_parser.TokenFieldim5().disassembly());
         let im5 = token_parser.TokenFieldim5();
         pattern_len += block_0_len;
         tokens_current =
@@ -64474,14 +64208,14 @@ impl lse14Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        let mut calc_off: i64 = 0;
+        calc_off = ((-1i64)
             .wrapping_mul(self.bit0.disassembly())
             .checked_shl(u32::try_from(13i64).unwrap())
             .unwrap_or(0)
             | self.im14less0.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, off)];
+            [DisplayElement::Number(true, calc_off)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64494,10 +64228,10 @@ impl lse14Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_off: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        calc_off = ((-1i64)
             .wrapping_mul(token_parser.TokenFieldbit0().disassembly())
             .checked_shl(u32::try_from(13i64).unwrap())
             .unwrap_or(0)
@@ -64571,14 +64305,14 @@ impl lse5Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        let mut calc_off: i64 = 0;
+        calc_off = ((-1i64)
             .wrapping_mul(self.bit0.disassembly())
             .checked_shl(u32::try_from(4i64).unwrap())
             .unwrap_or(0)
             | self.im5less0.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, off)];
+            [DisplayElement::Number(true, calc_off)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64591,10 +64325,10 @@ impl lse5Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_off: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        calc_off = ((-1i64)
             .wrapping_mul(token_parser.TokenFieldbit0().disassembly())
             .checked_shl(u32::try_from(4i64).unwrap())
             .unwrap_or(0)
@@ -64668,14 +64402,14 @@ impl highlse5Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        let mut calc_off: i64 = 0;
+        calc_off = ((-1i64)
             .wrapping_mul(self.bit16.disassembly())
             .checked_shl(u32::try_from(4i64).unwrap())
             .unwrap_or(0)
             | self.highIm5less16.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, off)];
+            [DisplayElement::Number(true, calc_off)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64688,10 +64422,10 @@ impl highlse5Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_off: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut off: i64 = 0;
-        off = ((-1i64)
+        calc_off = ((-1i64)
             .wrapping_mul(token_parser.TokenFieldbit16().disassembly())
             .checked_shl(u32::try_from(4i64).unwrap())
             .unwrap_or(0)
@@ -64774,8 +64508,8 @@ impl lse21Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut off: i64 = 0;
-        off = (((((-1i64)
+        let mut calc_off: i64 = 0;
+        calc_off = (((((-1i64)
             .wrapping_mul(self.bit0.disassembly())
             .checked_shl(u32::try_from(20i64).unwrap())
             .unwrap_or(0)
@@ -64798,7 +64532,7 @@ impl lse21Var0 {
         .checked_shl(u32::try_from(11i64).unwrap())
         .unwrap_or(0);
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, off)];
+            [DisplayElement::Number(true, calc_off)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64811,10 +64545,10 @@ impl lse21Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_off: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut off: i64 = 0;
-        off = (((((-1i64)
+        calc_off = (((((-1i64)
             .wrapping_mul(token_parser.TokenFieldbit0().disassembly())
             .checked_shl(u32::try_from(20i64).unwrap())
             .unwrap_or(0)
@@ -64918,14 +64652,14 @@ impl lse11Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut immed: i64 = 0;
-        immed = ((-1i64)
+        let mut calc_immed: i64 = 0;
+        calc_immed = ((-1i64)
             .wrapping_mul(self.bit0.disassembly())
             .checked_shl(u32::try_from(10i64).unwrap())
             .unwrap_or(0)
             | self.im11less0.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, immed)];
+            [DisplayElement::Number(true, calc_immed)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -64938,15 +64672,15 @@ impl lse11Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_immed: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        let mut immed: i64 = 0;
-        immed = ((-1i64)
+        calc_immed = ((-1i64)
             .wrapping_mul(token_parser.TokenFieldbit0().disassembly())
             .checked_shl(u32::try_from(10i64).unwrap())
             .unwrap_or(0)
             | token_parser.TokenFieldim11less0().disassembly());
-        let tmp = immed;
+        let tmp = calc_immed;
         context_instance
             .register_mut()
             .write_temp32_disassembly(tmp);

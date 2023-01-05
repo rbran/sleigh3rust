@@ -16651,12 +16651,12 @@ impl RELVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut reloc: i64 = 0;
-        reloc = i64::try_from(inst_next)
+        let mut calc_reloc: i64 = 0;
+        calc_reloc = i64::try_from(inst_next)
             .unwrap()
             .wrapping_add(self.rel.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, reloc)];
+            [DisplayElement::Number(true, calc_reloc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -16669,9 +16669,9 @@ impl RELVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_reloc: i64 = 0;
         let mut block_0_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        let mut reloc: i64 = 0;
         let rel = token_parser.TokenFieldrel();
         pattern_len += block_0_len;
         tokens_current =
@@ -16739,12 +16739,12 @@ impl NthBitVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut nthbit: i64 = 0;
-        nthbit = 1i64
+        let mut calc_nthbit: i64 = 0;
+        calc_nthbit = 1i64
             .checked_shl(u32::try_from(self.nIndex.disassembly()).unwrap())
             .unwrap_or(0);
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, nthbit)];
+            [DisplayElement::Number(true, calc_nthbit)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -16757,10 +16757,10 @@ impl NthBitVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_nthbit: i64 = 0;
         let mut block_0_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        let mut nthbit: i64 = 0;
-        nthbit = 1i64
+        calc_nthbit = 1i64
             .checked_shl(
                 u32::try_from(token_parser.TokenFieldnIndex().disassembly())
                     .unwrap(),

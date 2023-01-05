@@ -15030,12 +15030,12 @@ impl jmpdestVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut reloc: i64 = 0;
-        reloc = i64::try_from(inst_next)
+        let mut calc_reloc: i64 = 0;
+        calc_reloc = i64::try_from(inst_next)
             .unwrap()
             .wrapping_add(self.simm8.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, reloc)];
+            [DisplayElement::Number(true, calc_reloc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -15048,9 +15048,9 @@ impl jmpdestVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_reloc: i64 = 0;
         let mut block_0_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        let mut reloc: i64 = 0;
         let simm8 = token_parser.TokenFieldsimm8();
         pattern_len += block_0_len;
         tokens_current =
@@ -15119,8 +15119,8 @@ impl jmpdest11Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut reloc: i64 = 0;
-        reloc = i64::try_from(inst_next).unwrap().wrapping_add(
+        let mut calc_reloc: i64 = 0;
+        calc_reloc = i64::try_from(inst_next).unwrap().wrapping_add(
             (self
                 .jmp11_hi
                 .disassembly()
@@ -15129,7 +15129,7 @@ impl jmpdest11Var0 {
                 | self.jmp11_lo.disassembly()),
         );
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, reloc)];
+            [DisplayElement::Number(true, calc_reloc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -15142,9 +15142,9 @@ impl jmpdest11Var0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut reloc: i64 = 0;
         let jmp11_hi = token_parser.TokenFieldjmp11_hi();
         let jmp11_lo = token_parser.TokenFieldjmp11_lo();
         pattern_len += block_0_len;
@@ -15213,12 +15213,12 @@ impl jmpdest16Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut reloc: i64 = 0;
-        reloc = i64::try_from(inst_next)
+        let mut calc_reloc: i64 = 0;
+        calc_reloc = i64::try_from(inst_next)
             .unwrap()
             .wrapping_add(self.disp16.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, reloc)];
+            [DisplayElement::Number(true, calc_reloc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -15231,9 +15231,9 @@ impl jmpdest16Var0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut reloc: i64 = 0;
         let disp16 = token_parser.TokenFielddisp16();
         pattern_len += block_0_len;
         tokens_current =

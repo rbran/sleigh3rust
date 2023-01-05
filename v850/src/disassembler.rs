@@ -8624,8 +8624,8 @@ impl instructionVar80 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut vector8: i64 = 0;
-        vector8 = (self
+        let mut calc_vector8: i64 = 0;
+        calc_vector8 = (self
             .op2729
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -8634,7 +8634,7 @@ impl instructionVar80 {
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal("syscall"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, vector8),
+            DisplayElement::Number(true, calc_vector8),
         ];
         display.extend_from_slice(&extend);
     }
@@ -8648,18 +8648,12 @@ impl instructionVar80 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_vector8: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 1727i64 {
             return None;
         }
-        let mut vector8: i64 = 0;
-        vector8 = (token_parser
-            .TokenFieldop2729()
-            .disassembly()
-            .checked_shl(u32::try_from(5i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop0004().disassembly());
         let op0004 = token_parser.TokenFieldop0004();
         pattern_len += block_0_len;
         tokens_current =
@@ -8672,6 +8666,12 @@ impl instructionVar80 {
         if token_parser.TokenFieldop1626().disassembly() != 352i64 {
             return None;
         }
+        calc_vector8 = (token_parser
+            .TokenFieldop2729()
+            .disassembly()
+            .checked_shl(u32::try_from(5i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop0004().disassembly());
         let op2729 = token_parser.TokenFieldop2729();
         pattern_len += block_1_len;
         tokens_current =
@@ -11099,8 +11099,8 @@ impl instructionVar107 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut imm9: i64 = 0;
-        imm9 = (self
+        let mut calc_imm9: i64 = 0;
+        calc_imm9 = (self
             .s1821
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -11109,7 +11109,7 @@ impl instructionVar107 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("mul"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, imm9),
+            DisplayElement::Number(true, calc_imm9),
             DisplayElement::Literal(", "),
         ];
         display.extend_from_slice(&extend);
@@ -11132,18 +11132,12 @@ impl instructionVar107 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_imm9: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0510().disassembly() != 63i64 {
             return None;
         }
-        let mut imm9: i64 = 0;
-        imm9 = (token_parser
-            .TokenFields1821()
-            .disassembly()
-            .checked_shl(u32::try_from(5i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop0004().disassembly());
         let R1115 = if let Some((len, table)) =
             TableR1115::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -11164,6 +11158,12 @@ impl instructionVar107 {
         if token_parser.TokenFieldop1617().disassembly() != 0i64 {
             return None;
         }
+        calc_imm9 = (token_parser
+            .TokenFields1821()
+            .disassembly()
+            .checked_shl(u32::try_from(5i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop0004().disassembly());
         let R2731 = if let Some((len, table)) =
             TableR2731::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -12105,12 +12105,12 @@ impl instructionVar124 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp5: i64 = 0;
-        disp5 = self.op0003.disassembly().wrapping_mul(2i64);
+        let mut calc_disp5: i64 = 0;
+        calc_disp5 = self.op0003.disassembly().wrapping_mul(2i64);
         let extend: [DisplayElement; 6usize] = [
             DisplayElement::Literal("sld.hu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp5),
+            DisplayElement::Number(true, calc_disp5),
             DisplayElement::Literal("["),
             DisplayElement::Register(Register::ep),
             DisplayElement::Literal("], "),
@@ -12130,13 +12130,13 @@ impl instructionVar124 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp5: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0410().disassembly() != 7i64 {
             return None;
         }
-        let mut disp5: i64 = 0;
-        disp5 = token_parser
+        calc_disp5 = token_parser
             .TokenFieldop0003()
             .disassembly()
             .wrapping_mul(2i64);
@@ -12649,8 +12649,8 @@ impl instructionVar133 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut imm9: i64 = 0;
-        imm9 = (self
+        let mut calc_imm9: i64 = 0;
+        calc_imm9 = (self
             .op1821
             .disassembly()
             .checked_shl(u32::try_from(5i64).unwrap())
@@ -12659,7 +12659,7 @@ impl instructionVar133 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("mulu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, imm9),
+            DisplayElement::Number(true, calc_imm9),
             DisplayElement::Literal(", "),
         ];
         display.extend_from_slice(&extend);
@@ -12682,18 +12682,12 @@ impl instructionVar133 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_imm9: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0510().disassembly() != 63i64 {
             return None;
         }
-        let mut imm9: i64 = 0;
-        imm9 = (token_parser
-            .TokenFieldop1821()
-            .disassembly()
-            .checked_shl(u32::try_from(5i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop0004().disassembly());
         let R1115 = if let Some((len, table)) =
             TableR1115::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -12714,6 +12708,12 @@ impl instructionVar133 {
         if token_parser.TokenFieldop1617().disassembly() != 2i64 {
             return None;
         }
+        calc_imm9 = (token_parser
+            .TokenFieldop1821()
+            .disassembly()
+            .checked_shl(u32::try_from(5i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop0004().disassembly());
         let R2731 = if let Some((len, table)) =
             TableR2731::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -14670,8 +14670,8 @@ impl instructionVar153 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp16: i64 = 0;
-        disp16 = self
+        let mut calc_disp16: i64 = 0;
+        calc_disp16 = self
             .s1731
             .disassembly()
             .checked_shl(u32::try_from(1i64).unwrap())
@@ -14679,7 +14679,7 @@ impl instructionVar153 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.hu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp16),
+            DisplayElement::Number(true, calc_disp16),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -14702,17 +14702,12 @@ impl instructionVar153 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp16: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0510().disassembly() != 63i64 {
             return None;
         }
-        let mut disp16: i64 = 0;
-        disp16 = token_parser
-            .TokenFields1731()
-            .disassembly()
-            .checked_shl(u32::try_from(1i64).unwrap())
-            .unwrap_or(0);
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -14737,6 +14732,11 @@ impl instructionVar153 {
         if token_parser.TokenFieldop1616().disassembly() != 1i64 {
             return None;
         }
+        calc_disp16 = token_parser
+            .TokenFields1731()
+            .disassembly()
+            .checked_shl(u32::try_from(1i64).unwrap())
+            .unwrap_or(0);
         let s1731 = token_parser.TokenFields1731();
         pattern_len += block_1_len;
         tokens_current =
@@ -14770,12 +14770,12 @@ impl instructionVar154 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp16: i64 = 0;
-        disp16 = self.s1731.disassembly().wrapping_mul(2i64);
+        let mut calc_disp16: i64 = 0;
+        calc_disp16 = self.s1731.disassembly().wrapping_mul(2i64);
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.w"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp16),
+            DisplayElement::Number(true, calc_disp16),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -14798,16 +14798,12 @@ impl instructionVar154 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp16: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0510().disassembly() != 57i64 {
             return None;
         }
-        let mut disp16: i64 = 0;
-        disp16 = token_parser
-            .TokenFields1731()
-            .disassembly()
-            .wrapping_mul(2i64);
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -14832,6 +14828,10 @@ impl instructionVar154 {
         if token_parser.TokenFieldop1616().disassembly() != 1i64 {
             return None;
         }
+        calc_disp16 = token_parser
+            .TokenFields1731()
+            .disassembly()
+            .wrapping_mul(2i64);
         let s1731 = token_parser.TokenFields1731();
         pattern_len += block_1_len;
         tokens_current =
@@ -14957,8 +14957,8 @@ impl instructionVar156 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp16: i64 = 0;
-        disp16 = self.s1731.disassembly().wrapping_mul(2i64);
+        let mut calc_disp16: i64 = 0;
+        calc_disp16 = self.s1731.disassembly().wrapping_mul(2i64);
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("st.w"),
             DisplayElement::Literal(" "),
@@ -14969,7 +14969,7 @@ impl instructionVar156 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp16),
+            DisplayElement::Number(true, calc_disp16),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -14989,16 +14989,12 @@ impl instructionVar156 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp16: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0510().disassembly() != 59i64 {
             return None;
         }
-        let mut disp16: i64 = 0;
-        disp16 = token_parser
-            .TokenFields1731()
-            .disassembly()
-            .wrapping_mul(2i64);
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -15023,6 +15019,10 @@ impl instructionVar156 {
         if token_parser.TokenFieldop1616().disassembly() != 1i64 {
             return None;
         }
+        calc_disp16 = token_parser
+            .TokenFields1731()
+            .disassembly()
+            .wrapping_mul(2i64);
         let s1731 = token_parser.TokenFields1731();
         pattern_len += block_1_len;
         tokens_current =
@@ -15866,8 +15866,8 @@ impl instructionVar168 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -15880,7 +15880,7 @@ impl instructionVar168 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.h"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -15903,22 +15903,12 @@ impl instructionVar168 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 60i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser
-                .TokenFieldop2126()
-                .disassembly()
-                .checked_shl(u32::try_from(1i64).unwrap())
-                .unwrap_or(0));
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -15949,6 +15939,16 @@ impl instructionVar168 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser
+                .TokenFieldop2126()
+                .disassembly()
+                .checked_shl(u32::try_from(1i64).unwrap())
+                .unwrap_or(0));
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -15984,8 +15984,8 @@ impl instructionVar169 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -15998,7 +15998,7 @@ impl instructionVar169 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.w"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16021,22 +16021,12 @@ impl instructionVar169 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 60i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser
-                .TokenFieldop2126()
-                .disassembly()
-                .checked_shl(u32::try_from(1i64).unwrap())
-                .unwrap_or(0));
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16067,6 +16057,16 @@ impl instructionVar169 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser
+                .TokenFieldop2126()
+                .disassembly()
+                .checked_shl(u32::try_from(1i64).unwrap())
+                .unwrap_or(0));
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16102,8 +16102,8 @@ impl instructionVar170 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16123,7 +16123,7 @@ impl instructionVar170 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16143,22 +16143,12 @@ impl instructionVar170 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 61i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser
-                .TokenFieldop2126()
-                .disassembly()
-                .checked_shl(u32::try_from(1i64).unwrap())
-                .unwrap_or(0));
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16189,6 +16179,16 @@ impl instructionVar170 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser
+                .TokenFieldop2126()
+                .disassembly()
+                .checked_shl(u32::try_from(1i64).unwrap())
+                .unwrap_or(0));
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16224,8 +16224,8 @@ impl instructionVar171 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16245,7 +16245,7 @@ impl instructionVar171 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16265,22 +16265,12 @@ impl instructionVar171 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 60i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser
-                .TokenFieldop2126()
-                .disassembly()
-                .checked_shl(u32::try_from(1i64).unwrap())
-                .unwrap_or(0));
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16311,6 +16301,16 @@ impl instructionVar171 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser
+                .TokenFieldop2126()
+                .disassembly()
+                .checked_shl(u32::try_from(1i64).unwrap())
+                .unwrap_or(0));
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16346,8 +16346,8 @@ impl instructionVar172 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16356,7 +16356,7 @@ impl instructionVar172 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.b"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16379,18 +16379,12 @@ impl instructionVar172 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 60i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop2026().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16421,6 +16415,12 @@ impl instructionVar172 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop2026().disassembly());
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16456,8 +16456,8 @@ impl instructionVar173 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16466,7 +16466,7 @@ impl instructionVar173 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.bu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16489,18 +16489,12 @@ impl instructionVar173 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 61i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop2026().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16531,6 +16525,12 @@ impl instructionVar173 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop2026().disassembly());
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16566,8 +16566,8 @@ impl instructionVar174 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16576,7 +16576,7 @@ impl instructionVar174 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.hu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16599,18 +16599,12 @@ impl instructionVar174 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 61i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop2026().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16641,6 +16635,12 @@ impl instructionVar174 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop2026().disassembly());
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16676,8 +16676,8 @@ impl instructionVar175 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp23: i64 = 0;
-        disp23 = (self
+        let mut calc_disp23: i64 = 0;
+        calc_disp23 = (self
             .s3247
             .disassembly()
             .checked_shl(u32::try_from(7i64).unwrap())
@@ -16693,7 +16693,7 @@ impl instructionVar175 {
         );
         let extend: [DisplayElement; 3usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp23),
+            DisplayElement::Number(true, calc_disp23),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -16713,18 +16713,12 @@ impl instructionVar175 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp23: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 60i64 {
             return None;
         }
-        let mut disp23: i64 = 0;
-        disp23 = (token_parser
-            .TokenFields3247()
-            .disassembly()
-            .checked_shl(u32::try_from(7i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop2026().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16755,6 +16749,12 @@ impl instructionVar175 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_disp23 = (token_parser
+            .TokenFields3247()
+            .disassembly()
+            .checked_shl(u32::try_from(7i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop2026().disassembly());
         let s3247 = token_parser.TokenFields3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -16789,8 +16789,8 @@ impl instructionVar176 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut imm32: i64 = 0;
-        imm32 = (self
+        let mut calc_imm32: i64 = 0;
+        calc_imm32 = (self
             .op3247
             .disassembly()
             .checked_shl(u32::try_from(16i64).unwrap())
@@ -16799,7 +16799,7 @@ impl instructionVar176 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("mov"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, imm32),
+            DisplayElement::Number(true, calc_imm32),
             DisplayElement::Literal(", "),
         ];
         display.extend_from_slice(&extend);
@@ -16817,18 +16817,12 @@ impl instructionVar176 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_imm32: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0515().disassembly() != 49i64 {
             return None;
         }
-        let mut imm32: i64 = 0;
-        imm32 = (token_parser
-            .TokenFieldop3247()
-            .disassembly()
-            .checked_shl(u32::try_from(16i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop1631().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -16848,6 +16842,12 @@ impl instructionVar176 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_imm32 = (token_parser
+            .TokenFieldop3247()
+            .disassembly()
+            .checked_shl(u32::try_from(16i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop1631().disassembly());
         let op3247 = token_parser.TokenFieldop3247();
         pattern_len += block_2_len;
         tokens_current =
@@ -17370,8 +17370,8 @@ impl instructionVar184 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp16: i64 = 0;
-        disp16 = (self
+        let mut calc_disp16: i64 = 0;
+        calc_disp16 = (self
             .s1731
             .disassembly()
             .checked_shl(u32::try_from(1i64).unwrap())
@@ -17380,7 +17380,7 @@ impl instructionVar184 {
         let extend: [DisplayElement; 4usize] = [
             DisplayElement::Literal("ld.bu"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp16),
+            DisplayElement::Number(true, calc_disp16),
             DisplayElement::Literal("["),
         ];
         display.extend_from_slice(&extend);
@@ -17403,18 +17403,12 @@ impl instructionVar184 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp16: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0610().disassembly() != 30i64 {
             return None;
         }
-        let mut disp16: i64 = 0;
-        disp16 = (token_parser
-            .TokenFields1731()
-            .disassembly()
-            .checked_shl(u32::try_from(1i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop0505().disassembly());
         let R0004 = if let Some((len, table)) =
             TableR0004::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -17440,6 +17434,12 @@ impl instructionVar184 {
         if token_parser.TokenFieldop1616().disassembly() != 1i64 {
             return None;
         }
+        calc_disp16 = (token_parser
+            .TokenFields1731()
+            .disassembly()
+            .checked_shl(u32::try_from(1i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop0505().disassembly());
         let s1731 = token_parser.TokenFields1731();
         pattern_len += block_1_len;
         tokens_current =
@@ -17529,12 +17529,12 @@ impl instructionVar186 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp8: i64 = 0;
-        disp8 = self.op0106.disassembly().wrapping_mul(4i64);
+        let mut calc_disp8: i64 = 0;
+        calc_disp8 = self.op0106.disassembly().wrapping_mul(4i64);
         let extend: [DisplayElement; 6usize] = [
             DisplayElement::Literal("sld.w"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp8),
+            DisplayElement::Number(true, calc_disp8),
             DisplayElement::Literal("["),
             DisplayElement::Register(Register::ep),
             DisplayElement::Literal("], "),
@@ -17554,6 +17554,7 @@ impl instructionVar186 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp8: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0710().disassembly() != 10i64 {
@@ -17562,8 +17563,7 @@ impl instructionVar186 {
         if token_parser.TokenFieldop0000().disassembly() != 0i64 {
             return None;
         }
-        let mut disp8: i64 = 0;
-        disp8 = token_parser
+        calc_disp8 = token_parser
             .TokenFieldop0106()
             .disassembly()
             .wrapping_mul(4i64);
@@ -17600,8 +17600,8 @@ impl instructionVar187 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp8: i64 = 0;
-        disp8 = self.op0106.disassembly().wrapping_mul(4i64);
+        let mut calc_disp8: i64 = 0;
+        calc_disp8 = self.op0106.disassembly().wrapping_mul(4i64);
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("sst.w"),
             DisplayElement::Literal(" "),
@@ -17612,7 +17612,7 @@ impl instructionVar187 {
         );
         let extend: [DisplayElement; 5usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp8),
+            DisplayElement::Number(true, calc_disp8),
             DisplayElement::Literal("["),
             DisplayElement::Register(Register::ep),
             DisplayElement::Literal("]"),
@@ -17629,6 +17629,7 @@ impl instructionVar187 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp8: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0710().disassembly() != 10i64 {
@@ -17637,8 +17638,7 @@ impl instructionVar187 {
         if token_parser.TokenFieldop0000().disassembly() != 1i64 {
             return None;
         }
-        let mut disp8: i64 = 0;
-        disp8 = token_parser
+        calc_disp8 = token_parser
             .TokenFieldop0106()
             .disassembly()
             .wrapping_mul(4i64);
@@ -18429,12 +18429,12 @@ impl instructionVar200 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp8: i64 = 0;
-        disp8 = self.op0006.disassembly().wrapping_mul(2i64);
+        let mut calc_disp8: i64 = 0;
+        calc_disp8 = self.op0006.disassembly().wrapping_mul(2i64);
         let extend: [DisplayElement; 6usize] = [
             DisplayElement::Literal("sld.h"),
             DisplayElement::Literal(" "),
-            DisplayElement::Number(true, disp8),
+            DisplayElement::Number(true, calc_disp8),
             DisplayElement::Literal("["),
             DisplayElement::Register(Register::ep),
             DisplayElement::Literal("], "),
@@ -18454,13 +18454,13 @@ impl instructionVar200 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp8: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0710().disassembly() != 8i64 {
             return None;
         }
-        let mut disp8: i64 = 0;
-        disp8 = token_parser
+        calc_disp8 = token_parser
             .TokenFieldop0006()
             .disassembly()
             .wrapping_mul(2i64);
@@ -18562,8 +18562,8 @@ impl instructionVar202 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut disp8: i64 = 0;
-        disp8 = self.op0006.disassembly().wrapping_mul(2i64);
+        let mut calc_disp8: i64 = 0;
+        calc_disp8 = self.op0006.disassembly().wrapping_mul(2i64);
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("sst.h"),
             DisplayElement::Literal(" "),
@@ -18574,7 +18574,7 @@ impl instructionVar202 {
         );
         let extend: [DisplayElement; 5usize] = [
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, disp8),
+            DisplayElement::Number(true, calc_disp8),
             DisplayElement::Literal("["),
             DisplayElement::Register(Register::ep),
             DisplayElement::Literal("]"),
@@ -18591,13 +18591,13 @@ impl instructionVar202 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_disp8: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop0710().disassembly() != 9i64 {
             return None;
         }
-        let mut disp8: i64 = 0;
-        disp8 = token_parser
+        calc_disp8 = token_parser
             .TokenFieldop0006()
             .disassembly()
             .wrapping_mul(2i64);
@@ -19288,8 +19288,8 @@ impl instructionVar211 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut imm32: i64 = 0;
-        imm32 = (self
+        let mut calc_imm32: i64 = 0;
+        calc_imm32 = (self
             .op4863
             .disassembly()
             .checked_shl(u32::try_from(16i64).unwrap())
@@ -19307,7 +19307,7 @@ impl instructionVar211 {
             DisplayElement::Literal(", "),
             self.prep0105.display(),
             DisplayElement::Literal(", "),
-            DisplayElement::Number(true, imm32),
+            DisplayElement::Number(true, calc_imm32),
         ];
         display.extend_from_slice(&extend);
     }
@@ -19321,6 +19321,7 @@ impl instructionVar211 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_imm32: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
         if token_parser.TokenFieldprep0615().disassembly() != 30i64 {
@@ -19329,13 +19330,6 @@ impl instructionVar211 {
         if token_parser.TokenFieldprep1620().disassembly() != 27i64 {
             return None;
         }
-        let mut imm32: i64 = 0;
-        imm32 = (token_parser
-            .TokenFieldop4863()
-            .disassembly()
-            .checked_shl(u32::try_from(16i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop3247().disassembly());
         let PrepList = if let Some((len, table)) = TablePrepList::parse(
             tokens_current,
             &mut context_instance,
@@ -19358,6 +19352,12 @@ impl instructionVar211 {
             &tokens_current[usize::try_from(block_1_len).unwrap()..];
         let mut block_2_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_imm32 = (token_parser
+            .TokenFieldop4863()
+            .disassembly()
+            .checked_shl(u32::try_from(16i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop3247().disassembly());
         let op4863 = token_parser.TokenFieldop4863();
         pattern_len += block_2_len;
         tokens_current =
@@ -24980,8 +24980,8 @@ impl adr9Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut res: i64 = 0;
-        res = (self
+        let mut calc_res: i64 = 0;
+        calc_res = (self
             .s1115
             .disassembly()
             .checked_shl(u32::try_from(4i64).unwrap())
@@ -24993,7 +24993,7 @@ impl adr9Var0 {
                 .unwrap_or(0))
         .wrapping_add(i64::try_from(inst_start).unwrap());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, res)];
+            [DisplayElement::Number(true, calc_res)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -25006,10 +25006,10 @@ impl adr9Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_res: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut res: i64 = 0;
-        res = (token_parser
+        calc_res = (token_parser
             .TokenFields1115()
             .disassembly()
             .checked_shl(u32::try_from(4i64).unwrap())
@@ -25089,8 +25089,8 @@ impl adr22Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut res: i64 = 0;
-        res = (self
+        let mut calc_res: i64 = 0;
+        calc_res = (self
             .s0005
             .disassembly()
             .checked_shl(u32::try_from(16i64).unwrap())
@@ -25098,7 +25098,7 @@ impl adr22Var0 {
             | self.op1631.disassembly())
         .wrapping_add(i64::try_from(inst_start).unwrap());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, res)];
+            [DisplayElement::Number(true, calc_res)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -25111,16 +25111,9 @@ impl adr22Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_res: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut res: i64 = 0;
-        res = (token_parser
-            .TokenFields0005()
-            .disassembly()
-            .checked_shl(u32::try_from(16i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop1631().disassembly())
-        .wrapping_add(i64::try_from(inst_start).unwrap());
         let s0005 = token_parser.TokenFields0005();
         pattern_len += block_0_len;
         tokens_current =
@@ -25130,6 +25123,13 @@ impl adr22Var0 {
         if token_parser.TokenFieldop1616().disassembly() != 0i64 {
             return None;
         }
+        calc_res = (token_parser
+            .TokenFields0005()
+            .disassembly()
+            .checked_shl(u32::try_from(16i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop1631().disassembly())
+        .wrapping_add(i64::try_from(inst_start).unwrap());
         let op1631 = token_parser.TokenFieldop1631();
         pattern_len += block_1_len;
         tokens_current =
@@ -25198,8 +25198,8 @@ impl adr32Var0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut res: i64 = 0;
-        res = (self
+        let mut calc_res: i64 = 0;
+        calc_res = (self
             .op3247
             .disassembly()
             .checked_shl(u32::try_from(16i64).unwrap())
@@ -25207,7 +25207,7 @@ impl adr32Var0 {
             | self.op1631.disassembly())
         .wrapping_add(i64::try_from(inst_start).unwrap());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, res)];
+            [DisplayElement::Number(true, calc_res)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -25220,25 +25220,25 @@ impl adr32Var0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_res: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop1616().disassembly() != 0i64 {
             return None;
         }
-        let mut res: i64 = 0;
-        res = (token_parser
-            .TokenFieldop3247()
-            .disassembly()
-            .checked_shl(u32::try_from(16i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop1631().disassembly())
-        .wrapping_add(i64::try_from(inst_start).unwrap());
         let op1631 = token_parser.TokenFieldop1631();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         let mut block_1_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_res = (token_parser
+            .TokenFieldop3247()
+            .disassembly()
+            .checked_shl(u32::try_from(16i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop1631().disassembly())
+        .wrapping_add(i64::try_from(inst_start).unwrap());
         let op3247 = token_parser.TokenFieldop3247();
         pattern_len += block_1_len;
         tokens_current =
@@ -25307,15 +25307,15 @@ impl adr32iVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut res: i64 = 0;
-        res = (self
+        let mut calc_res: i64 = 0;
+        calc_res = (self
             .op3247
             .disassembly()
             .checked_shl(u32::try_from(16i64).unwrap())
             .unwrap_or(0)
             | self.op1631.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, res)];
+            [DisplayElement::Number(true, calc_res)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -25328,24 +25328,24 @@ impl adr32iVar0 {
     {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
+        let mut calc_res: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
         if token_parser.TokenFieldop1616().disassembly() != 0i64 {
             return None;
         }
-        let mut res: i64 = 0;
-        res = (token_parser
-            .TokenFieldop3247()
-            .disassembly()
-            .checked_shl(u32::try_from(16i64).unwrap())
-            .unwrap_or(0)
-            | token_parser.TokenFieldop1631().disassembly());
         let op1631 = token_parser.TokenFieldop1631();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         let mut block_1_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
+        calc_res = (token_parser
+            .TokenFieldop3247()
+            .disassembly()
+            .checked_shl(u32::try_from(16i64).unwrap())
+            .unwrap_or(0)
+            | token_parser.TokenFieldop1631().disassembly());
         let op3247 = token_parser.TokenFieldop3247();
         pattern_len += block_1_len;
         tokens_current =

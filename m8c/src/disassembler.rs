@@ -2449,16 +2449,16 @@ impl instructionVar24 {
         if token_parser.TokenFieldop8().disassembly() != 112i64 {
             return None;
         }
-        let tmp = (context_instance.register().read_regbank_disassembly()
-            & token_parser.TokenFieldrsb().disassembly());
-        context_instance
-            .register_mut()
-            .write_regbank_disassembly(tmp);
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         let mut block_1_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        let tmp = (context_instance.register().read_regbank_disassembly()
+            & token_parser.TokenFieldrsb().disassembly());
+        context_instance
+            .register_mut()
+            .write_regbank_disassembly(tmp);
         let imm8 = token_parser.TokenFieldimm8();
         let rsb = token_parser.TokenFieldrsb();
         pattern_len += block_1_len;
@@ -8958,16 +8958,16 @@ impl instructionVar130 {
         if token_parser.TokenFieldop8().disassembly() != 113i64 {
             return None;
         }
-        let tmp = (context_instance.register().read_regbank_disassembly()
-            | token_parser.TokenFieldrsb().disassembly());
-        context_instance
-            .register_mut()
-            .write_regbank_disassembly(tmp);
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         let mut block_1_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        let tmp = (context_instance.register().read_regbank_disassembly()
+            | token_parser.TokenFieldrsb().disassembly());
+        context_instance
+            .register_mut()
+            .write_regbank_disassembly(tmp);
         let imm8 = token_parser.TokenFieldimm8();
         let rsb = token_parser.TokenFieldrsb();
         pattern_len += block_1_len;
@@ -9097,16 +9097,16 @@ impl instructionVar132 {
         if token_parser.TokenFieldop8().disassembly() != 114i64 {
             return None;
         }
-        let tmp = (context_instance.register().read_regbank_disassembly()
-            ^ token_parser.TokenFieldrsb().disassembly());
-        context_instance
-            .register_mut()
-            .write_regbank_disassembly(tmp);
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
         let mut block_1_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
+        let tmp = (context_instance.register().read_regbank_disassembly()
+            ^ token_parser.TokenFieldrsb().disassembly());
+        context_instance
+            .register_mut()
+            .write_regbank_disassembly(tmp);
         let imm8 = token_parser.TokenFieldimm8();
         let rsb = token_parser.TokenFieldrsb();
         pattern_len += block_1_len;
@@ -12296,13 +12296,13 @@ impl RelAddrVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut reladdr: i64 = 0;
-        reladdr = i64::try_from(inst_start)
+        let mut calc_reladdr: i64 = 0;
+        calc_reladdr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(1i64)
             .wrapping_add(self.srel12.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, reladdr)];
+            [DisplayElement::Number(true, calc_reladdr)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -12315,10 +12315,10 @@ impl RelAddrVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_reladdr: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut reladdr: i64 = 0;
-        reladdr = i64::try_from(inst_start)
+        calc_reladdr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(1i64)
             .wrapping_add(token_parser.TokenFieldsrel12().disassembly());
@@ -12389,13 +12389,13 @@ impl CallAddrVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut calladdr: i64 = 0;
-        calladdr = i64::try_from(inst_start)
+        let mut calc_calladdr: i64 = 0;
+        calc_calladdr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(2i64)
             .wrapping_add(self.srel12.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, calladdr)];
+            [DisplayElement::Number(true, calc_calladdr)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -12408,10 +12408,10 @@ impl CallAddrVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_calladdr: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut calladdr: i64 = 0;
-        calladdr = i64::try_from(inst_start)
+        calc_calladdr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(2i64)
             .wrapping_add(token_parser.TokenFieldsrel12().disassembly());
@@ -12482,13 +12482,13 @@ impl IndexAddrVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut indexaddr: i64 = 0;
-        indexaddr = i64::try_from(inst_start)
+        let mut calc_indexaddr: i64 = 0;
+        calc_indexaddr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(2i64)
             .wrapping_add(self.srel12.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, indexaddr)];
+            [DisplayElement::Number(true, calc_indexaddr)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -12501,10 +12501,10 @@ impl IndexAddrVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_indexaddr: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut indexaddr: i64 = 0;
-        indexaddr = i64::try_from(inst_start)
+        calc_indexaddr = i64::try_from(inst_start)
             .unwrap()
             .wrapping_add(2i64)
             .wrapping_add(token_parser.TokenFieldsrel12().disassembly());

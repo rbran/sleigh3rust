@@ -5818,14 +5818,14 @@ impl RstAddrVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut loc: i64 = 0;
-        loc = self
+        let mut calc_loc: i64 = 0;
+        calc_loc = self
             .bits3_3
             .disassembly()
             .checked_shl(u32::try_from(3i64).unwrap())
             .unwrap_or(0);
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, loc)];
+            [DisplayElement::Number(true, calc_loc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -5838,10 +5838,10 @@ impl RstAddrVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_loc: i64 = 0;
         let mut block_0_len = 1u64 as u16;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        let mut loc: i64 = 0;
-        loc = token_parser
+        calc_loc = token_parser
             .TokenFieldbits3_3()
             .disassembly()
             .checked_shl(u32::try_from(3i64).unwrap())

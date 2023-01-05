@@ -51,6 +51,7 @@ members = [
     "cp1600",
     "cr16b",
     "cr16c",
+    "jvm",
     "dalvik_base",
     "dalvik_dex_android10",
     "dalvik_dex_android11",

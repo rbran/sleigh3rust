@@ -11961,11 +11961,11 @@ impl shortAddrVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut nLoc: i64 = 0;
-        nLoc = (i64::try_from(inst_next).unwrap() & 57344i64)
+        let mut calc_nLoc: i64 = 0;
+        calc_nLoc = (i64::try_from(inst_next).unwrap() & 57344i64)
             .wrapping_add(self.k13.disassembly());
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, nLoc)];
+            [DisplayElement::Number(true, calc_nLoc)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -11978,9 +11978,9 @@ impl shortAddrVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_nLoc: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut nLoc: i64 = 0;
         let k13 = token_parser.TokenFieldk13();
         pattern_len += block_0_len;
         tokens_current =
@@ -12128,10 +12128,10 @@ impl skipInstVar0 {
     ) where
         T: ContextTrait + Clone,
     {
-        let mut inst_skip: i64 = 0;
-        inst_skip = i64::try_from(inst_next).unwrap().wrapping_add(1i64);
+        let mut calc_inst_skip: i64 = 0;
+        calc_inst_skip = i64::try_from(inst_next).unwrap().wrapping_add(1i64);
         let extend: [DisplayElement; 1usize] =
-            [DisplayElement::Number(true, inst_skip)];
+            [DisplayElement::Number(true, calc_inst_skip)];
         display.extend_from_slice(&extend);
     }
     fn parse<T>(
@@ -12144,9 +12144,9 @@ impl skipInstVar0 {
     {
         let mut pattern_len = 0 as u16;
         let mut context_instance = context.clone();
+        let mut calc_inst_skip: i64 = 0;
         let mut block_0_len = 2u64 as u16;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        let mut inst_skip: i64 = 0;
         let op16 = token_parser.TokenFieldop16();
         pattern_len += block_0_len;
         tokens_current =
