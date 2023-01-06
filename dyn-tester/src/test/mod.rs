@@ -25,3 +25,4 @@ mod v850;
 //TODO mod tricore;
 mod sparcv9_32;
 mod sparcv9_64;
+mod x86;

@@ -1,7 +1,7 @@
 pub type AddrType = u64;
 macro_rules! impl_read_to_type {
     ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        const fn $read_unsigned<const BIG_ENDIAN: bool>(
+        fn $read_unsigned<const BIG_ENDIAN: bool>(
             data: [u8; $len],
             start_bit: usize,
             len_bits: usize,
@@ -20,7 +20,7 @@ macro_rules! impl_read_to_type {
             data = data & value_mask;
             data
         }
-        const fn $read_signed<const BIG_ENDIAN: bool>(
+        fn $read_signed<const BIG_ENDIAN: bool>(
             data: [u8; $len],
             start_bit: usize,
             len_bits: usize,
@@ -29,18 +29,23 @@ macro_rules! impl_read_to_type {
             assert!(len_bits > 1);
             assert!(TYPE_BITS / 8 == $len);
             let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask =
-                <$signed_type>::MAX as $unsigned_type >> (TYPE_BITS - len_bits);
+            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
+                .unwrap()
+                >> (TYPE_BITS - len_bits);
             let sign_mask = !value_mask;
             let value_part = data & value_mask;
             let sign_part = data & sign_mask;
             if sign_part != 0 {
-                sign_mask as $signed_type | value_part as $signed_type
+                let neg_value = (!value_part + 1) & value_mask;
+                <$signed_type>::try_from(neg_value)
+                    .unwrap()
+                    .checked_neg()
+                    .unwrap()
             } else {
-                data as $signed_type
+                <$signed_type>::try_from(value_part).unwrap()
             }
         }
-        const fn $write_unsigned<const BIG_ENDIAN: bool>(
+        fn $write_unsigned<const BIG_ENDIAN: bool>(
             value: $unsigned_type,
             mem: $unsigned_type,
             start_bit: usize,
@@ -60,7 +65,7 @@ macro_rules! impl_read_to_type {
                 value.to_le_bytes()
             }
         }
-        const fn $write_signed<const BIG_ENDIAN: bool>(
+        fn $write_signed<const BIG_ENDIAN: bool>(
             value: $signed_type,
             mem: $signed_type,
             start_bit: usize,
@@ -69,11 +74,20 @@ macro_rules! impl_read_to_type {
             const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
             assert!(len_bits > 0);
             assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$signed_type>::MAX >> (TYPE_BITS - len_bits);
-            let value_min = <$signed_type>::MIN >> (TYPE_BITS - len_bits);
+            let value: $unsigned_type = if value < 0 {
+                <$unsigned_type>::MAX
+                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
+            } else {
+                <$unsigned_type>::try_from(value).unwrap()
+            };
+            let mem: $unsigned_type = if mem < 0 {
+                <$unsigned_type>::MAX
+                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
+            } else {
+                <$unsigned_type>::try_from(value).unwrap()
+            };
             let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value as $unsigned_type & mask;
-            let mem = mem as $unsigned_type;
+            let value = value & mask;
             $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
         }
     };
@@ -84,6 +98,15 @@ impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
 impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
 impl_read_to_type!(
     u128, i128, 16, read_u128, read_i128, write_u128, write_i128
+);
+impl_read_to_type!(
+    ethnum::u256,
+    ethnum::i256,
+    32,
+    read_u256,
+    read_i256,
+    write_u256,
+    write_i256
 );
 pub trait GlobalSetTrait {
     fn set_test(&mut self, address: Option<u64>, value: i64);
