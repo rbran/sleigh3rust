@@ -46,15 +46,13 @@ impl GlobalSetTrait for GlobalSetDummy {
 }
 
 fn parse(
-    addrsize: u8,
+    context: &mut SpacesStruct,
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_addrsize_raw(addrsize);
     let (addr, parsed) = parse_instruction(
         tokens,
-        &mut context,
+        context,
         inst_start,
         &mut GlobalSetDummy,
     )?;
@@ -70,7 +68,8 @@ pub fn parse_16bits(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    parse(0, tokens, inst_start)
+    let mut context = SpacesStruct::default();
+    parse(&mut context, tokens, inst_start)
 }
 
 #[no_mangle]
@@ -78,5 +77,8 @@ pub fn parse_32bits(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    parse(1, tokens, inst_start)
+    let mut context = SpacesStruct::default();
+    context.register_mut().write_addrsize_raw(1);
+    context.register_mut().write_opsize_raw(1);
+    parse(&mut context, tokens, inst_start)
 }
