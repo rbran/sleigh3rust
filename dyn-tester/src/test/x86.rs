@@ -51,7 +51,7 @@ fn x86_64() {
     };
     let parse_32: libloading::Symbol<
         fn(&'_ [u8], u64) -> Option<(u64, String)>,
-    > = unsafe { ld_lib.get(b"parse_32bits\0").unwrap() };
+    > = unsafe { ld_lib.get(b"parse_64bits_emu32\0").unwrap() };
     let parse_64: libloading::Symbol<
         fn(&'_ [u8], u64) -> Option<(u64, String)>,
     > = unsafe { ld_lib.get(b"parse_64bits\0").unwrap() };

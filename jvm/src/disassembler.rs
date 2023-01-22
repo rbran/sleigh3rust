@@ -1,113 +1,5 @@
+use sleigh4rust::*;
 pub type AddrType = u32;
-macro_rules! impl_read_to_type {
-    ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        fn $read_unsigned<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $unsigned_type {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(TYPE_BITS / 8 == $len);
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let mut data = if BIG_ENDIAN {
-                <$unsigned_type>::from_be_bytes(data)
-            } else {
-                <$unsigned_type>::from_le_bytes(data)
-            };
-            let value_mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            data = data >> start_bit;
-            data = data & value_mask;
-            data
-        }
-        fn $read_signed<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $signed_type {
-            const TYPE_BITS: usize = <$signed_type>::BITS as usize;
-            assert!(len_bits > 1);
-            assert!(TYPE_BITS / 8 == $len);
-            let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
-                .unwrap()
-                >> (TYPE_BITS - len_bits);
-            let sign_mask = !value_mask;
-            let value_part = data & value_mask;
-            let sign_part = data & sign_mask;
-            if sign_part != 0 {
-                let neg_value = (!value_part + 1) & value_mask;
-                <$signed_type>::try_from(neg_value)
-                    .unwrap()
-                    .checked_neg()
-                    .unwrap()
-            } else {
-                <$signed_type>::try_from(value_part).unwrap()
-            }
-        }
-        fn $write_unsigned<const BIG_ENDIAN: bool>(
-            value: $unsigned_type,
-            mem: $unsigned_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let mask = value_max << start_bit;
-            let mut value = value;
-            value <<= start_bit;
-            value = (mem & !mask) | value;
-            if BIG_ENDIAN {
-                value.to_be_bytes()
-            } else {
-                value.to_le_bytes()
-            }
-        }
-        fn $write_signed<const BIG_ENDIAN: bool>(
-            value: $signed_type,
-            mem: $signed_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value: $unsigned_type = if value < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mem: $unsigned_type = if mem < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value & mask;
-            $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
-        }
-    };
-}
-impl_read_to_type!(u8, i8, 1, read_u8, read_i8, write_u8, write_i8);
-impl_read_to_type!(u16, i16, 2, read_u16, read_i16, write_u16, write_i16);
-impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
-impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
-impl_read_to_type!(
-    u128, i128, 16, read_u128, read_i128, write_u128, write_i128
-);
-impl_read_to_type!(
-    ethnum::u256,
-    ethnum::i256,
-    32,
-    read_u256,
-    read_i256,
-    write_u256,
-    write_i256
-);
 pub trait GlobalSetTrait {
     fn set_switch_low(&mut self, address: Option<u32>, value: i64);
     fn set_switch_high(&mut self, address: Option<u32>, value: i64);
@@ -117,271 +9,869 @@ pub trait GlobalSetTrait {
     fn set_alignmentPad(&mut self, address: Option<u32>, value: i64);
     fn set_padVal(&mut self, address: Option<u32>, value: i64);
 }
-pub trait MemoryRead {
-    type AddressType;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]);
-}
-pub trait MemoryWrite {
-    type AddressType;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
+#[derive(Default)]
+pub struct GlobalSetDefault<C: ContextTrait>(
+    pub std::collections::HashMap<AddrType, C>,
+);
+impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
+    fn set_switch_low(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_switch_low_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_switch_high(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_switch_high_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_switch_num(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_switch_num_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_in_table_switch(
+        &mut self,
+        inst_start: Option<AddrType>,
+        value: i64,
+    ) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_in_table_switch_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_in_lookup_switch(
+        &mut self,
+        inst_start: Option<AddrType>,
+        value: i64,
+    ) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_in_lookup_switch_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_alignmentPad(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_alignmentPad_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_padVal(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_padVal_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
 }
 pub trait ContextregisterTrait:
-    MemoryRead<AddressType = u32> + MemoryWrite<AddressType = u32>
+    MemoryRead<AddressType = u32> + MemoryWrite
 {
-    fn read_switch_low_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(12u64 as u32, &mut work_value[0..4]);
-        let value = read_u32::<true>(work_value, 0u64 as usize, 32u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_switch_low_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(12, 0, 32)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_switch_low_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(12u64 as u32, &mut mem[0..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 0u64 as usize, 32u64 as usize);
-        self.write(12u64 as u32, &mem[0..4]);
+    fn write_switch_low_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 12, 0, 32)
     }
-    fn read_switch_low_disassembly(&self) -> i64 {
-        i64::try_from(self.read_switch_low_raw()).unwrap()
+    fn read_switch_low_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_switch_low_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_switch_low_disassembly(&mut self, param: i64) {
+    fn write_switch_low_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_low_raw(param as u32)
     }
-    fn read_switch_low_execution(&self) -> u32 {
+    fn read_switch_low_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_switch_low_raw()
     }
-    fn write_switch_low_execution(&mut self, param: u32) {
+    fn write_switch_low_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_low_raw(param)
     }
-    fn switch_low_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_switch_low_raw())
+    fn switch_low_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_switch_low_raw()?))
     }
-    fn read_switch_high_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(8u64 as u32, &mut work_value[0..4]);
-        let value = read_u32::<true>(work_value, 0u64 as usize, 32u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_switch_high_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(8, 0, 32)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_switch_high_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(8u64 as u32, &mut mem[0..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 0u64 as usize, 32u64 as usize);
-        self.write(8u64 as u32, &mem[0..4]);
+    fn write_switch_high_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 8, 0, 32)
     }
-    fn read_switch_high_disassembly(&self) -> i64 {
-        i64::try_from(self.read_switch_high_raw()).unwrap()
+    fn read_switch_high_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_switch_high_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_switch_high_disassembly(&mut self, param: i64) {
+    fn write_switch_high_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_high_raw(param as u32)
     }
-    fn read_switch_high_execution(&self) -> u32 {
+    fn read_switch_high_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_switch_high_raw()
     }
-    fn write_switch_high_execution(&mut self, param: u32) {
+    fn write_switch_high_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_high_raw(param)
     }
-    fn switch_high_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_switch_high_raw())
+    fn switch_high_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_switch_high_raw()?))
     }
-    fn read_switch_num_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(4u64 as u32, &mut work_value[0..4]);
-        let value = read_u32::<true>(work_value, 0u64 as usize, 32u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_switch_num_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(4, 0, 32)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_switch_num_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(4u64 as u32, &mut mem[0..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 0u64 as usize, 32u64 as usize);
-        self.write(4u64 as u32, &mem[0..4]);
+    fn write_switch_num_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 4, 0, 32)
     }
-    fn read_switch_num_disassembly(&self) -> i64 {
-        i64::try_from(self.read_switch_num_raw()).unwrap()
+    fn read_switch_num_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_switch_num_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_switch_num_disassembly(&mut self, param: i64) {
+    fn write_switch_num_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_num_raw(param as u32)
     }
-    fn read_switch_num_execution(&self) -> u32 {
+    fn read_switch_num_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_switch_num_raw()
     }
-    fn write_switch_num_execution(&mut self, param: u32) {
+    fn write_switch_num_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_switch_num_raw(param)
     }
-    fn switch_num_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_switch_num_raw())
+    fn switch_num_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_switch_num_raw()?))
     }
-    fn read_in_table_switch_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_in_table_switch_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 0, 2)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_in_table_switch_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 0u64 as usize, 2u64 as usize);
-        self.write(3u64 as u32, &mem[0..1]);
+    fn write_in_table_switch_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 0, 2)
     }
-    fn read_in_table_switch_disassembly(&self) -> i64 {
-        i64::try_from(self.read_in_table_switch_raw()).unwrap()
+    fn read_in_table_switch_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_in_table_switch_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_in_table_switch_disassembly(&mut self, param: i64) {
+    fn write_in_table_switch_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_in_table_switch_raw(param as u8)
     }
-    fn read_in_table_switch_execution(&self) -> u8 {
+    fn read_in_table_switch_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_in_table_switch_raw()
     }
-    fn write_in_table_switch_execution(&mut self, param: u8) {
+    fn write_in_table_switch_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_in_table_switch_raw(param)
     }
-    fn in_table_switch_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_in_table_switch_raw())
+    fn in_table_switch_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_in_table_switch_raw()?))
     }
-    fn read_in_lookup_switch_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_in_lookup_switch_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 2, 2)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_in_lookup_switch_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 2u64 as usize, 2u64 as usize);
-        self.write(3u64 as u32, &mem[0..1]);
+    fn write_in_lookup_switch_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 2, 2)
     }
-    fn read_in_lookup_switch_disassembly(&self) -> i64 {
-        i64::try_from(self.read_in_lookup_switch_raw()).unwrap()
+    fn read_in_lookup_switch_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_in_lookup_switch_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_in_lookup_switch_disassembly(&mut self, param: i64) {
+    fn write_in_lookup_switch_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_in_lookup_switch_raw(param as u8)
     }
-    fn read_in_lookup_switch_execution(&self) -> u8 {
+    fn read_in_lookup_switch_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_in_lookup_switch_raw()
     }
-    fn write_in_lookup_switch_execution(&mut self, param: u8) {
+    fn write_in_lookup_switch_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_in_lookup_switch_raw(param)
     }
-    fn in_lookup_switch_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_in_lookup_switch_raw())
+    fn in_lookup_switch_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_in_lookup_switch_raw()?))
     }
-    fn read_alignmentPad_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 4u64 as usize, 2u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_alignmentPad_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 4, 2)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_alignmentPad_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 4u64 as usize, 2u64 as usize);
-        self.write(3u64 as u32, &mem[0..1]);
+    fn write_alignmentPad_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 4, 2)
     }
-    fn read_alignmentPad_disassembly(&self) -> i64 {
-        i64::try_from(self.read_alignmentPad_raw()).unwrap()
+    fn read_alignmentPad_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_alignmentPad_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_alignmentPad_disassembly(&mut self, param: i64) {
+    fn write_alignmentPad_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_alignmentPad_raw(param as u8)
     }
-    fn read_alignmentPad_execution(&self) -> u8 {
+    fn read_alignmentPad_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_alignmentPad_raw()
     }
-    fn write_alignmentPad_execution(&mut self, param: u8) {
+    fn write_alignmentPad_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_alignmentPad_raw(param)
     }
-    fn alignmentPad_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_alignmentPad_raw())
+    fn alignmentPad_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_alignmentPad_raw()?))
     }
-    fn read_padVal_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 4u64 as usize, 2u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_padVal_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 4, 2)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_padVal_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 4u64 as usize, 2u64 as usize);
-        self.write(3u64 as u32, &mem[0..1]);
+    fn write_padVal_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 4, 2)
     }
-    fn read_padVal_disassembly(&self) -> i64 {
-        i64::try_from(self.read_padVal_raw()).unwrap()
+    fn read_padVal_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_padVal_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_padVal_disassembly(&mut self, param: i64) {
+    fn write_padVal_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_padVal_raw(param as u8)
     }
-    fn read_padVal_execution(&self) -> u8 {
+    fn read_padVal_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_padVal_raw()
     }
-    fn write_padVal_execution(&mut self, param: u8) {
+    fn write_padVal_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_padVal_raw(param)
     }
-    fn padVal_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_padVal_raw())
+    fn padVal_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_padVal_raw()?))
     }
 }
-pub trait ContextTrait {
+pub trait ContextTrait: Default {
     type Typeregister: ContextregisterTrait;
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ContextregisterStruct {
-    pub chunk_0x0: [u8; 16u64 as usize],
+#[derive(Debug, Clone, Copy)]
+pub struct ContextregisterStructDebug {
+    pub chunk_0x0: [Option<bool>; 128],
 }
-impl ContextregisterTrait for ContextregisterStruct {}
-impl MemoryRead for ContextregisterStruct {
-    type AddressType = u32;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
-        match (addr, addr_end) {
-            (0u64..=15u64, 0u64..=16u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                buf.copy_from_slice(&self.chunk_0x0[start..end]);
-            }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+impl Default for ContextregisterStructDebug {
+    fn default() -> Self {
+        Self {
+            chunk_0x0: [None; 128],
         }
     }
 }
-impl MemoryWrite for ContextregisterStruct {
-    type AddressType = u32;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
+impl ContextregisterStructDebug {
+    fn read_bits(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
-            (0u64..=15u64, 0u64..=16u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                self.chunk_0x0[start..end].copy_from_slice(buf);
+            (0..=15, 0..=16) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                            as u8)
+                            << bit;
+                    }
+                }
             }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+            (addr_start, addr_end) => {
+                return Err(MemoryReadError::UnableToReadMemory(
+                    addr_start, addr_end,
+                ))
+            }
         }
+        Ok(())
+    }
+    fn write_bits(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
+        match (addr, addr_end) {
+            (0..=15, 0..=16) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        self.chunk_0x0[chunk_index + bit] =
+                            Some(*buf_byte & (1 << bit) != 0);
+                    }
+                }
+            }
+            (addr_start, addr_end) => {
+                return Err(MemoryWriteError::UnableToWriteMemory(
+                    addr_start, addr_end,
+                ))
+            }
+        }
+        Ok(())
+    }
+}
+impl ContextregisterTrait for ContextregisterStructDebug {}
+impl MemoryRead for ContextregisterStructDebug {
+    type AddressType = u32;
+    fn read(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.read_bits(addr, buf, &mut inner_buf)
+    }
+    fn read_u8<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u8, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u8>::from_be_bytes(data)
+        } else {
+            <u8>::from_le_bytes(data)
+        };
+        let value_mask = <u8>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u16<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u16, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u16>::from_be_bytes(data)
+        } else {
+            <u16>::from_le_bytes(data)
+        };
+        let value_mask = <u16>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u32<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u32, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u32>::from_be_bytes(data)
+        } else {
+            <u32>::from_le_bytes(data)
+        };
+        let value_mask = <u32>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u64<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u64, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u64>::from_be_bytes(data)
+        } else {
+            <u64>::from_le_bytes(data)
+        };
+        let value_mask = <u64>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u128<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u128, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u128>::from_be_bytes(data)
+        } else {
+            <u128>::from_le_bytes(data)
+        };
+        let value_mask = <u128>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+}
+impl MemoryWrite for ContextregisterStructDebug {
+    fn write(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.write_bits(addr, buf, &inner_buf)
+    }
+    fn write_u8<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u8,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u16<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u16,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u32<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u32,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u64<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u64,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u128<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u128,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
     }
 }
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
-    pub register: ContextregisterStruct,
+    pub register: ContextregisterStructDebug,
 }
 impl ContextTrait for SpacesStruct {
-    type Typeregister = ContextregisterStruct;
+    type Typeregister = ContextregisterStructDebug;
     fn register(&self) -> &Self::Typeregister {
         &self.register
     }
@@ -1138,6 +1628,20 @@ impl TokenField_offsetbyte4 {
     }
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
+impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
+    type AddressType = usize;
+    fn read(
+        &self,
+        addr: Self::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<Self::AddressType>> {
+        let end = addr + buf.len();
+        self.0
+            .get(addr..end)
+            .map(|src| buf.copy_from_slice(src))
+            .ok_or(MemoryReadError::UnableToReadMemory(addr, end))
+    }
+}
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
@@ -1145,859 +1649,232 @@ impl<const LEN: usize> TokenParser<LEN> {
         Some(Self(token_data))
     }
     fn TokenFieldop(&self) -> TokenField_op {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_op(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldw_op(&self) -> TokenField_w_op {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_w_op(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 16).unwrap();
+        TokenField_w_op(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldn(&self) -> TokenField_n {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_n(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_n(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldm(&self) -> TokenField_m {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_m(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_m(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldatype(&self) -> TokenField_atype {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_atype(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_atype(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte(&self) -> TokenField_byte {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_byte(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte1(&self) -> TokenField_byte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_byte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte2(&self) -> TokenField_byte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_byte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte3(&self) -> TokenField_byte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_byte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte4(&self) -> TokenField_byte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_byte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsbyte(&self) -> TokenField_sbyte {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sbyte(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_sbyte(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbranch(&self) -> TokenField_branch {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_branch(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_branch(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbranchbyte1(&self) -> TokenField_branchbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_branchbyte1(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_branchbyte1(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbranchbyte2(&self) -> TokenField_branchbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_branchbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_branchbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbranchbyte3(&self) -> TokenField_branchbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_branchbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_branchbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbranchbyte4(&self) -> TokenField_branchbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_branchbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_branchbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldindex(&self) -> TokenField_index {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_index(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_index(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldindexbyte1(&self) -> TokenField_indexbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_indexbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_indexbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldindexbyte2(&self) -> TokenField_indexbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_indexbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_indexbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldconstant(&self) -> TokenField_constant {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_constant(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_constant(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldconstantbyte1(&self) -> TokenField_constantbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_constantbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_constantbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldconstantbyte2(&self) -> TokenField_constantbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_constantbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_constantbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnargs(&self) -> TokenField_nargs {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_nargs(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_nargs(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmethod(&self) -> TokenField_method {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_method(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_method(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddefaultbyte1(&self) -> TokenField_defaultbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_defaultbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_defaultbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddefaultbyte2(&self) -> TokenField_defaultbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_defaultbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_defaultbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddefaultbyte3(&self) -> TokenField_defaultbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_defaultbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_defaultbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddefaultbyte4(&self) -> TokenField_defaultbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_defaultbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_defaultbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighbyte1(&self) -> TokenField_highbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_highbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_highbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighbyte2(&self) -> TokenField_highbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_highbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_highbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighbyte3(&self) -> TokenField_highbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_highbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_highbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighbyte4(&self) -> TokenField_highbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_highbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_highbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldlowbyte1(&self) -> TokenField_lowbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_lowbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_lowbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldlowbyte2(&self) -> TokenField_lowbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_lowbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_lowbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldlowbyte3(&self) -> TokenField_lowbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_lowbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_lowbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldlowbyte4(&self) -> TokenField_lowbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_lowbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_lowbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnpairsbyte1(&self) -> TokenField_npairsbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_npairsbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_npairsbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnpairsbyte2(&self) -> TokenField_npairsbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_npairsbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_npairsbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnpairsbyte3(&self) -> TokenField_npairsbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_npairsbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_npairsbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnpairsbyte4(&self) -> TokenField_npairsbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_npairsbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_npairsbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddimensions(&self) -> TokenField_dimensions {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_dimensions(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_dimensions(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldblank1(&self) -> TokenField_blank1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_blank1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_blank1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldblank2(&self) -> TokenField_blank2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_blank2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_blank2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcount(&self) -> TokenField_count {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_count(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_count(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpad(&self) -> TokenField_pad {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pad(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_pad(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpad1(&self) -> TokenField_pad1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pad1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_pad1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpad2(&self) -> TokenField_pad2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pad2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_pad2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpad3(&self) -> TokenField_pad3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pad3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_pad3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwide_op(&self) -> TokenField_wide_op {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wide_op(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_wide_op(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmatchbyte1(&self) -> TokenField_matchbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_matchbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_matchbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmatchbyte2(&self) -> TokenField_matchbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_matchbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_matchbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmatchbyte3(&self) -> TokenField_matchbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_matchbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_matchbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmatchbyte4(&self) -> TokenField_matchbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_matchbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_matchbyte4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldoffsetbyte1(&self) -> TokenField_offsetbyte1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_offsetbyte1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_offsetbyte1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldoffsetbyte2(&self) -> TokenField_offsetbyte2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_offsetbyte2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_offsetbyte2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldoffsetbyte3(&self) -> TokenField_offsetbyte3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_offsetbyte3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_offsetbyte3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldoffsetbyte4(&self) -> TokenField_offsetbyte4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_offsetbyte4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_offsetbyte4(u8::try_from(inner_value).unwrap())
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -2084,6 +1961,7 @@ impl instructionVar0 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2091,6 +1969,7 @@ impl instructionVar0 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2151,6 +2030,7 @@ impl instructionVar1 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2158,6 +2038,7 @@ impl instructionVar1 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2218,6 +2099,7 @@ impl instructionVar2 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2225,6 +2107,7 @@ impl instructionVar2 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2290,6 +2173,7 @@ impl instructionVar3 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2297,6 +2181,7 @@ impl instructionVar3 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2363,6 +2248,7 @@ impl instructionVar4 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2370,6 +2256,7 @@ impl instructionVar4 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2430,6 +2317,7 @@ impl instructionVar5 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2437,6 +2325,7 @@ impl instructionVar5 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2497,6 +2386,7 @@ impl instructionVar6 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2504,6 +2394,7 @@ impl instructionVar6 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2564,6 +2455,7 @@ impl instructionVar7 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2571,6 +2463,7 @@ impl instructionVar7 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2646,6 +2539,7 @@ impl instructionVar8 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2653,6 +2547,7 @@ impl instructionVar8 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2741,6 +2636,7 @@ impl instructionVar9 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2748,6 +2644,7 @@ impl instructionVar9 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2808,6 +2705,7 @@ impl instructionVar10 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2815,6 +2713,7 @@ impl instructionVar10 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2880,6 +2779,7 @@ impl instructionVar11 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2887,6 +2787,7 @@ impl instructionVar11 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2953,6 +2854,7 @@ impl instructionVar12 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -2960,6 +2862,7 @@ impl instructionVar12 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3020,6 +2923,7 @@ impl instructionVar13 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3027,6 +2931,7 @@ impl instructionVar13 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3087,6 +2992,7 @@ impl instructionVar14 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3094,6 +3000,7 @@ impl instructionVar14 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3154,6 +3061,7 @@ impl instructionVar15 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3161,6 +3069,7 @@ impl instructionVar15 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3221,6 +3130,7 @@ impl instructionVar16 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3228,6 +3138,7 @@ impl instructionVar16 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3288,6 +3199,7 @@ impl instructionVar17 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3295,6 +3207,7 @@ impl instructionVar17 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3355,6 +3268,7 @@ impl instructionVar18 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3362,6 +3276,7 @@ impl instructionVar18 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3427,6 +3342,7 @@ impl instructionVar19 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3434,6 +3350,7 @@ impl instructionVar19 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3500,6 +3417,7 @@ impl instructionVar20 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3507,6 +3425,7 @@ impl instructionVar20 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3567,6 +3486,7 @@ impl instructionVar21 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3574,6 +3494,7 @@ impl instructionVar21 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3649,6 +3570,7 @@ impl instructionVar22 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3656,6 +3578,7 @@ impl instructionVar22 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3743,6 +3666,7 @@ impl instructionVar23 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3750,6 +3674,7 @@ impl instructionVar23 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3809,6 +3734,7 @@ impl instructionVar24 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3816,6 +3742,7 @@ impl instructionVar24 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3875,6 +3802,7 @@ impl instructionVar25 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3882,6 +3810,7 @@ impl instructionVar25 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3942,6 +3871,7 @@ impl instructionVar26 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -3949,6 +3879,7 @@ impl instructionVar26 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4009,6 +3940,7 @@ impl instructionVar27 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4016,6 +3948,7 @@ impl instructionVar27 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4076,6 +4009,7 @@ impl instructionVar28 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4083,6 +4017,7 @@ impl instructionVar28 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4143,6 +4078,7 @@ impl instructionVar29 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4150,6 +4086,7 @@ impl instructionVar29 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4210,6 +4147,7 @@ impl instructionVar30 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4217,6 +4155,7 @@ impl instructionVar30 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4277,6 +4216,7 @@ impl instructionVar31 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4284,6 +4224,7 @@ impl instructionVar31 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4344,6 +4285,7 @@ impl instructionVar32 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4351,6 +4293,7 @@ impl instructionVar32 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4411,6 +4354,7 @@ impl instructionVar33 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4418,6 +4362,7 @@ impl instructionVar33 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4483,6 +4428,7 @@ impl instructionVar34 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4490,6 +4436,7 @@ impl instructionVar34 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4556,6 +4503,7 @@ impl instructionVar35 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4563,6 +4511,7 @@ impl instructionVar35 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4623,6 +4572,7 @@ impl instructionVar36 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4630,6 +4580,7 @@ impl instructionVar36 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4690,6 +4641,7 @@ impl instructionVar37 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4697,6 +4649,7 @@ impl instructionVar37 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4757,6 +4710,7 @@ impl instructionVar38 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4764,6 +4718,7 @@ impl instructionVar38 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4824,6 +4779,7 @@ impl instructionVar39 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4831,6 +4787,7 @@ impl instructionVar39 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4891,6 +4848,7 @@ impl instructionVar40 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4898,6 +4856,7 @@ impl instructionVar40 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4958,6 +4917,7 @@ impl instructionVar41 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -4965,6 +4925,7 @@ impl instructionVar41 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5025,6 +4986,7 @@ impl instructionVar42 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5032,6 +4994,7 @@ impl instructionVar42 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5097,6 +5060,7 @@ impl instructionVar43 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5104,6 +5068,7 @@ impl instructionVar43 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5170,6 +5135,7 @@ impl instructionVar44 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5177,6 +5143,7 @@ impl instructionVar44 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5237,6 +5204,7 @@ impl instructionVar45 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5244,6 +5212,7 @@ impl instructionVar45 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5304,6 +5273,7 @@ impl instructionVar46 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5311,6 +5281,7 @@ impl instructionVar46 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5371,6 +5342,7 @@ impl instructionVar47 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5378,6 +5350,7 @@ impl instructionVar47 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5438,6 +5411,7 @@ impl instructionVar48 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5445,6 +5419,7 @@ impl instructionVar48 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5504,6 +5479,7 @@ impl instructionVar49 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5511,6 +5487,7 @@ impl instructionVar49 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5571,6 +5548,7 @@ impl instructionVar50 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5578,6 +5556,7 @@ impl instructionVar50 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5638,6 +5617,7 @@ impl instructionVar51 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5645,6 +5625,7 @@ impl instructionVar51 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5705,6 +5686,7 @@ impl instructionVar52 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5712,6 +5694,7 @@ impl instructionVar52 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5772,6 +5755,7 @@ impl instructionVar53 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5779,6 +5763,7 @@ impl instructionVar53 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5839,6 +5824,7 @@ impl instructionVar54 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5846,6 +5832,7 @@ impl instructionVar54 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5905,6 +5892,7 @@ impl instructionVar55 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5912,6 +5900,7 @@ impl instructionVar55 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5971,6 +5960,7 @@ impl instructionVar56 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -5978,6 +5968,7 @@ impl instructionVar56 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6037,6 +6028,7 @@ impl instructionVar57 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6044,6 +6036,7 @@ impl instructionVar57 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6104,6 +6097,7 @@ impl instructionVar58 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6111,6 +6105,7 @@ impl instructionVar58 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6171,6 +6166,7 @@ impl instructionVar59 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6178,6 +6174,7 @@ impl instructionVar59 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6238,6 +6235,7 @@ impl instructionVar60 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6245,6 +6243,7 @@ impl instructionVar60 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6305,6 +6304,7 @@ impl instructionVar61 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6312,6 +6312,7 @@ impl instructionVar61 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6372,6 +6373,7 @@ impl instructionVar62 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6379,6 +6381,7 @@ impl instructionVar62 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6439,6 +6442,7 @@ impl instructionVar63 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6446,6 +6450,7 @@ impl instructionVar63 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6506,6 +6511,7 @@ impl instructionVar64 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6513,6 +6519,7 @@ impl instructionVar64 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6573,6 +6580,7 @@ impl instructionVar65 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6580,6 +6588,7 @@ impl instructionVar65 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6640,6 +6649,7 @@ impl instructionVar66 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6647,6 +6657,7 @@ impl instructionVar66 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6712,6 +6723,7 @@ impl instructionVar67 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6719,6 +6731,7 @@ impl instructionVar67 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6785,6 +6798,7 @@ impl instructionVar68 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6792,6 +6806,7 @@ impl instructionVar68 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6852,6 +6867,7 @@ impl instructionVar69 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6859,6 +6875,7 @@ impl instructionVar69 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6919,6 +6936,7 @@ impl instructionVar70 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6926,6 +6944,7 @@ impl instructionVar70 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6986,6 +7005,7 @@ impl instructionVar71 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -6993,6 +7013,7 @@ impl instructionVar71 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7053,6 +7074,7 @@ impl instructionVar72 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7060,6 +7082,7 @@ impl instructionVar72 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7120,6 +7143,7 @@ impl instructionVar73 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7127,6 +7151,7 @@ impl instructionVar73 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7187,6 +7212,7 @@ impl instructionVar74 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7194,6 +7220,7 @@ impl instructionVar74 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7254,6 +7281,7 @@ impl instructionVar75 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7261,6 +7289,7 @@ impl instructionVar75 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7326,6 +7355,7 @@ impl instructionVar76 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7333,6 +7363,7 @@ impl instructionVar76 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7399,6 +7430,7 @@ impl instructionVar77 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7406,6 +7438,7 @@ impl instructionVar77 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7466,6 +7499,7 @@ impl instructionVar78 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7473,6 +7507,7 @@ impl instructionVar78 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7533,6 +7568,7 @@ impl instructionVar79 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7540,6 +7576,7 @@ impl instructionVar79 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7600,6 +7637,7 @@ impl instructionVar80 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7607,6 +7645,7 @@ impl instructionVar80 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7667,6 +7706,7 @@ impl instructionVar81 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7674,6 +7714,7 @@ impl instructionVar81 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7749,6 +7790,7 @@ impl instructionVar82 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7756,6 +7798,7 @@ impl instructionVar82 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7859,6 +7902,7 @@ impl instructionVar83 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7866,6 +7910,7 @@ impl instructionVar83 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7961,6 +8006,7 @@ impl instructionVar84 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -7968,6 +8014,7 @@ impl instructionVar84 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8049,6 +8096,7 @@ impl instructionVar85 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8056,6 +8104,7 @@ impl instructionVar85 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8129,6 +8178,7 @@ impl instructionVar86 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8136,6 +8186,7 @@ impl instructionVar86 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8195,6 +8246,7 @@ impl instructionVar87 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8202,6 +8254,7 @@ impl instructionVar87 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8261,6 +8314,7 @@ impl instructionVar88 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8268,6 +8322,7 @@ impl instructionVar88 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8327,6 +8382,7 @@ impl instructionVar89 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8334,6 +8390,7 @@ impl instructionVar89 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8393,6 +8450,7 @@ impl instructionVar90 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8400,6 +8458,7 @@ impl instructionVar90 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8459,6 +8518,7 @@ impl instructionVar91 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8466,6 +8526,7 @@ impl instructionVar91 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8526,6 +8587,7 @@ impl instructionVar92 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8533,6 +8595,7 @@ impl instructionVar92 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8593,6 +8656,7 @@ impl instructionVar93 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8600,6 +8664,7 @@ impl instructionVar93 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8660,6 +8725,7 @@ impl instructionVar94 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8667,6 +8733,7 @@ impl instructionVar94 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8727,6 +8794,7 @@ impl instructionVar95 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8734,6 +8802,7 @@ impl instructionVar95 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8794,6 +8863,7 @@ impl instructionVar96 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8801,6 +8871,7 @@ impl instructionVar96 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8861,6 +8932,7 @@ impl instructionVar97 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8868,6 +8940,7 @@ impl instructionVar97 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8928,6 +9001,7 @@ impl instructionVar98 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8935,6 +9009,7 @@ impl instructionVar98 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -8995,6 +9070,7 @@ impl instructionVar99 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9002,6 +9078,7 @@ impl instructionVar99 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9062,6 +9139,7 @@ impl instructionVar100 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9069,6 +9147,7 @@ impl instructionVar100 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9129,6 +9208,7 @@ impl instructionVar101 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9136,6 +9216,7 @@ impl instructionVar101 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9196,6 +9277,7 @@ impl instructionVar102 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9203,6 +9285,7 @@ impl instructionVar102 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9263,6 +9346,7 @@ impl instructionVar103 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9270,6 +9354,7 @@ impl instructionVar103 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9337,6 +9422,7 @@ impl instructionVar104 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9344,6 +9430,7 @@ impl instructionVar104 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9425,6 +9512,7 @@ impl instructionVar105 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9432,6 +9520,7 @@ impl instructionVar105 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9513,6 +9602,7 @@ impl instructionVar106 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9520,6 +9610,7 @@ impl instructionVar106 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9601,6 +9692,7 @@ impl instructionVar107 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9608,6 +9700,7 @@ impl instructionVar107 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9689,6 +9782,7 @@ impl instructionVar108 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9696,6 +9790,7 @@ impl instructionVar108 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9777,6 +9872,7 @@ impl instructionVar109 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9784,6 +9880,7 @@ impl instructionVar109 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9865,6 +9962,7 @@ impl instructionVar110 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9872,6 +9970,7 @@ impl instructionVar110 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9953,6 +10052,7 @@ impl instructionVar111 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -9960,6 +10060,7 @@ impl instructionVar111 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10041,6 +10142,7 @@ impl instructionVar112 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10048,6 +10150,7 @@ impl instructionVar112 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10129,6 +10232,7 @@ impl instructionVar113 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10136,6 +10240,7 @@ impl instructionVar113 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10217,6 +10322,7 @@ impl instructionVar114 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10224,6 +10330,7 @@ impl instructionVar114 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10305,6 +10412,7 @@ impl instructionVar115 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10312,6 +10420,7 @@ impl instructionVar115 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10393,6 +10502,7 @@ impl instructionVar116 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10400,6 +10510,7 @@ impl instructionVar116 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10481,6 +10592,7 @@ impl instructionVar117 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10488,6 +10600,7 @@ impl instructionVar117 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10569,6 +10682,7 @@ impl instructionVar118 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10576,6 +10690,7 @@ impl instructionVar118 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10657,6 +10772,7 @@ impl instructionVar119 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10664,6 +10780,7 @@ impl instructionVar119 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10746,6 +10863,7 @@ impl instructionVar120 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10753,6 +10871,7 @@ impl instructionVar120 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10830,6 +10949,7 @@ impl instructionVar121 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10837,6 +10957,7 @@ impl instructionVar121 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10903,6 +11024,7 @@ impl instructionVar122 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10910,6 +11032,7 @@ impl instructionVar122 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10970,6 +11093,7 @@ impl instructionVar123 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -10977,6 +11101,7 @@ impl instructionVar123 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11037,6 +11162,7 @@ impl instructionVar124 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11044,6 +11170,7 @@ impl instructionVar124 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11104,6 +11231,7 @@ impl instructionVar125 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11111,6 +11239,7 @@ impl instructionVar125 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11171,6 +11300,7 @@ impl instructionVar126 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11178,6 +11308,7 @@ impl instructionVar126 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11238,6 +11369,7 @@ impl instructionVar127 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11245,6 +11377,7 @@ impl instructionVar127 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11320,6 +11453,7 @@ impl instructionVar128 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11327,6 +11461,7 @@ impl instructionVar128 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11436,6 +11571,7 @@ impl instructionVar129 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11443,6 +11579,7 @@ impl instructionVar129 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11566,6 +11703,7 @@ impl instructionVar130 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11573,6 +11711,7 @@ impl instructionVar130 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11690,6 +11829,7 @@ impl instructionVar131 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11697,6 +11837,7 @@ impl instructionVar131 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11800,6 +11941,7 @@ impl instructionVar132 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11807,6 +11949,7 @@ impl instructionVar132 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11910,6 +12053,7 @@ impl instructionVar133 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -11917,6 +12061,7 @@ impl instructionVar133 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12004,6 +12149,7 @@ impl instructionVar134 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12011,6 +12157,7 @@ impl instructionVar134 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12071,6 +12218,7 @@ impl instructionVar135 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12078,6 +12226,7 @@ impl instructionVar135 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12138,6 +12287,7 @@ impl instructionVar136 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12145,6 +12295,7 @@ impl instructionVar136 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12205,6 +12356,7 @@ impl instructionVar137 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12212,6 +12364,7 @@ impl instructionVar137 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12272,6 +12425,7 @@ impl instructionVar138 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12279,6 +12433,7 @@ impl instructionVar138 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12344,6 +12499,7 @@ impl instructionVar139 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12351,6 +12507,7 @@ impl instructionVar139 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12417,6 +12574,7 @@ impl instructionVar140 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12424,6 +12582,7 @@ impl instructionVar140 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12484,6 +12643,7 @@ impl instructionVar141 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12491,6 +12651,7 @@ impl instructionVar141 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12551,6 +12712,7 @@ impl instructionVar142 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12558,6 +12720,7 @@ impl instructionVar142 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12618,6 +12781,7 @@ impl instructionVar143 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12625,6 +12789,7 @@ impl instructionVar143 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12685,6 +12850,7 @@ impl instructionVar144 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12692,6 +12858,7 @@ impl instructionVar144 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12752,6 +12919,7 @@ impl instructionVar145 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12759,6 +12927,7 @@ impl instructionVar145 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12819,6 +12988,7 @@ impl instructionVar146 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12826,6 +12996,7 @@ impl instructionVar146 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12891,6 +13062,7 @@ impl instructionVar147 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12898,6 +13070,7 @@ impl instructionVar147 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12979,6 +13152,7 @@ impl instructionVar148 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -12986,6 +13160,7 @@ impl instructionVar148 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13059,6 +13234,7 @@ impl instructionVar149 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13066,6 +13242,7 @@ impl instructionVar149 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13125,6 +13302,7 @@ impl instructionVar150 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13132,6 +13310,7 @@ impl instructionVar150 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13191,6 +13370,7 @@ impl instructionVar151 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13198,6 +13378,7 @@ impl instructionVar151 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13258,6 +13439,7 @@ impl instructionVar152 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13265,6 +13447,7 @@ impl instructionVar152 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13325,6 +13508,7 @@ impl instructionVar153 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13332,6 +13516,7 @@ impl instructionVar153 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13392,6 +13577,7 @@ impl instructionVar154 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13399,6 +13585,7 @@ impl instructionVar154 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13459,6 +13646,7 @@ impl instructionVar155 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13466,6 +13654,7 @@ impl instructionVar155 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13526,6 +13715,7 @@ impl instructionVar156 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13533,6 +13723,7 @@ impl instructionVar156 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13593,6 +13784,7 @@ impl instructionVar157 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13600,6 +13792,7 @@ impl instructionVar157 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13660,6 +13853,7 @@ impl instructionVar158 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13667,6 +13861,7 @@ impl instructionVar158 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13732,6 +13927,7 @@ impl instructionVar159 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13739,6 +13935,7 @@ impl instructionVar159 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13820,6 +14017,7 @@ impl instructionVar160 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13827,6 +14025,7 @@ impl instructionVar160 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13930,6 +14129,7 @@ impl instructionVar161 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -13937,6 +14137,7 @@ impl instructionVar161 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14025,6 +14226,7 @@ impl instructionVar162 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14032,6 +14234,7 @@ impl instructionVar162 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14097,6 +14300,7 @@ impl instructionVar163 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14104,6 +14308,7 @@ impl instructionVar163 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14170,6 +14375,7 @@ impl instructionVar164 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14177,6 +14383,7 @@ impl instructionVar164 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14237,6 +14444,7 @@ impl instructionVar165 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14244,6 +14452,7 @@ impl instructionVar165 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14304,6 +14513,7 @@ impl instructionVar166 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14311,6 +14521,7 @@ impl instructionVar166 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14371,6 +14582,7 @@ impl instructionVar167 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14378,6 +14590,7 @@ impl instructionVar167 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14438,6 +14651,7 @@ impl instructionVar168 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14445,6 +14659,7 @@ impl instructionVar168 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14505,6 +14720,7 @@ impl instructionVar169 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14512,6 +14728,7 @@ impl instructionVar169 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14574,10 +14791,12 @@ impl instructionVar170 {
         let tmp = context_instance
             .register()
             .read_switch_num_disassembly()
+            .unwrap()
             .wrapping_sub(1i64);
         context_instance
             .register_mut()
-            .write_switch_num_disassembly(tmp);
+            .write_switch_num_disassembly(tmp)
+            .unwrap();
         let mut sub_pattern_c39 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
@@ -14586,6 +14805,7 @@ impl instructionVar170 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 1i64
             {
                 return None;
@@ -14593,6 +14813,7 @@ impl instructionVar170 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14681,7 +14902,8 @@ impl instructionVar171 {
         let tmp = 0i64;
         context_instance
             .register_mut()
-            .write_in_lookup_switch_disassembly(tmp);
+            .write_in_lookup_switch_disassembly(tmp)
+            .unwrap();
         let mut sub_pattern_c27 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
@@ -14690,17 +14912,23 @@ impl instructionVar171 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 1i64
             {
                 return None;
             }
-            if context_instance.register().read_switch_num_disassembly() != 1i64
+            if context_instance
+                .register()
+                .read_switch_num_disassembly()
+                .unwrap()
+                != 1i64
             {
                 return None;
             }
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -14781,6 +15009,7 @@ impl instructionVar172 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -14788,6 +15017,7 @@ impl instructionVar172 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -14795,7 +15025,12 @@ impl instructionVar172 {
         if token_parser.TokenFieldop().disassembly() != 171i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -14886,6 +15121,7 @@ impl instructionVar173 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -14893,6 +15129,7 @@ impl instructionVar173 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -14900,7 +15137,12 @@ impl instructionVar173 {
         if token_parser.TokenFieldop().disassembly() != 171i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -14997,6 +15239,7 @@ impl instructionVar174 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -15004,6 +15247,7 @@ impl instructionVar174 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -15011,7 +15255,12 @@ impl instructionVar174 {
         if token_parser.TokenFieldop().disassembly() != 171i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -15120,6 +15369,7 @@ impl instructionVar175 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15127,6 +15377,7 @@ impl instructionVar175 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15225,6 +15476,7 @@ impl instructionVar176 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15232,6 +15484,7 @@ impl instructionVar176 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15330,6 +15583,7 @@ impl instructionVar177 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15337,6 +15591,7 @@ impl instructionVar177 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15435,6 +15690,7 @@ impl instructionVar178 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15442,6 +15698,7 @@ impl instructionVar178 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15540,6 +15797,7 @@ impl instructionVar179 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15547,6 +15805,7 @@ impl instructionVar179 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15645,6 +15904,7 @@ impl instructionVar180 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15652,6 +15912,7 @@ impl instructionVar180 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15750,6 +16011,7 @@ impl instructionVar181 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15757,6 +16019,7 @@ impl instructionVar181 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15855,6 +16118,7 @@ impl instructionVar182 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15862,6 +16126,7 @@ impl instructionVar182 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15960,6 +16225,7 @@ impl instructionVar183 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -15967,6 +16233,7 @@ impl instructionVar183 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16065,6 +16332,7 @@ impl instructionVar184 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16072,6 +16340,7 @@ impl instructionVar184 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16170,6 +16439,7 @@ impl instructionVar185 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16177,6 +16447,7 @@ impl instructionVar185 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16269,6 +16540,7 @@ impl instructionVar186 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -16276,6 +16548,7 @@ impl instructionVar186 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -16283,7 +16556,12 @@ impl instructionVar186 {
         if token_parser.TokenFieldop().disassembly() != 171i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -16383,6 +16661,7 @@ impl instructionVar187 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16390,6 +16669,7 @@ impl instructionVar187 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16450,6 +16730,7 @@ impl instructionVar188 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16457,6 +16738,7 @@ impl instructionVar188 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16517,6 +16799,7 @@ impl instructionVar189 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16524,6 +16807,7 @@ impl instructionVar189 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16584,6 +16868,7 @@ impl instructionVar190 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16591,6 +16876,7 @@ impl instructionVar190 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16651,6 +16937,7 @@ impl instructionVar191 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16658,6 +16945,7 @@ impl instructionVar191 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16723,6 +17011,7 @@ impl instructionVar192 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16730,6 +17019,7 @@ impl instructionVar192 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16796,6 +17086,7 @@ impl instructionVar193 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16803,6 +17094,7 @@ impl instructionVar193 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16863,6 +17155,7 @@ impl instructionVar194 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16870,6 +17163,7 @@ impl instructionVar194 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16930,6 +17224,7 @@ impl instructionVar195 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16937,6 +17232,7 @@ impl instructionVar195 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -16997,6 +17293,7 @@ impl instructionVar196 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17004,6 +17301,7 @@ impl instructionVar196 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17064,6 +17362,7 @@ impl instructionVar197 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17071,6 +17370,7 @@ impl instructionVar197 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17131,6 +17431,7 @@ impl instructionVar198 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17138,6 +17439,7 @@ impl instructionVar198 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17198,6 +17500,7 @@ impl instructionVar199 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17205,6 +17508,7 @@ impl instructionVar199 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17265,6 +17569,7 @@ impl instructionVar200 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17272,6 +17577,7 @@ impl instructionVar200 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17332,6 +17638,7 @@ impl instructionVar201 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17339,6 +17646,7 @@ impl instructionVar201 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17414,6 +17722,7 @@ impl instructionVar202 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17421,6 +17730,7 @@ impl instructionVar202 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17530,6 +17840,7 @@ impl instructionVar203 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17537,6 +17848,7 @@ impl instructionVar203 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17630,6 +17942,7 @@ impl instructionVar204 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17637,6 +17950,7 @@ impl instructionVar204 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17702,6 +18016,7 @@ impl instructionVar205 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17709,6 +18024,7 @@ impl instructionVar205 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17716,6 +18032,7 @@ impl instructionVar205 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17775,6 +18092,7 @@ impl instructionVar206 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17782,6 +18100,7 @@ impl instructionVar206 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17842,6 +18161,7 @@ impl instructionVar207 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17849,6 +18169,7 @@ impl instructionVar207 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17924,6 +18245,7 @@ impl instructionVar208 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -17931,6 +18253,7 @@ impl instructionVar208 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18034,6 +18357,7 @@ impl instructionVar209 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18041,6 +18365,7 @@ impl instructionVar209 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18134,6 +18459,7 @@ impl instructionVar210 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18141,6 +18467,7 @@ impl instructionVar210 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18207,6 +18534,7 @@ impl instructionVar211 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18214,6 +18542,7 @@ impl instructionVar211 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18274,6 +18603,7 @@ impl instructionVar212 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18281,6 +18611,7 @@ impl instructionVar212 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18341,6 +18672,7 @@ impl instructionVar213 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18348,6 +18680,7 @@ impl instructionVar213 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18423,6 +18756,7 @@ impl instructionVar214 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18430,6 +18764,7 @@ impl instructionVar214 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18512,6 +18847,7 @@ impl instructionVar215 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18519,6 +18855,7 @@ impl instructionVar215 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18581,10 +18918,12 @@ impl instructionVar216 {
         let tmp = context_instance
             .register()
             .read_switch_num_disassembly()
+            .unwrap()
             .wrapping_sub(1i64);
         context_instance
             .register_mut()
-            .write_switch_num_disassembly(tmp);
+            .write_switch_num_disassembly(tmp)
+            .unwrap();
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
@@ -18593,6 +18932,7 @@ impl instructionVar216 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 1i64
             {
                 return None;
@@ -18600,6 +18940,7 @@ impl instructionVar216 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -18688,7 +19029,8 @@ impl instructionVar217 {
         let tmp = 0i64;
         context_instance
             .register_mut()
-            .write_in_table_switch_disassembly(tmp);
+            .write_in_table_switch_disassembly(tmp)
+            .unwrap();
         let mut sub_pattern_c22 = |tokens: &[u8], context_param: &mut T| {
             let mut pattern_len = 0 as u32;
             let mut context_instance = context_param.clone();
@@ -18697,6 +19039,7 @@ impl instructionVar217 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 1i64
             {
                 return None;
@@ -18704,11 +19047,16 @@ impl instructionVar217 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
             }
-            if context_instance.register().read_switch_num_disassembly() != 0i64
+            if context_instance
+                .register()
+                .read_switch_num_disassembly()
+                .unwrap()
+                != 0i64
             {
                 return None;
             }
@@ -18788,6 +19136,7 @@ impl instructionVar218 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -18795,6 +19144,7 @@ impl instructionVar218 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -18802,7 +19152,12 @@ impl instructionVar218 {
         if token_parser.TokenFieldop().disassembly() != 170i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -18893,6 +19248,7 @@ impl instructionVar219 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -18900,6 +19256,7 @@ impl instructionVar219 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -18907,7 +19264,12 @@ impl instructionVar219 {
         if token_parser.TokenFieldop().disassembly() != 170i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -19004,6 +19366,7 @@ impl instructionVar220 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -19011,6 +19374,7 @@ impl instructionVar220 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -19018,7 +19382,12 @@ impl instructionVar220 {
         if token_parser.TokenFieldop().disassembly() != 170i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -19121,6 +19490,7 @@ impl instructionVar221 {
         if context_instance
             .register()
             .read_in_table_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -19128,6 +19498,7 @@ impl instructionVar221 {
         if context_instance
             .register()
             .read_in_lookup_switch_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
@@ -19135,7 +19506,12 @@ impl instructionVar221 {
         if token_parser.TokenFieldop().disassembly() != 170i64 {
             return None;
         }
-        if context_instance.register().read_alignmentPad_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -19262,6 +19638,7 @@ impl instructionVar222 {
             if context_instance
                 .register()
                 .read_in_table_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -19269,6 +19646,7 @@ impl instructionVar222 {
             if context_instance
                 .register()
                 .read_in_lookup_switch_disassembly()
+                .unwrap()
                 != 0i64
             {
                 return None;
@@ -23608,7 +23986,12 @@ impl padSwitchVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_alignmentPad_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         let op = token_parser.TokenFieldop();
@@ -23667,7 +24050,12 @@ impl padSwitchVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_alignmentPad_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         let op = token_parser.TokenFieldop();
@@ -23720,7 +24108,12 @@ impl padSwitchVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_alignmentPad_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let op = token_parser.TokenFieldop();
@@ -23767,7 +24160,12 @@ impl padSwitchVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_alignmentPad_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_alignmentPad_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op = token_parser.TokenFieldop();
@@ -24022,11 +24420,13 @@ impl dolookupswitchVar0 {
         let tmp = calc_npairs;
         context_instance
             .register_mut()
-            .write_switch_num_disassembly(tmp);
+            .write_switch_num_disassembly(tmp)
+            .unwrap();
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_in_lookup_switch_disassembly(tmp);
+            .write_in_lookup_switch_disassembly(tmp)
+            .unwrap();
         let npairsbyte4 = token_parser.TokenFieldnpairsbyte4();
         pattern_len += block_7_len;
         tokens_current =
@@ -24418,19 +24818,23 @@ impl dotableswitchVar0 {
         let tmp = calc_low;
         context_instance
             .register_mut()
-            .write_switch_low_disassembly(tmp);
+            .write_switch_low_disassembly(tmp)
+            .unwrap();
         let tmp = calc_high.wrapping_sub(calc_low);
         context_instance
             .register_mut()
-            .write_switch_num_disassembly(tmp);
+            .write_switch_num_disassembly(tmp)
+            .unwrap();
         let tmp = calc_high;
         context_instance
             .register_mut()
-            .write_switch_high_disassembly(tmp);
+            .write_switch_high_disassembly(tmp)
+            .unwrap();
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_in_table_switch_disassembly(tmp);
+            .write_in_table_switch_disassembly(tmp)
+            .unwrap();
         let highbyte4 = token_parser.TokenFieldhighbyte4();
         pattern_len += block_8_len;
         tokens_current =

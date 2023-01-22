@@ -11,9 +11,6 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 
-struct GlobalSetDummy;
-impl GlobalSetTrait for GlobalSetDummy {}
-
 #[no_mangle]
 pub fn parse_default(
     tokens: &[u8],
@@ -24,7 +21,7 @@ pub fn parse_default(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDummy,
+        &mut GlobalSetDefault::default(),
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

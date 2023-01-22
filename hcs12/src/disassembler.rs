@@ -1,297 +1,711 @@
+use sleigh4rust::*;
 pub type AddrType = u32;
-macro_rules! impl_read_to_type {
-    ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        fn $read_unsigned<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $unsigned_type {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(TYPE_BITS / 8 == $len);
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let mut data = if BIG_ENDIAN {
-                <$unsigned_type>::from_be_bytes(data)
-            } else {
-                <$unsigned_type>::from_le_bytes(data)
-            };
-            let value_mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            data = data >> start_bit;
-            data = data & value_mask;
-            data
-        }
-        fn $read_signed<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $signed_type {
-            const TYPE_BITS: usize = <$signed_type>::BITS as usize;
-            assert!(len_bits > 1);
-            assert!(TYPE_BITS / 8 == $len);
-            let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
-                .unwrap()
-                >> (TYPE_BITS - len_bits);
-            let sign_mask = !value_mask;
-            let value_part = data & value_mask;
-            let sign_part = data & sign_mask;
-            if sign_part != 0 {
-                let neg_value = (!value_part + 1) & value_mask;
-                <$signed_type>::try_from(neg_value)
-                    .unwrap()
-                    .checked_neg()
-                    .unwrap()
-            } else {
-                <$signed_type>::try_from(value_part).unwrap()
-            }
-        }
-        fn $write_unsigned<const BIG_ENDIAN: bool>(
-            value: $unsigned_type,
-            mem: $unsigned_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let mask = value_max << start_bit;
-            let mut value = value;
-            value <<= start_bit;
-            value = (mem & !mask) | value;
-            if BIG_ENDIAN {
-                value.to_be_bytes()
-            } else {
-                value.to_le_bytes()
-            }
-        }
-        fn $write_signed<const BIG_ENDIAN: bool>(
-            value: $signed_type,
-            mem: $signed_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value: $unsigned_type = if value < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mem: $unsigned_type = if mem < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value & mask;
-            $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
-        }
-    };
-}
-impl_read_to_type!(u8, i8, 1, read_u8, read_i8, write_u8, write_i8);
-impl_read_to_type!(u16, i16, 2, read_u16, read_i16, write_u16, write_i16);
-impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
-impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
-impl_read_to_type!(
-    u128, i128, 16, read_u128, read_i128, write_u128, write_i128
-);
-impl_read_to_type!(
-    ethnum::u256,
-    ethnum::i256,
-    32,
-    read_u256,
-    read_i256,
-    write_u256,
-    write_i256
-);
 pub trait GlobalSetTrait {
     fn set_Prefix18(&mut self, address: Option<u32>, value: i64);
     fn set_PrefixHCS12X(&mut self, address: Option<u32>, value: i64);
     fn set_UseGPAGE(&mut self, address: Option<u32>, value: i64);
     fn set_XGATE(&mut self, address: Option<u32>, value: i64);
 }
-pub trait MemoryRead {
-    type AddressType;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]);
-}
-pub trait MemoryWrite {
-    type AddressType;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
+#[derive(Default)]
+pub struct GlobalSetDefault<C: ContextTrait>(
+    pub std::collections::HashMap<AddrType, C>,
+);
+impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
+    fn set_Prefix18(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_Prefix18_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_PrefixHCS12X(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_PrefixHCS12X_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_UseGPAGE(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_UseGPAGE_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_XGATE(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_XGATE_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
 }
 pub trait ContextregisterTrait:
-    MemoryRead<AddressType = u16> + MemoryWrite<AddressType = u16>
+    MemoryRead<AddressType = u16> + MemoryWrite
 {
-    fn read_Prefix18_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_Prefix18_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 0, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_Prefix18_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u16, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 0u64 as usize, 1u64 as usize);
-        self.write(3u64 as u16, &mem[0..1]);
+    fn write_Prefix18_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 0, 1)
     }
-    fn read_Prefix18_disassembly(&self) -> i64 {
-        i64::try_from(self.read_Prefix18_raw()).unwrap()
+    fn read_Prefix18_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_Prefix18_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_Prefix18_disassembly(&mut self, param: i64) {
+    fn write_Prefix18_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_Prefix18_raw(param as u8)
     }
-    fn read_Prefix18_execution(&self) -> u8 {
+    fn read_Prefix18_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_Prefix18_raw()
     }
-    fn write_Prefix18_execution(&mut self, param: u8) {
+    fn write_Prefix18_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_Prefix18_raw(param)
     }
-    fn Prefix18_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_Prefix18_raw())
+    fn Prefix18_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_Prefix18_raw()?))
     }
-    fn read_PrefixHCS12X_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_PrefixHCS12X_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 0, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_PrefixHCS12X_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u16, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 0u64 as usize, 1u64 as usize);
-        self.write(3u64 as u16, &mem[0..1]);
+    fn write_PrefixHCS12X_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 0, 1)
     }
-    fn read_PrefixHCS12X_disassembly(&self) -> i64 {
-        i64::try_from(self.read_PrefixHCS12X_raw()).unwrap()
+    fn read_PrefixHCS12X_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_PrefixHCS12X_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_PrefixHCS12X_disassembly(&mut self, param: i64) {
+    fn write_PrefixHCS12X_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_PrefixHCS12X_raw(param as u8)
     }
-    fn read_PrefixHCS12X_execution(&self) -> u8 {
+    fn read_PrefixHCS12X_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_PrefixHCS12X_raw()
     }
-    fn write_PrefixHCS12X_execution(&mut self, param: u8) {
+    fn write_PrefixHCS12X_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_PrefixHCS12X_raw(param)
     }
-    fn PrefixHCS12X_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_PrefixHCS12X_raw())
+    fn PrefixHCS12X_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_PrefixHCS12X_raw()?))
     }
-    fn read_UseGPAGE_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_UseGPAGE_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 1, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_UseGPAGE_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u16, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 1u64 as usize, 1u64 as usize);
-        self.write(3u64 as u16, &mem[0..1]);
+    fn write_UseGPAGE_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 1, 1)
     }
-    fn read_UseGPAGE_disassembly(&self) -> i64 {
-        i64::try_from(self.read_UseGPAGE_raw()).unwrap()
+    fn read_UseGPAGE_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_UseGPAGE_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_UseGPAGE_disassembly(&mut self, param: i64) {
+    fn write_UseGPAGE_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_UseGPAGE_raw(param as u8)
     }
-    fn read_UseGPAGE_execution(&self) -> u8 {
+    fn read_UseGPAGE_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_UseGPAGE_raw()
     }
-    fn write_UseGPAGE_execution(&mut self, param: u8) {
+    fn write_UseGPAGE_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_UseGPAGE_raw(param)
     }
-    fn UseGPAGE_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_UseGPAGE_raw())
+    fn UseGPAGE_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_UseGPAGE_raw()?))
     }
-    fn read_XGATE_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u16, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_XGATE_raw(&self) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 2, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_XGATE_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u16, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 2u64 as usize, 1u64 as usize);
-        self.write(3u64 as u16, &mem[0..1]);
+    fn write_XGATE_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 2, 1)
     }
-    fn read_XGATE_disassembly(&self) -> i64 {
-        i64::try_from(self.read_XGATE_raw()).unwrap()
+    fn read_XGATE_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_XGATE_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_XGATE_disassembly(&mut self, param: i64) {
+    fn write_XGATE_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_XGATE_raw(param as u8)
     }
-    fn read_XGATE_execution(&self) -> u8 {
+    fn read_XGATE_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_XGATE_raw()
     }
-    fn write_XGATE_execution(&mut self, param: u8) {
+    fn write_XGATE_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_XGATE_raw(param)
     }
-    fn XGATE_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_XGATE_raw())
+    fn XGATE_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_XGATE_raw()?))
     }
 }
-pub trait ContextTrait {
+pub trait ContextTrait: Default {
     type Typeregister: ContextregisterTrait;
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ContextregisterStruct {
-    pub chunk_0x0: [u8; 4u64 as usize],
+#[derive(Debug, Clone, Copy)]
+pub struct ContextregisterStructDebug {
+    pub chunk_0x0: [Option<bool>; 32],
 }
-impl ContextregisterTrait for ContextregisterStruct {}
-impl MemoryRead for ContextregisterStruct {
-    type AddressType = u16;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
-        match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                buf.copy_from_slice(&self.chunk_0x0[start..end]);
-            }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+impl Default for ContextregisterStructDebug {
+    fn default() -> Self {
+        Self {
+            chunk_0x0: [None; 32],
         }
     }
 }
-impl MemoryWrite for ContextregisterStruct {
-    type AddressType = u16;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
+impl ContextregisterStructDebug {
+    fn read_bits(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                self.chunk_0x0[start..end].copy_from_slice(buf);
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                            as u8)
+                            << bit;
+                    }
+                }
             }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+            (addr_start, addr_end) => {
+                return Err(MemoryReadError::UnableToReadMemory(
+                    addr_start, addr_end,
+                ))
+            }
         }
+        Ok(())
+    }
+    fn write_bits(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
+        match (addr, addr_end) {
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        self.chunk_0x0[chunk_index + bit] =
+                            Some(*buf_byte & (1 << bit) != 0);
+                    }
+                }
+            }
+            (addr_start, addr_end) => {
+                return Err(MemoryWriteError::UnableToWriteMemory(
+                    addr_start, addr_end,
+                ))
+            }
+        }
+        Ok(())
+    }
+}
+impl ContextregisterTrait for ContextregisterStructDebug {}
+impl MemoryRead for ContextregisterStructDebug {
+    type AddressType = u16;
+    fn read(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.read_bits(addr, buf, &mut inner_buf)
+    }
+    fn read_u8<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u8, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u8>::from_be_bytes(data)
+        } else {
+            <u8>::from_le_bytes(data)
+        };
+        let value_mask = <u8>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u16<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u16, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u16>::from_be_bytes(data)
+        } else {
+            <u16>::from_le_bytes(data)
+        };
+        let value_mask = <u16>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u32<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u32, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u32>::from_be_bytes(data)
+        } else {
+            <u32>::from_le_bytes(data)
+        };
+        let value_mask = <u32>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u64<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u64, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u64>::from_be_bytes(data)
+        } else {
+            <u64>::from_le_bytes(data)
+        };
+        let value_mask = <u64>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u128<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u128, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u128>::from_be_bytes(data)
+        } else {
+            <u128>::from_le_bytes(data)
+        };
+        let value_mask = <u128>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+}
+impl MemoryWrite for ContextregisterStructDebug {
+    fn write(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.write_bits(addr, buf, &inner_buf)
+    }
+    fn write_u8<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u8,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u16<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u16,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u32<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u32,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u64<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u64,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u128<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u128,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
     }
 }
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
-    pub register: ContextregisterStruct,
+    pub register: ContextregisterStructDebug,
 }
 impl ContextTrait for SpacesStruct {
-    type Typeregister = ContextregisterStruct;
+    type Typeregister = ContextregisterStructDebug;
     fn register(&self) -> &Self::Typeregister {
         &self.register
     }
@@ -1643,6 +2057,20 @@ impl TokenField_simm16 {
     }
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
+impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
+    type AddressType = usize;
+    fn read(
+        &self,
+        addr: Self::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<Self::AddressType>> {
+        let end = addr + buf.len();
+        self.0
+            .get(addr..end)
+            .map(|src| buf.copy_from_slice(src))
+            .ok_or(MemoryReadError::UnableToReadMemory(addr, end))
+    }
+}
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
@@ -1650,982 +2078,278 @@ impl<const LEN: usize> TokenParser<LEN> {
         Some(Self(token_data))
     }
     fn TokenFieldop8(&self) -> TokenField_op8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op8(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_op8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop7_4(&self) -> TokenField_op7_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op7_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_op7_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop6_4(&self) -> TokenField_op6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_op6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnIndex(&self) -> TokenField_nIndex {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_nIndex(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 3).unwrap();
+        TokenField_nIndex(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0_0(&self) -> TokenField_op0_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_op0_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldtrapnum(&self) -> TokenField_trapnum {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_trapnum(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_trapnum(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrr7_6(&self) -> TokenField_rr7_6 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rr7_6(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 2).unwrap();
+        TokenField_rr7_6(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrr7_6a(&self) -> TokenField_rr7_6a {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rr7_6a(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 2).unwrap();
+        TokenField_rr7_6a(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldxb5_5(&self) -> TokenField_xb5_5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_xb5_5(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 1).unwrap();
+        TokenField_xb5_5(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnn4_0(&self) -> TokenField_nn4_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_nn4_0(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 5).unwrap();
+        TokenField_nn4_0(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldxb7_5(&self) -> TokenField_xb7_5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_xb7_5(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_xb7_5(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrr4_3(&self) -> TokenField_rr4_3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rr4_3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 2).unwrap();
+        TokenField_rr4_3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldxb2_2(&self) -> TokenField_xb2_2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_xb2_2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 1).unwrap();
+        TokenField_xb2_2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldxb2_1(&self) -> TokenField_xb2_1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_xb2_1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 2).unwrap();
+        TokenField_xb2_1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldz1_1(&self) -> TokenField_z1_1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_z1_1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 1).unwrap();
+        TokenField_z1_1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields0_0(&self) -> TokenField_s0_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s0_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_s0_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldss0_0(&self) -> TokenField_ss0_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_ss0_0(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 1).unwrap();
+        TokenField_ss0_0(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldxb2_0(&self) -> TokenField_xb2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_xb2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_xb2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldp4_4(&self) -> TokenField_p4_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_p4_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 1).unwrap();
+        TokenField_p4_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddecrement3_3(&self) -> TokenField_decrement3_3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_decrement3_3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_decrement3_3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnn3_0(&self) -> TokenField_nn3_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_nn3_0(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 4).unwrap();
+        TokenField_nn3_0(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaa1_0(&self) -> TokenField_aa1_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_aa1_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 2).unwrap();
+        TokenField_aa1_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaa0_0(&self) -> TokenField_aa0_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_aa0_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_aa0_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnotUsed7_7(&self) -> TokenField_notUsed7_7 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_notUsed7_7(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_notUsed7_7(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldabcdxys6_4(&self) -> TokenField_abcdxys6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_abcdxys6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_abcdxys6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldabc5_4(&self) -> TokenField_abc5_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_abc5_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 2).unwrap();
+        TokenField_abc5_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddxys2_0(&self) -> TokenField_dxys2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_dxys2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_dxys2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldabcdxys2_0(&self) -> TokenField_abcdxys2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_abcdxys2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_abcdxys2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcolumns7_4(&self) -> TokenField_columns7_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_columns7_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_columns7_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrows2_0(&self) -> TokenField_rows2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rows2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_rows2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrows3_0(&self) -> TokenField_rows3_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rows3_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_rows3_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_ABCl_6_4(&self) -> TokenField_bytes_ABCl_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_ABCl_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_ABCl_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_ABClT3lBXlYlSl_6_4(
         &self,
     ) -> TokenField_bytes_ABClT3lBXlYlSl_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_ABClT3lBXlYlSl_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_ABClT3lBXlYlSl_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_ABChT3hBXhYhSh_6_4(
         &self,
     ) -> TokenField_bytes_ABChT3hBXhYhSh_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_ABChT3hBXhYhSh_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_ABChT3hBXhYhSh_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwords_CT3DXYS_6_4(&self) -> TokenField_words_CT3DXYS_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_words_CT3DXYS_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_words_CT3DXYS_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwords_T3DXYS_6_4(&self) -> TokenField_words_T3DXYS_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_words_T3DXYS_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_words_T3DXYS_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_ABCl_2_0(&self) -> TokenField_bytes_ABCl_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_ABCl_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bytes_ABCl_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T3lDlXlYlSl_6_4(
         &self,
     ) -> TokenField_bytes_T3lDlXlYlSl_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T3lDlXlYlSl_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_T3lDlXlYlSl_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwords_T2DXYS_2_0(&self) -> TokenField_words_T2DXYS_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_words_T2DXYS_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_words_T2DXYS_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T2h_XhYhSh_2_0(
         &self,
     ) -> TokenField_bytes_T2h_XhYhSh_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T2h_XhYhSh_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bytes_T2h_XhYhSh_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T2l_XlYlSl_2_0(
         &self,
     ) -> TokenField_bytes_T2l_XlYlSl_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T2l_XlYlSl_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bytes_T2l_XlYlSl_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T3l_XlYlSl_6_4(
         &self,
     ) -> TokenField_bytes_T3l_XlYlSl_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T3l_XlYlSl_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_T3l_XlYlSl_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T3h_XhYhSh_6_4(
         &self,
     ) -> TokenField_bytes_T3h_XhYhSh_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T3h_XhYhSh_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_bytes_T3h_XhYhSh_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwords_T3_XYS_6_4(&self) -> TokenField_words_T3_XYS_6_4 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_words_T3_XYS_6_4(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 3).unwrap();
+        TokenField_words_T3_XYS_6_4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T2hDhXhYhSh_2_0(
         &self,
     ) -> TokenField_bytes_T2hDhXhYhSh_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T2hDhXhYhSh_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bytes_T2hDhXhYhSh_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbytes_T2lDlXlYlSl_2_0(
         &self,
     ) -> TokenField_bytes_T2lDlXlYlSl_2_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bytes_T2lDlXlYlSl_2_0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bytes_T2lDlXlYlSl_2_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop16(&self) -> TokenField_op16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_op16(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 16).unwrap();
+        TokenField_op16(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldop15_13(&self) -> TokenField_op15_13 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op15_13(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_op15_13(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsign12_12(&self) -> TokenField_sign12_12 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sign12_12(inner_value)
+        let inner_value = self.read_i8::<true>(0, 4, 1).unwrap();
+        TokenField_sign12_12(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldnot_used11(&self) -> TokenField_not_used11 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_not_used11(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_not_used11(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsize10_10(&self) -> TokenField_size10_10 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_size10_10(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 1).unwrap();
+        TokenField_size10_10(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbyte9_8(&self) -> TokenField_byte9_8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_byte9_8(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 2).unwrap();
+        TokenField_byte9_8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldword9_8(&self) -> TokenField_word9_8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_word9_8(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 2).unwrap();
+        TokenField_word9_8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrr7_0(&self) -> TokenField_rr7_0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rr7_0(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 8).unwrap();
+        TokenField_rr7_0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm8(&self) -> TokenField_imm8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_imm8(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_imm8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsimm8(&self) -> TokenField_simm8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_simm8(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_simm8(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrel(&self) -> TokenField_rel {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_rel(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_rel(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16(&self) -> TokenField_imm16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_imm16(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 16).unwrap();
+        TokenField_imm16(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16p(&self) -> TokenField_imm16p {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_imm16p(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_imm16p(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16e(&self) -> TokenField_imm16e {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_imm16e(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_imm16e(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16ev(&self) -> TokenField_imm16ev {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 10u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_imm16ev(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 10).unwrap();
+        TokenField_imm16ev(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16rv(&self) -> TokenField_imm16rv {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 12u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_imm16rv(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 12).unwrap();
+        TokenField_imm16rv(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldimm16pv(&self) -> TokenField_imm16pv {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 14u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_imm16pv(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 14).unwrap();
+        TokenField_imm16pv(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsimm16(&self) -> TokenField_simm16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_simm16(inner_value)
+        let inner_value = self.read_i16::<true>(0, 0, 16).unwrap();
+        TokenField_simm16(i16::try_from(inner_value).unwrap())
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -2752,7 +2476,12 @@ impl instructionVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 24i64 {
@@ -2761,7 +2490,8 @@ impl instructionVar0 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_Prefix18_disassembly(tmp);
+            .write_Prefix18_disassembly(tmp)
+            .unwrap();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
@@ -2811,7 +2541,12 @@ impl instructionVar1 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c30 = |tokens: &[u8], context_param: &mut T| {
@@ -2820,7 +2555,12 @@ impl instructionVar1 {
             let mut tokens = tokens;
             let mut block_0_len = 1u64 as u32;
             let token_parser = <TokenParser<1usize>>::new(tokens)?;
-            if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+            if context_instance
+                .register()
+                .read_Prefix18_disassembly()
+                .unwrap()
+                != 1i64
+            {
                 return None;
             }
             if token_parser.TokenFieldop8().disassembly() != 6i64 {
@@ -2869,10 +2609,20 @@ impl instructionVar2 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -2927,10 +2677,20 @@ impl instructionVar3 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -2993,10 +2753,20 @@ impl instructionVar4 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -3073,10 +2843,20 @@ impl instructionVar5 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -3153,10 +2933,20 @@ impl instructionVar6 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -3233,10 +3023,20 @@ impl instructionVar7 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -3313,10 +3113,20 @@ impl instructionVar8 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -3393,10 +3203,20 @@ impl instructionVar9 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -3473,10 +3293,20 @@ impl instructionVar10 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -3553,10 +3383,20 @@ impl instructionVar11 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -3633,10 +3473,20 @@ impl instructionVar12 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -3713,10 +3563,20 @@ impl instructionVar13 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -3793,10 +3653,20 @@ impl instructionVar14 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -3873,10 +3743,20 @@ impl instructionVar15 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -3953,10 +3833,20 @@ impl instructionVar16 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -4033,10 +3923,20 @@ impl instructionVar17 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -4113,10 +4013,20 @@ impl instructionVar18 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -4193,10 +4103,20 @@ impl instructionVar19 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -4273,10 +4193,20 @@ impl instructionVar20 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -4353,10 +4283,20 @@ impl instructionVar21 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -4433,10 +4373,20 @@ impl instructionVar22 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -4513,10 +4463,20 @@ impl instructionVar23 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -4593,10 +4553,20 @@ impl instructionVar24 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -4673,10 +4643,20 @@ impl instructionVar25 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -4753,10 +4733,20 @@ impl instructionVar26 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -4833,10 +4823,20 @@ impl instructionVar27 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -4913,10 +4913,20 @@ impl instructionVar28 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -4993,10 +5003,20 @@ impl instructionVar29 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -5073,10 +5093,20 @@ impl instructionVar30 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -5153,10 +5183,20 @@ impl instructionVar31 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -5233,10 +5273,20 @@ impl instructionVar32 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -5311,10 +5361,20 @@ impl instructionVar33 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -5389,10 +5449,20 @@ impl instructionVar34 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -5463,10 +5533,20 @@ impl instructionVar35 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 72i64 {
@@ -5509,10 +5589,20 @@ impl instructionVar36 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 88i64 {
@@ -5555,10 +5645,20 @@ impl instructionVar37 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 89i64 {
@@ -5605,10 +5705,20 @@ impl instructionVar38 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -5683,10 +5793,20 @@ impl instructionVar39 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -5757,10 +5877,20 @@ impl instructionVar40 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 71i64 {
@@ -5803,10 +5933,20 @@ impl instructionVar41 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 87i64 {
@@ -5854,10 +5994,20 @@ impl instructionVar42 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 36i64 {
@@ -5924,10 +6074,20 @@ impl instructionVar43 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c39 = |tokens: &[u8], context_param: &mut T| {
@@ -6022,10 +6182,20 @@ impl instructionVar44 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c39 = |tokens: &[u8], context_param: &mut T| {
@@ -6120,10 +6290,20 @@ impl instructionVar45 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c41 = |tokens: &[u8], context_param: &mut T| {
@@ -6211,10 +6391,20 @@ impl instructionVar46 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 37i64 {
@@ -6274,10 +6464,20 @@ impl instructionVar47 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 39i64 {
@@ -6337,10 +6537,20 @@ impl instructionVar48 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 44i64 {
@@ -6395,10 +6605,20 @@ impl instructionVar49 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 0i64 {
@@ -6446,10 +6666,20 @@ impl instructionVar50 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 46i64 {
@@ -6509,10 +6739,20 @@ impl instructionVar51 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 34i64 {
@@ -6573,10 +6813,20 @@ impl instructionVar52 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -6653,10 +6903,20 @@ impl instructionVar53 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -6733,10 +6993,20 @@ impl instructionVar54 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -6813,10 +7083,20 @@ impl instructionVar55 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -6893,10 +7173,20 @@ impl instructionVar56 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -6973,10 +7263,20 @@ impl instructionVar57 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -7053,10 +7353,20 @@ impl instructionVar58 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -7133,10 +7443,20 @@ impl instructionVar59 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -7212,10 +7532,20 @@ impl instructionVar60 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 47i64 {
@@ -7275,10 +7605,20 @@ impl instructionVar61 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 35i64 {
@@ -7338,10 +7678,20 @@ impl instructionVar62 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 45i64 {
@@ -7401,10 +7751,20 @@ impl instructionVar63 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 43i64 {
@@ -7464,10 +7824,20 @@ impl instructionVar64 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 38i64 {
@@ -7527,10 +7897,20 @@ impl instructionVar65 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 42i64 {
@@ -7590,10 +7970,20 @@ impl instructionVar66 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 32i64 {
@@ -7667,10 +8057,20 @@ impl instructionVar67 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 79i64 {
@@ -7777,10 +8177,20 @@ impl instructionVar68 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 31i64 {
@@ -7887,10 +8297,20 @@ impl instructionVar69 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 15i64 {
@@ -7983,10 +8403,20 @@ impl instructionVar70 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 33i64 {
@@ -8059,10 +8489,20 @@ impl instructionVar71 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 78i64 {
@@ -8169,10 +8609,20 @@ impl instructionVar72 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 30i64 {
@@ -8279,10 +8729,20 @@ impl instructionVar73 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 14i64 {
@@ -8383,10 +8843,20 @@ impl instructionVar74 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 76i64 {
@@ -8468,10 +8938,20 @@ impl instructionVar75 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 28i64 {
@@ -8553,10 +9033,20 @@ impl instructionVar76 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 12i64 {
@@ -8630,10 +9120,20 @@ impl instructionVar77 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 7i64 {
@@ -8693,10 +9193,20 @@ impl instructionVar78 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 40i64 {
@@ -8756,10 +9266,20 @@ impl instructionVar79 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 41i64 {
@@ -8821,10 +9341,20 @@ impl instructionVar80 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 74i64 {
@@ -8893,10 +9423,20 @@ impl instructionVar81 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -8985,10 +9525,20 @@ impl instructionVar82 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -9057,7 +9607,12 @@ impl instructionVar83 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c25 = |tokens: &[u8], context_param: &mut T| {
@@ -9066,7 +9621,12 @@ impl instructionVar83 {
             let mut tokens = tokens;
             let mut block_0_len = 1u64 as u32;
             let token_parser = <TokenParser<1usize>>::new(tokens)?;
-            if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+            if context_instance
+                .register()
+                .read_Prefix18_disassembly()
+                .unwrap()
+                != 1i64
+            {
                 return None;
             }
             if token_parser.TokenFieldop8().disassembly() != 23i64 {
@@ -9116,10 +9676,20 @@ impl instructionVar84 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 4350i64 {
@@ -9161,10 +9731,20 @@ impl instructionVar85 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 4335i64 {
@@ -9211,10 +9791,20 @@ impl instructionVar86 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -9289,10 +9879,20 @@ impl instructionVar87 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -9363,10 +9963,20 @@ impl instructionVar88 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 135i64 {
@@ -9409,10 +10019,20 @@ impl instructionVar89 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 199i64 {
@@ -9454,10 +10074,20 @@ impl instructionVar90 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 4349i64 {
@@ -9506,10 +10136,20 @@ impl instructionVar91 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -9586,10 +10226,20 @@ impl instructionVar92 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -9666,10 +10316,20 @@ impl instructionVar93 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -9746,10 +10406,20 @@ impl instructionVar94 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -9826,10 +10496,20 @@ impl instructionVar95 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -9906,10 +10586,20 @@ impl instructionVar96 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -9986,10 +10676,20 @@ impl instructionVar97 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -10066,10 +10766,20 @@ impl instructionVar98 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -10144,10 +10854,20 @@ impl instructionVar99 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -10222,10 +10942,20 @@ impl instructionVar100 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -10296,10 +11026,20 @@ impl instructionVar101 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 65i64 {
@@ -10342,10 +11082,20 @@ impl instructionVar102 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 81i64 {
@@ -10392,10 +11142,20 @@ impl instructionVar103 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -10470,10 +11230,20 @@ impl instructionVar104 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -10548,10 +11318,20 @@ impl instructionVar105 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -10626,10 +11406,20 @@ impl instructionVar106 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -10707,10 +11497,20 @@ impl instructionVar107 {
         let mut context_instance = context.clone();
         let mut calc_loc: i64 = 0;
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -10782,10 +11582,20 @@ impl instructionVar108 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -10863,10 +11673,20 @@ impl instructionVar109 {
         let mut context_instance = context.clone();
         let mut calc_loc: i64 = 0;
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -10938,10 +11758,20 @@ impl instructionVar110 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -11016,10 +11846,20 @@ impl instructionVar111 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -11094,10 +11934,20 @@ impl instructionVar112 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -11172,10 +12022,20 @@ impl instructionVar113 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -11250,10 +12110,20 @@ impl instructionVar114 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -11328,10 +12198,20 @@ impl instructionVar115 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -11406,10 +12286,20 @@ impl instructionVar116 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -11484,10 +12374,20 @@ impl instructionVar117 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -11562,10 +12462,20 @@ impl instructionVar118 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -11635,10 +12545,20 @@ impl instructionVar119 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 7i64 {
@@ -11691,10 +12611,20 @@ impl instructionVar120 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -11767,10 +12697,20 @@ impl instructionVar121 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -11843,10 +12783,20 @@ impl instructionVar122 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -11919,10 +12869,20 @@ impl instructionVar123 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -11989,10 +12949,20 @@ impl instructionVar124 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -12067,10 +13037,20 @@ impl instructionVar125 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -12141,10 +13121,20 @@ impl instructionVar126 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 67i64 {
@@ -12187,10 +13177,20 @@ impl instructionVar127 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 83i64 {
@@ -12232,10 +13232,20 @@ impl instructionVar128 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 7071i64 {
@@ -12277,10 +13287,20 @@ impl instructionVar129 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 9i64 {
@@ -12322,10 +13342,20 @@ impl instructionVar130 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 3i64 {
@@ -12368,10 +13398,20 @@ impl instructionVar131 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 17i64 {
@@ -12414,10 +13454,20 @@ impl instructionVar132 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 20i64 {
@@ -12467,10 +13517,20 @@ impl instructionVar133 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 18i64 {
@@ -12534,10 +13594,20 @@ impl instructionVar134 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 26i64 {
@@ -12601,10 +13671,20 @@ impl instructionVar135 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 30i64 {
@@ -12668,10 +13748,20 @@ impl instructionVar136 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 27i64 {
@@ -12735,10 +13825,20 @@ impl instructionVar137 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 31i64 {
@@ -12795,10 +13895,20 @@ impl instructionVar138 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 19i64 {
@@ -12841,10 +13951,20 @@ impl instructionVar139 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 19i64 {
@@ -12893,10 +14013,20 @@ impl instructionVar140 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -12973,10 +14103,20 @@ impl instructionVar141 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -13053,10 +14193,20 @@ impl instructionVar142 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -13133,10 +14283,20 @@ impl instructionVar143 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -13213,10 +14373,20 @@ impl instructionVar144 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -13293,10 +14463,20 @@ impl instructionVar145 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -13373,10 +14553,20 @@ impl instructionVar146 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -13453,10 +14643,20 @@ impl instructionVar147 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -13534,10 +14734,20 @@ impl instructionVar148 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 63i64 {
@@ -13598,10 +14808,20 @@ impl instructionVar149 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c29 = |tokens: &[u8], context_param: &mut T| {
@@ -13782,10 +15002,20 @@ impl instructionVar150 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c29 = |tokens: &[u8], context_param: &mut T| {
@@ -13966,10 +15196,20 @@ impl instructionVar151 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c29 = |tokens: &[u8], context_param: &mut T| {
@@ -14150,10 +15390,20 @@ impl instructionVar152 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c29 = |tokens: &[u8], context_param: &mut T| {
@@ -14334,10 +15584,20 @@ impl instructionVar153 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -14453,10 +15713,20 @@ impl instructionVar154 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -14572,10 +15842,20 @@ impl instructionVar155 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -14694,10 +15974,20 @@ impl instructionVar156 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
@@ -14961,10 +16251,20 @@ impl instructionVar157 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -15142,10 +16442,20 @@ impl instructionVar158 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -15430,10 +16740,20 @@ impl instructionVar159 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -15611,10 +16931,20 @@ impl instructionVar160 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -15792,10 +17122,20 @@ impl instructionVar161 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -15973,10 +17313,20 @@ impl instructionVar162 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -16153,10 +17503,20 @@ impl instructionVar163 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -16347,10 +17707,20 @@ impl instructionVar164 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -16532,10 +17902,20 @@ impl instructionVar165 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -16651,10 +18031,20 @@ impl instructionVar166 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -16773,10 +18163,20 @@ impl instructionVar167 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -17299,10 +18699,20 @@ impl instructionVar168 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -17569,10 +18979,20 @@ impl instructionVar169 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c62 = |tokens: &[u8], context_param: &mut T| {
@@ -17866,10 +19286,20 @@ impl instructionVar170 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c62 = |tokens: &[u8], context_param: &mut T| {
@@ -18162,10 +19592,20 @@ impl instructionVar171 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c46 = |tokens: &[u8], context_param: &mut T| {
@@ -18502,10 +19942,20 @@ impl instructionVar172 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -18834,10 +20284,20 @@ impl instructionVar173 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 17i64 {
@@ -18890,10 +20350,20 @@ impl instructionVar174 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -18966,10 +20436,20 @@ impl instructionVar175 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -19042,10 +20522,20 @@ impl instructionVar176 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -19118,10 +20608,20 @@ impl instructionVar177 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -19184,10 +20684,20 @@ impl instructionVar178 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 16i64 {
@@ -19230,10 +20740,20 @@ impl instructionVar179 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 21i64 {
@@ -19280,10 +20800,20 @@ impl instructionVar180 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -19358,10 +20888,20 @@ impl instructionVar181 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -19432,10 +20972,20 @@ impl instructionVar182 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 66i64 {
@@ -19478,10 +21028,20 @@ impl instructionVar183 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 82i64 {
@@ -19523,10 +21083,20 @@ impl instructionVar184 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 7041i64 {
@@ -19568,10 +21138,20 @@ impl instructionVar185 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 8i64 {
@@ -19613,10 +21193,20 @@ impl instructionVar186 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 2i64 {
@@ -19663,10 +21253,20 @@ impl instructionVar187 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c45 = |tokens: &[u8], context_param: &mut T| {
@@ -19741,10 +21341,20 @@ impl instructionVar188 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -19819,10 +21429,20 @@ impl instructionVar189 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -19895,10 +21515,20 @@ impl instructionVar190 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -19973,10 +21603,20 @@ impl instructionVar191 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -20054,10 +21694,20 @@ impl instructionVar192 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 36i64 {
@@ -20119,10 +21769,20 @@ impl instructionVar193 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 37i64 {
@@ -20184,10 +21844,20 @@ impl instructionVar194 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 39i64 {
@@ -20249,10 +21919,20 @@ impl instructionVar195 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 44i64 {
@@ -20314,10 +21994,20 @@ impl instructionVar196 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 46i64 {
@@ -20379,10 +22069,20 @@ impl instructionVar197 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 34i64 {
@@ -20444,10 +22144,20 @@ impl instructionVar198 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 47i64 {
@@ -20509,10 +22219,20 @@ impl instructionVar199 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 35i64 {
@@ -20574,10 +22294,20 @@ impl instructionVar200 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 45i64 {
@@ -20639,10 +22369,20 @@ impl instructionVar201 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 43i64 {
@@ -20704,10 +22444,20 @@ impl instructionVar202 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 38i64 {
@@ -20769,10 +22519,20 @@ impl instructionVar203 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 42i64 {
@@ -20834,10 +22594,20 @@ impl instructionVar204 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 32i64 {
@@ -20899,10 +22669,20 @@ impl instructionVar205 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 33i64 {
@@ -20964,10 +22744,20 @@ impl instructionVar206 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 40i64 {
@@ -21029,10 +22819,20 @@ impl instructionVar207 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 41i64 {
@@ -21093,10 +22893,20 @@ impl instructionVar208 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -21177,13 +22987,22 @@ impl instructionVar209 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21272,13 +23091,22 @@ impl instructionVar210 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21367,13 +23195,22 @@ impl instructionVar211 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21458,10 +23295,20 @@ impl instructionVar212 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -21542,13 +23389,22 @@ impl instructionVar213 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21637,13 +23493,22 @@ impl instructionVar214 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21732,13 +23597,22 @@ impl instructionVar215 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21821,10 +23695,20 @@ impl instructionVar216 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -21903,13 +23787,22 @@ impl instructionVar217 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -21996,13 +23889,22 @@ impl instructionVar218 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22089,13 +23991,22 @@ impl instructionVar219 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22178,10 +24089,20 @@ impl instructionVar220 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -22260,13 +24181,22 @@ impl instructionVar221 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22353,13 +24283,22 @@ impl instructionVar222 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22446,13 +24385,22 @@ impl instructionVar223 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22535,10 +24483,20 @@ impl instructionVar224 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -22617,13 +24575,22 @@ impl instructionVar225 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22710,13 +24677,22 @@ impl instructionVar226 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22803,13 +24779,22 @@ impl instructionVar227 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -22892,10 +24877,20 @@ impl instructionVar228 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -22974,13 +24969,22 @@ impl instructionVar229 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -23067,13 +25071,22 @@ impl instructionVar230 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -23160,13 +25173,22 @@ impl instructionVar231 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -23251,10 +25273,20 @@ impl instructionVar232 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -23331,10 +25363,20 @@ impl instructionVar233 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -23411,10 +25453,20 @@ impl instructionVar234 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -23489,10 +25541,20 @@ impl instructionVar235 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -23567,10 +25629,20 @@ impl instructionVar236 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -23641,10 +25713,20 @@ impl instructionVar237 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 68i64 {
@@ -23687,10 +25769,20 @@ impl instructionVar238 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 84i64 {
@@ -23733,10 +25825,20 @@ impl instructionVar239 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 73i64 {
@@ -23786,10 +25888,20 @@ impl instructionVar240 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 24i64 {
@@ -23853,10 +25965,20 @@ impl instructionVar241 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 28i64 {
@@ -23912,10 +26034,20 @@ impl instructionVar242 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 1i64 {
@@ -23965,10 +26097,20 @@ impl instructionVar243 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 25i64 {
@@ -24032,10 +26174,20 @@ impl instructionVar244 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 29i64 {
@@ -24105,10 +26257,20 @@ impl instructionVar245 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 11i64 {
@@ -24192,10 +26354,20 @@ impl instructionVar246 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 8i64 {
@@ -24279,10 +26451,20 @@ impl instructionVar247 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 12i64 {
@@ -24372,10 +26554,20 @@ impl instructionVar248 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 9i64 {
@@ -24465,10 +26657,20 @@ impl instructionVar249 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 13i64 {
@@ -24558,10 +26760,20 @@ impl instructionVar250 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 10i64 {
@@ -24652,10 +26864,20 @@ impl instructionVar251 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 3i64 {
@@ -24739,10 +26961,20 @@ impl instructionVar252 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 0i64 {
@@ -24832,10 +27064,20 @@ impl instructionVar253 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -24926,10 +27168,20 @@ impl instructionVar254 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 1i64 {
@@ -25019,10 +27271,20 @@ impl instructionVar255 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 5i64 {
@@ -25112,10 +27374,20 @@ impl instructionVar256 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 2i64 {
@@ -25192,10 +27464,20 @@ impl instructionVar257 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 18i64 {
@@ -25242,10 +27524,20 @@ impl instructionVar258 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -25320,10 +27612,20 @@ impl instructionVar259 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -25394,10 +27696,20 @@ impl instructionVar260 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 64i64 {
@@ -25440,10 +27752,20 @@ impl instructionVar261 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 80i64 {
@@ -25485,10 +27807,20 @@ impl instructionVar262 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 167i64 {
@@ -25537,10 +27869,20 @@ impl instructionVar263 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -25617,10 +27959,20 @@ impl instructionVar264 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -25697,10 +28049,20 @@ impl instructionVar265 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -25777,10 +28139,20 @@ impl instructionVar266 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -25857,10 +28229,20 @@ impl instructionVar267 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -25937,10 +28319,20 @@ impl instructionVar268 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -26017,10 +28409,20 @@ impl instructionVar269 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -26097,10 +28499,20 @@ impl instructionVar270 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -26177,10 +28589,20 @@ impl instructionVar271 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -26251,10 +28673,20 @@ impl instructionVar272 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 54i64 {
@@ -26297,10 +28729,20 @@ impl instructionVar273 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 55i64 {
@@ -26343,10 +28785,20 @@ impl instructionVar274 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 57i64 {
@@ -26389,10 +28841,20 @@ impl instructionVar275 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 59i64 {
@@ -26435,10 +28897,20 @@ impl instructionVar276 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 52i64 {
@@ -26481,10 +28953,20 @@ impl instructionVar277 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 53i64 {
@@ -26527,10 +29009,20 @@ impl instructionVar278 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 50i64 {
@@ -26573,10 +29065,20 @@ impl instructionVar279 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 51i64 {
@@ -26619,10 +29121,20 @@ impl instructionVar280 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 56i64 {
@@ -26665,10 +29177,20 @@ impl instructionVar281 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 58i64 {
@@ -26711,10 +29233,20 @@ impl instructionVar282 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 48i64 {
@@ -26757,10 +29289,20 @@ impl instructionVar283 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 49i64 {
@@ -26802,10 +29344,20 @@ impl instructionVar284 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 58i64 {
@@ -26848,10 +29400,20 @@ impl instructionVar285 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 59i64 {
@@ -26898,10 +29460,20 @@ impl instructionVar286 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -26976,10 +29548,20 @@ impl instructionVar287 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -27050,10 +29632,20 @@ impl instructionVar288 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 69i64 {
@@ -27096,10 +29688,20 @@ impl instructionVar289 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 85i64 {
@@ -27146,10 +29748,20 @@ impl instructionVar290 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -27224,10 +29836,20 @@ impl instructionVar291 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -27298,10 +29920,20 @@ impl instructionVar292 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 70i64 {
@@ -27344,10 +29976,20 @@ impl instructionVar293 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 86i64 {
@@ -27389,10 +30031,20 @@ impl instructionVar294 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 10i64 {
@@ -27434,10 +30086,20 @@ impl instructionVar295 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 11i64 {
@@ -27479,10 +30141,20 @@ impl instructionVar296 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 61i64 {
@@ -27523,10 +30195,20 @@ impl instructionVar297 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let mut sub_pattern_c40 = |tokens: &[u8], context_param: &mut T| {
@@ -27589,10 +30271,20 @@ impl instructionVar298 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -27669,10 +30361,20 @@ impl instructionVar299 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -27749,10 +30451,20 @@ impl instructionVar300 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -27829,10 +30541,20 @@ impl instructionVar301 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -27909,10 +30631,20 @@ impl instructionVar302 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -27989,10 +30721,20 @@ impl instructionVar303 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -28069,10 +30811,20 @@ impl instructionVar304 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -28149,10 +30901,20 @@ impl instructionVar305 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -28222,10 +30984,20 @@ impl instructionVar306 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 5121i64 {
@@ -28267,10 +31039,20 @@ impl instructionVar307 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 5136i64 {
@@ -28312,10 +31094,20 @@ impl instructionVar308 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 5122i64 {
@@ -28366,10 +31158,20 @@ impl instructionVar309 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 183i64 {
@@ -28660,13 +31462,22 @@ impl instructionVar310 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -28755,13 +31566,22 @@ impl instructionVar311 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -28850,13 +31670,22 @@ impl instructionVar312 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -28945,13 +31774,22 @@ impl instructionVar313 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29040,13 +31878,22 @@ impl instructionVar314 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29135,13 +31982,22 @@ impl instructionVar315 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29228,13 +32084,22 @@ impl instructionVar316 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29321,13 +32186,22 @@ impl instructionVar317 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29414,13 +32288,22 @@ impl instructionVar318 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29499,10 +32382,20 @@ impl instructionVar319 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 62i64 {
@@ -29553,13 +32446,22 @@ impl instructionVar320 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29646,13 +32548,22 @@ impl instructionVar321 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29739,13 +32650,22 @@ impl instructionVar322 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29832,13 +32752,22 @@ impl instructionVar323 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -29925,13 +32854,22 @@ impl instructionVar324 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -30018,13 +32956,22 @@ impl instructionVar325 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -30111,13 +33058,22 @@ impl instructionVar326 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -30204,13 +33160,22 @@ impl instructionVar327 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -30297,13 +33262,22 @@ impl instructionVar328 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        let tmp = context_instance.register().read_Prefix18_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         let GPaged = if let Some((len, table)) = TableGPaged::parse(
             tokens_current,
             &mut context_instance,
@@ -30388,10 +33362,20 @@ impl instructionVar329 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -30468,10 +33452,20 @@ impl instructionVar330 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -30548,10 +33542,20 @@ impl instructionVar331 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -30628,10 +33632,20 @@ impl instructionVar332 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -30708,10 +33722,20 @@ impl instructionVar333 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -30788,10 +33812,20 @@ impl instructionVar334 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -30868,10 +33902,20 @@ impl instructionVar335 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -30948,10 +33992,20 @@ impl instructionVar336 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -31028,10 +34082,20 @@ impl instructionVar337 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -31108,10 +34172,20 @@ impl instructionVar338 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -31188,10 +34262,20 @@ impl instructionVar339 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -31268,10 +34352,20 @@ impl instructionVar340 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -31341,10 +34435,20 @@ impl instructionVar341 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 63i64 {
@@ -31386,10 +34490,20 @@ impl instructionVar342 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 14i64 {
@@ -31431,10 +34545,20 @@ impl instructionVar343 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46850i64 {
@@ -31476,10 +34600,20 @@ impl instructionVar344 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 15i64 {
@@ -31532,10 +34666,20 @@ impl instructionVar345 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -31608,10 +34752,20 @@ impl instructionVar346 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -31679,10 +34833,20 @@ impl instructionVar347 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 61i64 {
@@ -31749,10 +34913,20 @@ impl instructionVar348 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -31825,10 +34999,20 @@ impl instructionVar349 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 4i64 {
@@ -31898,10 +35082,20 @@ impl instructionVar350 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c65 = |tokens: &[u8], context_param: &mut T| {
@@ -32166,10 +35360,20 @@ impl instructionVar351 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c54 = |tokens: &[u8], context_param: &mut T| {
@@ -32353,10 +35557,20 @@ impl instructionVar352 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -32544,10 +35758,20 @@ impl instructionVar353 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -32665,10 +35889,20 @@ impl instructionVar354 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -32866,10 +36100,20 @@ impl instructionVar355 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -33389,10 +36633,20 @@ impl instructionVar356 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -33508,10 +36762,20 @@ impl instructionVar357 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -33629,10 +36893,20 @@ impl instructionVar358 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -33967,10 +37241,20 @@ impl instructionVar359 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -34261,10 +37545,20 @@ impl instructionVar360 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -34548,10 +37842,20 @@ impl instructionVar361 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46880i64 {
@@ -34599,10 +37903,20 @@ impl instructionVar362 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 48i64 {
@@ -34650,10 +37964,20 @@ impl instructionVar363 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -34728,10 +38052,20 @@ impl instructionVar364 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -34802,10 +38136,20 @@ impl instructionVar365 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 151i64 {
@@ -34848,10 +38192,20 @@ impl instructionVar366 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 215i64 {
@@ -34894,10 +38248,20 @@ impl instructionVar367 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 151i64 {
@@ -34940,10 +38304,20 @@ impl instructionVar368 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 215i64 {
@@ -34985,10 +38359,20 @@ impl instructionVar369 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46965i64 {
@@ -35030,10 +38414,20 @@ impl instructionVar370 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46966i64 {
@@ -35075,10 +38469,20 @@ impl instructionVar371 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46935i64 {
@@ -35120,10 +38524,20 @@ impl instructionVar372 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 46951i64 {
@@ -35165,10 +38579,20 @@ impl instructionVar373 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 62i64 {
@@ -35210,10 +38634,20 @@ impl instructionVar374 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 60i64 {
@@ -35256,10 +38690,20 @@ impl instructionVar375 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop8().disassembly() != 60i64 {
@@ -35302,10 +38746,20 @@ impl instructionVar376 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 47045i64 {
@@ -35348,10 +38802,20 @@ impl instructionVar377 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop16().disassembly() != 47046i64 {
@@ -42681,7 +46145,12 @@ impl opr8a_8Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_UseGPAGE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_UseGPAGE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let imm8 = token_parser.TokenFieldimm8();
@@ -42766,7 +46235,12 @@ impl opr8a_16Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_UseGPAGE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_UseGPAGE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let imm8 = token_parser.TokenFieldimm8();
@@ -47942,7 +51416,12 @@ impl indexedA_5Var0 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_UseGPAGE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_UseGPAGE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let indexed5 = if let Some((len, table)) = Tableindexed5::parse(
@@ -48038,7 +51517,12 @@ impl indexed1_5Var0 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_UseGPAGE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_UseGPAGE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let indexed5 = if let Some((len, table)) = Tableindexed5::parse(
@@ -48134,7 +51618,12 @@ impl indexed2_5Var0 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_UseGPAGE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_UseGPAGE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let indexed5 = if let Some((len, table)) = Tableindexed5::parse(
@@ -48874,7 +52363,12 @@ impl SkipNextInstrVar0 {
         let mut context_instance = context.clone();
         let mut calc_dest: i64 = 0;
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -48965,7 +52459,12 @@ impl CallDestVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -49080,7 +52579,12 @@ impl SkipNext2BytesVar0 {
         let mut context_instance = context.clone();
         let mut calc_dest: i64 = 0;
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         pattern_len += block_0_len;
@@ -49163,16 +52667,27 @@ impl GPagedVar0 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
@@ -49206,16 +52721,27 @@ impl GPagedVar1 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_XGATE_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_XGATE_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_Prefix18_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_Prefix18_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let tmp = 0i64;
         context_instance
             .register_mut()
-            .write_UseGPAGE_disassembly(tmp);
+            .write_UseGPAGE_disassembly(tmp)
+            .unwrap();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];

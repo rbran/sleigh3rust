@@ -1,207 +1,557 @@
+use sleigh4rust::*;
 pub type AddrType = u32;
-macro_rules! impl_read_to_type {
-    ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        fn $read_unsigned<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $unsigned_type {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(TYPE_BITS / 8 == $len);
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let mut data = if BIG_ENDIAN {
-                <$unsigned_type>::from_be_bytes(data)
-            } else {
-                <$unsigned_type>::from_le_bytes(data)
-            };
-            let value_mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            data = data >> start_bit;
-            data = data & value_mask;
-            data
-        }
-        fn $read_signed<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $signed_type {
-            const TYPE_BITS: usize = <$signed_type>::BITS as usize;
-            assert!(len_bits > 1);
-            assert!(TYPE_BITS / 8 == $len);
-            let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
-                .unwrap()
-                >> (TYPE_BITS - len_bits);
-            let sign_mask = !value_mask;
-            let value_part = data & value_mask;
-            let sign_part = data & sign_mask;
-            if sign_part != 0 {
-                let neg_value = (!value_part + 1) & value_mask;
-                <$signed_type>::try_from(neg_value)
-                    .unwrap()
-                    .checked_neg()
-                    .unwrap()
-            } else {
-                <$signed_type>::try_from(value_part).unwrap()
-            }
-        }
-        fn $write_unsigned<const BIG_ENDIAN: bool>(
-            value: $unsigned_type,
-            mem: $unsigned_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let mask = value_max << start_bit;
-            let mut value = value;
-            value <<= start_bit;
-            value = (mem & !mask) | value;
-            if BIG_ENDIAN {
-                value.to_be_bytes()
-            } else {
-                value.to_le_bytes()
-            }
-        }
-        fn $write_signed<const BIG_ENDIAN: bool>(
-            value: $signed_type,
-            mem: $signed_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value: $unsigned_type = if value < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mem: $unsigned_type = if mem < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value & mask;
-            $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
-        }
-    };
-}
-impl_read_to_type!(u8, i8, 1, read_u8, read_i8, write_u8, write_i8);
-impl_read_to_type!(u16, i16, 2, read_u16, read_i16, write_u16, write_i16);
-impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
-impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
-impl_read_to_type!(
-    u128, i128, 16, read_u128, read_i128, write_u128, write_i128
-);
-impl_read_to_type!(
-    ethnum::u256,
-    ethnum::i256,
-    32,
-    read_u256,
-    read_i256,
-    write_u256,
-    write_i256
-);
 pub trait GlobalSetTrait {
     fn set_PCPMode(&mut self, address: Option<u32>, value: i64);
 }
-pub trait MemoryRead {
-    type AddressType;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]);
-}
-pub trait MemoryWrite {
-    type AddressType;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
+#[derive(Default)]
+pub struct GlobalSetDefault<C: ContextTrait>(
+    pub std::collections::HashMap<AddrType, C>,
+);
+impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
+    fn set_PCPMode(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_PCPMode_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
 }
 pub trait ContextregisterTrait:
-    MemoryRead<AddressType = u32> + MemoryWrite<AddressType = u32>
+    MemoryRead<AddressType = u32> + MemoryWrite
 {
-    fn read_PCPMode_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(0u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<false>(work_value, 0u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_PCPMode_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<false>(0, 0, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_PCPMode_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(0u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_le_bytes(mem);
-        let mem =
-            write_u8::<false>(param as u8, mem, 0u64 as usize, 1u64 as usize);
-        self.write(0u64 as u32, &mem[0..1]);
+    fn write_PCPMode_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<false>(u8::from(param), 0, 0, 1)
     }
-    fn read_PCPMode_disassembly(&self) -> i64 {
-        i64::try_from(self.read_PCPMode_raw()).unwrap()
+    fn read_PCPMode_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_PCPMode_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_PCPMode_disassembly(&mut self, param: i64) {
+    fn write_PCPMode_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_PCPMode_raw(param as u8)
     }
-    fn read_PCPMode_execution(&self) -> u8 {
+    fn read_PCPMode_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_PCPMode_raw()
     }
-    fn write_PCPMode_execution(&mut self, param: u8) {
+    fn write_PCPMode_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_PCPMode_raw(param)
     }
-    fn PCPMode_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_PCPMode_raw())
+    fn PCPMode_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_PCPMode_raw()?))
     }
 }
-pub trait ContextTrait {
+pub trait ContextTrait: Default {
     type Typeregister: ContextregisterTrait;
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ContextregisterStruct {
-    pub chunk_0x0: [u8; 4u64 as usize],
+#[derive(Debug, Clone, Copy)]
+pub struct ContextregisterStructDebug {
+    pub chunk_0x0: [Option<bool>; 32],
 }
-impl ContextregisterTrait for ContextregisterStruct {}
-impl MemoryRead for ContextregisterStruct {
-    type AddressType = u32;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
-        match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                buf.copy_from_slice(&self.chunk_0x0[start..end]);
-            }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+impl Default for ContextregisterStructDebug {
+    fn default() -> Self {
+        Self {
+            chunk_0x0: [None; 32],
         }
     }
 }
-impl MemoryWrite for ContextregisterStruct {
-    type AddressType = u32;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
+impl ContextregisterStructDebug {
+    fn read_bits(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                self.chunk_0x0[start..end].copy_from_slice(buf);
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                            as u8)
+                            << bit;
+                    }
+                }
             }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+            (addr_start, addr_end) => {
+                return Err(MemoryReadError::UnableToReadMemory(
+                    addr_start, addr_end,
+                ))
+            }
         }
+        Ok(())
+    }
+    fn write_bits(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
+        match (addr, addr_end) {
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        self.chunk_0x0[chunk_index + bit] =
+                            Some(*buf_byte & (1 << bit) != 0);
+                    }
+                }
+            }
+            (addr_start, addr_end) => {
+                return Err(MemoryWriteError::UnableToWriteMemory(
+                    addr_start, addr_end,
+                ))
+            }
+        }
+        Ok(())
+    }
+}
+impl ContextregisterTrait for ContextregisterStructDebug {}
+impl MemoryRead for ContextregisterStructDebug {
+    type AddressType = u32;
+    fn read(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.read_bits(addr, buf, &mut inner_buf)
+    }
+    fn read_u8<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u8, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u8>::from_be_bytes(data)
+        } else {
+            <u8>::from_le_bytes(data)
+        };
+        let value_mask = <u8>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u16<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u16, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u16>::from_be_bytes(data)
+        } else {
+            <u16>::from_le_bytes(data)
+        };
+        let value_mask = <u16>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u32<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u32, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u32>::from_be_bytes(data)
+        } else {
+            <u32>::from_le_bytes(data)
+        };
+        let value_mask = <u32>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u64<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u64, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u64>::from_be_bytes(data)
+        } else {
+            <u64>::from_le_bytes(data)
+        };
+        let value_mask = <u64>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u128<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u128, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u128>::from_be_bytes(data)
+        } else {
+            <u128>::from_le_bytes(data)
+        };
+        let value_mask = <u128>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+}
+impl MemoryWrite for ContextregisterStructDebug {
+    fn write(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.write_bits(addr, buf, &inner_buf)
+    }
+    fn write_u8<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u8,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u16<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u16,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u32<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u32,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u64<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u64,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u128<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u128,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
     }
 }
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
-    pub register: ContextregisterStruct,
+    pub register: ContextregisterStructDebug,
 }
 impl ContextTrait for SpacesStruct {
-    type Typeregister = ContextregisterStruct;
+    type Typeregister = ContextregisterStructDebug;
     fn register(&self) -> &Self::Typeregister {
         &self.register
     }
@@ -1809,6 +2159,20 @@ impl TokenField_pcp_op1631 {
     }
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
+impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
+    type AddressType = usize;
+    fn read(
+        &self,
+        addr: Self::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<Self::AddressType>> {
+        let end = addr + buf.len();
+        self.0
+            .get(addr..end)
+            .map(|src| buf.copy_from_slice(src))
+            .ok_or(MemoryReadError::UnableToReadMemory(addr, end))
+    }
+}
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
@@ -1816,1534 +2180,412 @@ impl<const LEN: usize> TokenParser<LEN> {
         Some(Self(token_data))
     }
     fn TokenFieldop0003(&self) -> TokenField_op0003 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0003(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 4).unwrap();
+        TokenField_op0003(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0005(&self) -> TokenField_op0005 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0005(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 6).unwrap();
+        TokenField_op0005(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0006(&self) -> TokenField_op0006 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0006(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 7).unwrap();
+        TokenField_op0006(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0007(&self) -> TokenField_op0007 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0007(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 8).unwrap();
+        TokenField_op0007(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0404(&self) -> TokenField_op0404 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0404(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 1).unwrap();
+        TokenField_op0404(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0405(&self) -> TokenField_op0405 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0405(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 2).unwrap();
+        TokenField_op0405(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0407(&self) -> TokenField_op0407 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0407(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 4).unwrap();
+        TokenField_op0407(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0606(&self) -> TokenField_op0606 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0606(inner_value)
+        let inner_value = self.read_u8::<false>(0, 6, 1).unwrap();
+        TokenField_op0606(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0607(&self) -> TokenField_op0607 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0607(inner_value)
+        let inner_value = self.read_u8::<false>(0, 6, 2).unwrap();
+        TokenField_op0607(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0707(&self) -> TokenField_op0707 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0707(inner_value)
+        let inner_value = self.read_u8::<false>(0, 7, 1).unwrap();
+        TokenField_op0707(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0810(&self) -> TokenField_op0810 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0810(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 3).unwrap();
+        TokenField_op0810(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRd0811(&self) -> TokenField_Rd0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rd0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Rd0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRa0811(&self) -> TokenField_Ra0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ra0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Ra0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRe0811(&self) -> TokenField_Re0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Re0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Re0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRee0811(&self) -> TokenField_Ree0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ree0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Ree0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldReo0811(&self) -> TokenField_Reo0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Reo0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Reo0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldReN0811(&self) -> TokenField_ReN0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ReN0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_ReN0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0811(&self) -> TokenField_op0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_op0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRp0811(&self) -> TokenField_Rp0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rp0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Rp0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRpe0811(&self) -> TokenField_Rpe0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rpe0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Rpe0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRpo0811(&self) -> TokenField_Rpo0811 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rpo0811(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Rpo0811(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop0815(&self) -> TokenField_op0815 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op0815(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 8).unwrap();
+        TokenField_op0815(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop0815(&self) -> TokenField_sop0815 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sop0815(inner_value)
+        let inner_value = self.read_i8::<false>(1, 0, 8).unwrap();
+        TokenField_sop0815(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1111(&self) -> TokenField_op1111 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1111(inner_value)
+        let inner_value = self.read_u8::<false>(1, 3, 1).unwrap();
+        TokenField_op1111(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRd1215(&self) -> TokenField_Rd1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rd1215(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Rd1215(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1215(&self) -> TokenField_op1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1215(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_op1215(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop1215(&self) -> TokenField_sop1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sop1215(inner_value)
+        let inner_value = self.read_i8::<false>(1, 4, 4).unwrap();
+        TokenField_sop1215(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRa1215(&self) -> TokenField_Ra1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ra1215(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Ra1215(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRpe1215(&self) -> TokenField_Rpe1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rpe1215(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Rpe1215(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRpo1215(&self) -> TokenField_Rpo1215 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rpo1215(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Rpo1215(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1515(&self) -> TokenField_op1515 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1515(inner_value)
+        let inner_value = self.read_u8::<false>(1, 7, 1).unwrap();
+        TokenField_op1515(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1617(&self) -> TokenField_op1617 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1617(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 2).unwrap();
+        TokenField_op1617(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1620(&self) -> TokenField_op1620 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1620(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 5).unwrap();
+        TokenField_op1620(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop1620(&self) -> TokenField_sop1620 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 0u64 as usize, 5u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sop1620(inner_value)
+        let inner_value = self.read_i8::<false>(0, 0, 5).unwrap();
+        TokenField_sop1620(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1621(&self) -> TokenField_op1621 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1621(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 6).unwrap();
+        TokenField_op1621(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1622(&self) -> TokenField_op1622 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1622(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 7).unwrap();
+        TokenField_op1622(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1623(&self) -> TokenField_op1623 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1623(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 8).unwrap();
+        TokenField_op1623(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1627(&self) -> TokenField_op1627 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 0u64 as usize, 12u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_op1627(inner_value)
+        let inner_value = self.read_u16::<false>(0, 0, 12).unwrap();
+        TokenField_op1627(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop1627(&self) -> TokenField_sop1627 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<false>(work_value, 0u64 as usize, 12u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_sop1627(inner_value)
+        let inner_value = self.read_i16::<false>(0, 0, 12).unwrap();
+        TokenField_sop1627(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop1630(&self) -> TokenField_sop1630 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<false>(work_value, 0u64 as usize, 15u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_sop1630(inner_value)
+        let inner_value = self.read_i16::<false>(0, 0, 15).unwrap();
+        TokenField_sop1630(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1631(&self) -> TokenField_op1631 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_op1631(inner_value)
+        let inner_value = self.read_u16::<false>(0, 0, 16).unwrap();
+        TokenField_op1631(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1819(&self) -> TokenField_op1819 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1819(inner_value)
+        let inner_value = self.read_u8::<false>(0, 2, 2).unwrap();
+        TokenField_op1819(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1823(&self) -> TokenField_op1823 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op1823(inner_value)
+        let inner_value = self.read_u8::<false>(0, 2, 6).unwrap();
+        TokenField_op1823(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop1827(&self) -> TokenField_op1827 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 2u64 as usize, 10u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_op1827(inner_value)
+        let inner_value = self.read_u16::<false>(0, 2, 10).unwrap();
+        TokenField_op1827(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2020(&self) -> TokenField_op2020 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2020(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 1).unwrap();
+        TokenField_op2020(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2023(&self) -> TokenField_op2023 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2023(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 4).unwrap();
+        TokenField_op2023(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2027(&self) -> TokenField_op2027 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 4u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2027(inner_value)
+        let inner_value = self.read_u16::<false>(0, 4, 8).unwrap();
+        TokenField_op2027(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2122(&self) -> TokenField_op2122 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2122(inner_value)
+        let inner_value = self.read_u8::<false>(0, 5, 2).unwrap();
+        TokenField_op2122(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2123(&self) -> TokenField_op2123 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2123(inner_value)
+        let inner_value = self.read_u8::<false>(0, 5, 3).unwrap();
+        TokenField_op2123(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2127(&self) -> TokenField_op2127 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 5u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2127(inner_value)
+        let inner_value = self.read_u16::<false>(0, 5, 7).unwrap();
+        TokenField_op2127(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2131(&self) -> TokenField_op2131 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 5u64 as usize, 11u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_op2131(inner_value)
+        let inner_value = self.read_u16::<false>(0, 5, 11).unwrap();
+        TokenField_op2131(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2225(&self) -> TokenField_op2225 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 6u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2225(inner_value)
+        let inner_value = self.read_u16::<false>(0, 6, 4).unwrap();
+        TokenField_op2225(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2227(&self) -> TokenField_op2227 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 6u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2227(inner_value)
+        let inner_value = self.read_u16::<false>(0, 6, 6).unwrap();
+        TokenField_op2227(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop2227(&self) -> TokenField_sop2227 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<false>(work_value, 6u64 as usize, 6u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sop2227(inner_value)
+        let inner_value = self.read_i16::<false>(0, 6, 6).unwrap();
+        TokenField_sop2227(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2327(&self) -> TokenField_op2327 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 7u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2327(inner_value)
+        let inner_value = self.read_u16::<false>(0, 7, 5).unwrap();
+        TokenField_op2327(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRd2427(&self) -> TokenField_Rd2427 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rd2427(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Rd2427(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRe2427(&self) -> TokenField_Re2427 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Re2427(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Re2427(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRee2427(&self) -> TokenField_Ree2427 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ree2427(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Ree2427(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldReo2427(&self) -> TokenField_Reo2427 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Reo2427(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 4).unwrap();
+        TokenField_Reo2427(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2627(&self) -> TokenField_op2627 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2627(inner_value)
+        let inner_value = self.read_u8::<false>(1, 2, 2).unwrap();
+        TokenField_op2627(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRd2831(&self) -> TokenField_Rd2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Rd2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Rd2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRa2831(&self) -> TokenField_Ra2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ra2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Ra2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRe2831(&self) -> TokenField_Re2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Re2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Re2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRee2831(&self) -> TokenField_Ree2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Ree2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Ree2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldReo2831(&self) -> TokenField_Reo2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_Reo2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_Reo2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop2831(&self) -> TokenField_op2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op2831(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 4).unwrap();
+        TokenField_op2831(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsop2831(&self) -> TokenField_sop2831 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<false>(work_value, 4u64 as usize, 4u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sop2831(inner_value)
+        let inner_value = self.read_i8::<false>(1, 4, 4).unwrap();
+        TokenField_sop2831(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop3131(&self) -> TokenField_op3131 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op3131(inner_value)
+        let inner_value = self.read_u8::<false>(1, 7, 1).unwrap();
+        TokenField_op3131(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0000(&self) -> TokenField_pcp_op0000 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0000(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 1).unwrap();
+        TokenField_pcp_op0000(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0001(&self) -> TokenField_pcp_op0001 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0001(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 2).unwrap();
+        TokenField_pcp_op0001(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0002(&self) -> TokenField_pcp_op0002 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0002(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 3).unwrap();
+        TokenField_pcp_op0002(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldccAB(&self) -> TokenField_ccAB {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ccAB(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 4).unwrap();
+        TokenField_ccAB(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldccA(&self) -> TokenField_ccA {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ccA(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 3).unwrap();
+        TokenField_ccA(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0004(&self) -> TokenField_pcp_op0004 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0004(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 5).unwrap();
+        TokenField_pcp_op0004(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0005(&self) -> TokenField_pcp_op0005 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0005(inner_value)
+        let inner_value = self.read_u8::<false>(0, 0, 6).unwrap();
+        TokenField_pcp_op0005(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0009(&self) -> TokenField_pcp_op0009 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 0u64 as usize, 10u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0009(inner_value)
+        let inner_value = self.read_u16::<false>(0, 0, 10).unwrap();
+        TokenField_pcp_op0009(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0010(&self) -> TokenField_pcp_op0010 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 0u64 as usize, 11u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0010(inner_value)
+        let inner_value = self.read_u16::<false>(0, 0, 11).unwrap();
+        TokenField_pcp_op0010(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0101(&self) -> TokenField_pcp_op0101 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0101(inner_value)
+        let inner_value = self.read_u8::<false>(0, 1, 1).unwrap();
+        TokenField_pcp_op0101(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0202(&self) -> TokenField_pcp_op0202 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0202(inner_value)
+        let inner_value = self.read_u8::<false>(0, 2, 1).unwrap();
+        TokenField_pcp_op0202(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0203(&self) -> TokenField_pcp_op0203 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0203(inner_value)
+        let inner_value = self.read_u8::<false>(0, 2, 2).unwrap();
+        TokenField_pcp_op0203(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0204(&self) -> TokenField_pcp_op0204 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0204(inner_value)
+        let inner_value = self.read_u8::<false>(0, 2, 3).unwrap();
+        TokenField_pcp_op0204(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0303(&self) -> TokenField_pcp_op0303 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0303(inner_value)
+        let inner_value = self.read_u8::<false>(0, 3, 1).unwrap();
+        TokenField_pcp_op0303(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldR0305(&self) -> TokenField_R0305 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 3u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_R0305(inner_value)
+        let inner_value = self.read_u8::<false>(0, 3, 3).unwrap();
+        TokenField_R0305(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0404(&self) -> TokenField_pcp_op0404 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0404(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 1).unwrap();
+        TokenField_pcp_op0404(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0405(&self) -> TokenField_pcp_op0405 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0405(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 2).unwrap();
+        TokenField_pcp_op0405(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0406(&self) -> TokenField_pcp_op0406 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0406(inner_value)
+        let inner_value = self.read_u8::<false>(0, 4, 3).unwrap();
+        TokenField_pcp_op0406(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0505(&self) -> TokenField_pcp_op0505 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0505(inner_value)
+        let inner_value = self.read_u8::<false>(0, 5, 1).unwrap();
+        TokenField_pcp_op0505(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0506(&self) -> TokenField_pcp_op0506 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0506(inner_value)
+        let inner_value = self.read_u8::<false>(0, 5, 2).unwrap();
+        TokenField_pcp_op0506(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldR0608(&self) -> TokenField_R0608 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 6u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_R0608(inner_value)
+        let inner_value = self.read_u16::<false>(0, 6, 3).unwrap();
+        TokenField_R0608(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldccB(&self) -> TokenField_ccB {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 6u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ccB(inner_value)
+        let inner_value = self.read_u16::<false>(0, 6, 4).unwrap();
+        TokenField_ccB(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0707(&self) -> TokenField_pcp_op0707 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0707(inner_value)
+        let inner_value = self.read_u8::<false>(0, 7, 1).unwrap();
+        TokenField_pcp_op0707(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0708(&self) -> TokenField_pcp_op0708 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 7u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0708(inner_value)
+        let inner_value = self.read_u16::<false>(0, 7, 2).unwrap();
+        TokenField_pcp_op0708(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0808(&self) -> TokenField_pcp_op0808 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0808(inner_value)
+        let inner_value = self.read_u8::<false>(1, 0, 1).unwrap();
+        TokenField_pcp_op0808(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0909(&self) -> TokenField_pcp_op0909 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0909(inner_value)
+        let inner_value = self.read_u8::<false>(1, 1, 1).unwrap();
+        TokenField_pcp_op0909(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0910(&self) -> TokenField_pcp_op0910 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 1u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0910(inner_value)
+        let inner_value = self.read_u8::<false>(1, 1, 2).unwrap();
+        TokenField_pcp_op0910(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op0912(&self) -> TokenField_pcp_op0912 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 1u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op0912(inner_value)
+        let inner_value = self.read_u8::<false>(1, 1, 4).unwrap();
+        TokenField_pcp_op0912(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op1010(&self) -> TokenField_pcp_op1010 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op1010(inner_value)
+        let inner_value = self.read_u8::<false>(1, 2, 1).unwrap();
+        TokenField_pcp_op1010(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op1012(&self) -> TokenField_pcp_op1012 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 2u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op1012(inner_value)
+        let inner_value = self.read_u8::<false>(1, 2, 3).unwrap();
+        TokenField_pcp_op1012(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op1111(&self) -> TokenField_pcp_op1111 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op1111(inner_value)
+        let inner_value = self.read_u8::<false>(1, 3, 1).unwrap();
+        TokenField_pcp_op1111(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op1212(&self) -> TokenField_pcp_op1212 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pcp_op1212(inner_value)
+        let inner_value = self.read_u8::<false>(1, 4, 1).unwrap();
+        TokenField_pcp_op1212(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaddrmode(&self) -> TokenField_addrmode {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<false>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_addrmode(inner_value)
+        let inner_value = self.read_u8::<false>(1, 5, 3).unwrap();
+        TokenField_addrmode(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldpcp_op1631(&self) -> TokenField_pcp_op1631 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<false>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_pcp_op1631(inner_value)
+        let inner_value = self.read_u16::<false>(0, 0, 16).unwrap();
+        TokenField_pcp_op1631(u16::try_from(inner_value).unwrap())
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -3816,7 +3058,12 @@ impl instructionVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -3870,7 +3117,12 @@ impl instructionVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -3924,7 +3176,12 @@ impl instructionVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -3978,7 +3235,12 @@ impl instructionVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4032,7 +3294,12 @@ impl instructionVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4092,7 +3359,12 @@ impl instructionVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4145,7 +3417,12 @@ impl instructionVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4198,7 +3475,12 @@ impl instructionVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4251,7 +3533,12 @@ impl instructionVar8 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4304,7 +3591,12 @@ impl instructionVar9 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4358,7 +3650,12 @@ impl instructionVar10 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4412,7 +3709,12 @@ impl instructionVar11 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 47i64 {
@@ -4466,7 +3768,12 @@ impl instructionVar12 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4520,7 +3827,12 @@ impl instructionVar13 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -4574,7 +3886,12 @@ impl instructionVar14 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -4628,7 +3945,12 @@ impl instructionVar15 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4682,7 +4004,12 @@ impl instructionVar16 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4736,7 +4063,12 @@ impl instructionVar17 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -4804,7 +4136,12 @@ impl instructionVar18 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -4868,7 +4205,12 @@ impl instructionVar19 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -4932,7 +4274,12 @@ impl instructionVar20 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -4996,7 +4343,12 @@ impl instructionVar21 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -5060,7 +4412,12 @@ impl instructionVar22 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -5121,7 +4478,12 @@ impl instructionVar23 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 45i64 {
@@ -5181,7 +4543,12 @@ impl instructionVar24 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -5241,7 +4608,12 @@ impl instructionVar25 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 45i64 {
@@ -5301,7 +4673,12 @@ impl instructionVar26 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 45i64 {
@@ -5361,7 +4738,12 @@ impl instructionVar27 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 45i64 {
@@ -5421,7 +4803,12 @@ impl instructionVar28 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 13i64 {
@@ -5481,7 +4868,12 @@ impl instructionVar29 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -5541,7 +4933,12 @@ impl instructionVar30 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -5601,7 +4998,12 @@ impl instructionVar31 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -5661,7 +5063,12 @@ impl instructionVar32 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 117i64 {
@@ -5721,7 +5128,12 @@ impl instructionVar33 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -5784,7 +5196,12 @@ impl instructionVar34 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -5848,7 +5265,12 @@ impl instructionVar35 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -5912,7 +5334,12 @@ impl instructionVar36 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -5976,7 +5403,12 @@ impl instructionVar37 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -6040,7 +5472,12 @@ impl instructionVar38 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -6104,7 +5541,12 @@ impl instructionVar39 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -6168,7 +5610,12 @@ impl instructionVar40 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -6232,7 +5679,12 @@ impl instructionVar41 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -6296,7 +5748,12 @@ impl instructionVar42 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6360,7 +5817,12 @@ impl instructionVar43 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6424,7 +5886,12 @@ impl instructionVar44 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6488,7 +5955,12 @@ impl instructionVar45 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6552,7 +6024,12 @@ impl instructionVar46 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6621,7 +6098,12 @@ impl instructionVar47 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -6721,7 +6203,12 @@ impl instructionVar48 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -6816,7 +6303,12 @@ impl instructionVar49 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -6880,7 +6372,12 @@ impl instructionVar50 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -6944,7 +6441,12 @@ impl instructionVar51 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -7008,7 +6510,12 @@ impl instructionVar52 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -7072,7 +6579,12 @@ impl instructionVar53 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -7136,7 +6648,12 @@ impl instructionVar54 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -7200,7 +6717,12 @@ impl instructionVar55 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -7261,7 +6783,12 @@ impl instructionVar56 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -7325,7 +6852,12 @@ impl instructionVar57 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -7389,7 +6921,12 @@ impl instructionVar58 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -7453,7 +6990,12 @@ impl instructionVar59 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -7517,7 +7059,12 @@ impl instructionVar60 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -7581,7 +7128,12 @@ impl instructionVar61 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -7645,7 +7197,12 @@ impl instructionVar62 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -7717,7 +7274,12 @@ impl instructionVar63 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -7820,7 +7382,12 @@ impl instructionVar64 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -7915,7 +7482,12 @@ impl instructionVar65 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -7979,7 +7551,12 @@ impl instructionVar66 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -8046,7 +7623,12 @@ impl instructionVar67 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8118,7 +7700,12 @@ impl instructionVar68 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8190,7 +7777,12 @@ impl instructionVar69 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8262,7 +7854,12 @@ impl instructionVar70 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8334,7 +7931,12 @@ impl instructionVar71 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8406,7 +8008,12 @@ impl instructionVar72 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8478,7 +8085,12 @@ impl instructionVar73 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -8550,7 +8162,12 @@ impl instructionVar74 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8622,7 +8239,12 @@ impl instructionVar75 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8694,7 +8316,12 @@ impl instructionVar76 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8766,7 +8393,12 @@ impl instructionVar77 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8838,7 +8470,12 @@ impl instructionVar78 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8910,7 +8547,12 @@ impl instructionVar79 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -8982,7 +8624,12 @@ impl instructionVar80 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9054,7 +8701,12 @@ impl instructionVar81 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -9126,7 +8778,12 @@ impl instructionVar82 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9198,7 +8855,12 @@ impl instructionVar83 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -9270,7 +8932,12 @@ impl instructionVar84 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9342,7 +9009,12 @@ impl instructionVar85 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9414,7 +9086,12 @@ impl instructionVar86 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9486,7 +9163,12 @@ impl instructionVar87 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9558,7 +9240,12 @@ impl instructionVar88 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9630,7 +9317,12 @@ impl instructionVar89 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -9702,7 +9394,12 @@ impl instructionVar90 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -9774,7 +9471,12 @@ impl instructionVar91 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -9846,7 +9548,12 @@ impl instructionVar92 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -9918,7 +9625,12 @@ impl instructionVar93 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -9993,7 +9705,12 @@ impl instructionVar94 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10070,7 +9787,12 @@ impl instructionVar95 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10144,7 +9866,12 @@ impl instructionVar96 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10219,7 +9946,12 @@ impl instructionVar97 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10296,7 +10028,12 @@ impl instructionVar98 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10373,7 +10110,12 @@ impl instructionVar99 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10450,7 +10192,12 @@ impl instructionVar100 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10527,7 +10274,12 @@ impl instructionVar101 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10604,7 +10356,12 @@ impl instructionVar102 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -10678,7 +10435,12 @@ impl instructionVar103 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -10750,7 +10512,12 @@ impl instructionVar104 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -10822,7 +10589,12 @@ impl instructionVar105 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -10894,7 +10666,12 @@ impl instructionVar106 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -10966,7 +10743,12 @@ impl instructionVar107 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11038,7 +10820,12 @@ impl instructionVar108 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11110,7 +10897,12 @@ impl instructionVar109 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11182,7 +10974,12 @@ impl instructionVar110 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -11254,7 +11051,12 @@ impl instructionVar111 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -11326,7 +11128,12 @@ impl instructionVar112 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11398,7 +11205,12 @@ impl instructionVar113 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -11470,7 +11282,12 @@ impl instructionVar114 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11542,7 +11359,12 @@ impl instructionVar115 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11614,7 +11436,12 @@ impl instructionVar116 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -11686,7 +11513,12 @@ impl instructionVar117 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11758,7 +11590,12 @@ impl instructionVar118 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11830,7 +11667,12 @@ impl instructionVar119 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11902,7 +11744,12 @@ impl instructionVar120 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -11974,7 +11821,12 @@ impl instructionVar121 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12046,7 +11898,12 @@ impl instructionVar122 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12118,7 +11975,12 @@ impl instructionVar123 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12190,7 +12052,12 @@ impl instructionVar124 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12262,7 +12129,12 @@ impl instructionVar125 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12334,7 +12206,12 @@ impl instructionVar126 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12406,7 +12283,12 @@ impl instructionVar127 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12478,7 +12360,12 @@ impl instructionVar128 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12550,7 +12437,12 @@ impl instructionVar129 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12622,7 +12514,12 @@ impl instructionVar130 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12694,7 +12591,12 @@ impl instructionVar131 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12766,7 +12668,12 @@ impl instructionVar132 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12838,7 +12745,12 @@ impl instructionVar133 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12910,7 +12822,12 @@ impl instructionVar134 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -12982,7 +12899,12 @@ impl instructionVar135 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -13057,7 +12979,12 @@ impl instructionVar136 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -13131,7 +13058,12 @@ impl instructionVar137 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 115i64 {
@@ -13203,7 +13135,12 @@ impl instructionVar138 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 115i64 {
@@ -13275,7 +13212,12 @@ impl instructionVar139 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -13347,7 +13289,12 @@ impl instructionVar140 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 115i64 {
@@ -13419,7 +13366,12 @@ impl instructionVar141 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 115i64 {
@@ -13491,7 +13443,12 @@ impl instructionVar142 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 115i64 {
@@ -13563,7 +13520,12 @@ impl instructionVar143 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -13635,7 +13597,12 @@ impl instructionVar144 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -13707,7 +13674,12 @@ impl instructionVar145 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -13779,7 +13751,12 @@ impl instructionVar146 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -13851,7 +13828,12 @@ impl instructionVar147 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -13923,7 +13905,12 @@ impl instructionVar148 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -13995,7 +13982,12 @@ impl instructionVar149 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14067,7 +14059,12 @@ impl instructionVar150 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14139,7 +14136,12 @@ impl instructionVar151 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14211,7 +14213,12 @@ impl instructionVar152 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14283,7 +14290,12 @@ impl instructionVar153 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14355,7 +14367,12 @@ impl instructionVar154 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -14427,7 +14444,12 @@ impl instructionVar155 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -14499,7 +14521,12 @@ impl instructionVar156 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -14571,7 +14598,12 @@ impl instructionVar157 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14643,7 +14675,12 @@ impl instructionVar158 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14715,7 +14752,12 @@ impl instructionVar159 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14787,7 +14829,12 @@ impl instructionVar160 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -14859,7 +14906,12 @@ impl instructionVar161 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -14931,7 +14983,12 @@ impl instructionVar162 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15003,7 +15060,12 @@ impl instructionVar163 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15075,7 +15137,12 @@ impl instructionVar164 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -15147,7 +15214,12 @@ impl instructionVar165 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -15219,7 +15291,12 @@ impl instructionVar166 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -15291,7 +15368,12 @@ impl instructionVar167 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15363,7 +15445,12 @@ impl instructionVar168 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -15435,7 +15522,12 @@ impl instructionVar169 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15507,7 +15599,12 @@ impl instructionVar170 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15579,7 +15676,12 @@ impl instructionVar171 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15651,7 +15753,12 @@ impl instructionVar172 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15723,7 +15830,12 @@ impl instructionVar173 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15795,7 +15907,12 @@ impl instructionVar174 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15867,7 +15984,12 @@ impl instructionVar175 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -15939,7 +16061,12 @@ impl instructionVar176 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16011,7 +16138,12 @@ impl instructionVar177 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -16083,7 +16215,12 @@ impl instructionVar178 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 15i64 {
@@ -16155,7 +16292,12 @@ impl instructionVar179 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16227,7 +16369,12 @@ impl instructionVar180 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16299,7 +16446,12 @@ impl instructionVar181 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16371,7 +16523,12 @@ impl instructionVar182 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16443,7 +16600,12 @@ impl instructionVar183 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16515,7 +16677,12 @@ impl instructionVar184 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16587,7 +16754,12 @@ impl instructionVar185 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16659,7 +16831,12 @@ impl instructionVar186 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 11i64 {
@@ -16736,7 +16913,12 @@ impl instructionVar187 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 1i64 {
@@ -16814,7 +16996,12 @@ impl instructionVar188 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -16911,7 +17098,12 @@ impl instructionVar189 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -17005,7 +17197,12 @@ impl instructionVar190 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -17099,7 +17296,12 @@ impl instructionVar191 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -17193,7 +17395,12 @@ impl instructionVar192 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -17284,7 +17491,12 @@ impl instructionVar193 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17373,7 +17585,12 @@ impl instructionVar194 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17461,7 +17678,12 @@ impl instructionVar195 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17551,7 +17773,12 @@ impl instructionVar196 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17641,7 +17868,12 @@ impl instructionVar197 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17730,7 +17962,12 @@ impl instructionVar198 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17819,7 +18056,12 @@ impl instructionVar199 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17907,7 +18149,12 @@ impl instructionVar200 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -17996,7 +18243,12 @@ impl instructionVar201 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18085,7 +18337,12 @@ impl instructionVar202 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18174,7 +18431,12 @@ impl instructionVar203 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18263,7 +18525,12 @@ impl instructionVar204 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18352,7 +18619,12 @@ impl instructionVar205 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18441,7 +18713,12 @@ impl instructionVar206 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18530,7 +18807,12 @@ impl instructionVar207 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18619,7 +18901,12 @@ impl instructionVar208 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 179i64 {
@@ -18709,7 +18996,12 @@ impl instructionVar209 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -18799,7 +19091,12 @@ impl instructionVar210 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 147i64 {
@@ -18884,7 +19181,12 @@ impl instructionVar211 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -18983,7 +19285,12 @@ impl instructionVar212 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -19075,7 +19382,12 @@ impl instructionVar213 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -19165,7 +19477,12 @@ impl instructionVar214 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -19261,7 +19578,12 @@ impl instructionVar215 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -19344,7 +19666,12 @@ impl instructionVar216 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 0i64 {
@@ -19390,7 +19717,12 @@ impl instructionVar217 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 0i64 {
@@ -19438,7 +19770,12 @@ impl instructionVar218 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 0i64 {
@@ -19483,7 +19820,12 @@ impl instructionVar219 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 0i64 {
@@ -19528,7 +19870,12 @@ impl instructionVar220 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 0i64 {
@@ -19573,7 +19920,12 @@ impl instructionVar221 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 0i64 {
@@ -19630,7 +19982,12 @@ impl instructionVar222 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 220i64 {
@@ -19682,7 +20039,12 @@ impl instructionVar223 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 70i64 {
@@ -19734,7 +20096,12 @@ impl instructionVar224 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 50i64 {
@@ -19786,7 +20153,12 @@ impl instructionVar225 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 50i64 {
@@ -19838,7 +20210,12 @@ impl instructionVar226 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 50i64 {
@@ -19890,7 +20267,12 @@ impl instructionVar227 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 50i64 {
@@ -19942,7 +20324,12 @@ impl instructionVar228 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 50i64 {
@@ -19999,7 +20386,12 @@ impl instructionVar229 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 6i64 {
@@ -20066,7 +20458,12 @@ impl instructionVar230 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 6i64 {
@@ -20133,7 +20530,12 @@ impl instructionVar231 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 18i64 {
@@ -20190,7 +20592,12 @@ impl instructionVar232 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 146i64 {
@@ -20254,7 +20661,12 @@ impl instructionVar233 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 26i64 {
@@ -20307,7 +20719,12 @@ impl instructionVar234 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 66i64 {
@@ -20364,7 +20781,12 @@ impl instructionVar235 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 154i64 {
@@ -20428,7 +20850,12 @@ impl instructionVar236 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 194i64 {
@@ -20495,7 +20922,12 @@ impl instructionVar237 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -20586,7 +21018,12 @@ impl instructionVar238 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 48i64 {
@@ -20641,7 +21078,12 @@ impl instructionVar239 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 176i64 {
@@ -20706,7 +21148,12 @@ impl instructionVar240 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -20783,7 +21230,12 @@ impl instructionVar241 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -20879,7 +21331,12 @@ impl instructionVar242 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -20975,7 +21432,12 @@ impl instructionVar243 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -21071,7 +21533,12 @@ impl instructionVar244 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -21167,7 +21634,12 @@ impl instructionVar245 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -21263,7 +21735,12 @@ impl instructionVar246 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -21359,7 +21836,12 @@ impl instructionVar247 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -21455,7 +21937,12 @@ impl instructionVar248 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c53 = |tokens: &[u8], context_param: &mut T| {
@@ -21551,7 +22038,12 @@ impl instructionVar249 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -21647,7 +22139,12 @@ impl instructionVar250 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c53 = |tokens: &[u8], context_param: &mut T| {
@@ -21743,7 +22240,12 @@ impl instructionVar251 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -21839,7 +22341,12 @@ impl instructionVar252 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -21939,7 +22446,12 @@ impl instructionVar253 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22024,7 +22536,12 @@ impl instructionVar254 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22109,7 +22626,12 @@ impl instructionVar255 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22191,7 +22713,12 @@ impl instructionVar256 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 23i64 {
@@ -22271,7 +22798,12 @@ impl instructionVar257 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 23i64 {
@@ -22348,7 +22880,12 @@ impl instructionVar258 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22423,7 +22960,12 @@ impl instructionVar259 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22498,7 +23040,12 @@ impl instructionVar260 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22573,7 +23120,12 @@ impl instructionVar261 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22651,7 +23203,12 @@ impl instructionVar262 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22728,7 +23285,12 @@ impl instructionVar263 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -22806,7 +23368,12 @@ impl instructionVar264 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -22883,7 +23450,12 @@ impl instructionVar265 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -22960,7 +23532,12 @@ impl instructionVar266 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -23037,7 +23614,12 @@ impl instructionVar267 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -23114,7 +23696,12 @@ impl instructionVar268 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 23i64 {
@@ -23190,7 +23777,12 @@ impl instructionVar269 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -23286,7 +23878,12 @@ impl instructionVar270 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -23382,7 +23979,12 @@ impl instructionVar271 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -23481,7 +24083,12 @@ impl instructionVar272 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 87i64 {
@@ -23572,7 +24179,12 @@ impl instructionVar273 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 87i64 {
@@ -23660,7 +24272,12 @@ impl instructionVar274 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -23756,7 +24373,12 @@ impl instructionVar275 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -23858,7 +24480,12 @@ impl instructionVar276 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 87i64 {
@@ -23959,7 +24586,12 @@ impl instructionVar277 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 215i64 {
@@ -24062,7 +24694,12 @@ impl instructionVar278 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 23i64 {
@@ -24149,7 +24786,12 @@ impl instructionVar279 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 151i64 {
@@ -24236,7 +24878,12 @@ impl instructionVar280 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -24332,7 +24979,12 @@ impl instructionVar281 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -24429,7 +25081,12 @@ impl instructionVar282 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24506,7 +25163,12 @@ impl instructionVar283 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24583,7 +25245,12 @@ impl instructionVar284 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -24660,7 +25327,12 @@ impl instructionVar285 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24737,7 +25409,12 @@ impl instructionVar286 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24814,7 +25491,12 @@ impl instructionVar287 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24891,7 +25573,12 @@ impl instructionVar288 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -24968,7 +25655,12 @@ impl instructionVar289 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 3i64 {
@@ -25045,7 +25737,12 @@ impl instructionVar290 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25122,7 +25819,12 @@ impl instructionVar291 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25199,7 +25901,12 @@ impl instructionVar292 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -25276,7 +25983,12 @@ impl instructionVar293 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25353,7 +26065,12 @@ impl instructionVar294 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25430,7 +26147,12 @@ impl instructionVar295 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25507,7 +26229,12 @@ impl instructionVar296 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25584,7 +26311,12 @@ impl instructionVar297 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 35i64 {
@@ -25661,7 +26393,12 @@ impl instructionVar298 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -25738,7 +26475,12 @@ impl instructionVar299 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 43i64 {
@@ -25827,7 +26569,12 @@ impl instructionVar300 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -25931,7 +26678,12 @@ impl instructionVar301 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -26035,7 +26787,12 @@ impl instructionVar302 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -26139,7 +26896,12 @@ impl instructionVar303 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -26238,7 +27000,12 @@ impl instructionVar304 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26332,7 +27099,12 @@ impl instructionVar305 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26426,7 +27198,12 @@ impl instructionVar306 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26519,7 +27296,12 @@ impl instructionVar307 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26614,7 +27396,12 @@ impl instructionVar308 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26708,7 +27495,12 @@ impl instructionVar309 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26802,7 +27594,12 @@ impl instructionVar310 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26895,7 +27692,12 @@ impl instructionVar311 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -26990,7 +27792,12 @@ impl instructionVar312 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -27085,7 +27892,12 @@ impl instructionVar313 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -27179,7 +27991,12 @@ impl instructionVar314 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27273,7 +28090,12 @@ impl instructionVar315 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27367,7 +28189,12 @@ impl instructionVar316 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27461,7 +28288,12 @@ impl instructionVar317 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27555,7 +28387,12 @@ impl instructionVar318 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27649,7 +28486,12 @@ impl instructionVar319 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27743,7 +28585,12 @@ impl instructionVar320 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27837,7 +28684,12 @@ impl instructionVar321 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -27934,7 +28786,12 @@ impl instructionVar322 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -28030,7 +28887,12 @@ impl instructionVar323 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28124,7 +28986,12 @@ impl instructionVar324 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28218,7 +29085,12 @@ impl instructionVar325 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28312,7 +29184,12 @@ impl instructionVar326 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28407,7 +29284,12 @@ impl instructionVar327 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -28502,7 +29384,12 @@ impl instructionVar328 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -28599,7 +29486,12 @@ impl instructionVar329 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -28695,7 +29587,12 @@ impl instructionVar330 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28789,7 +29686,12 @@ impl instructionVar331 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28883,7 +29785,12 @@ impl instructionVar332 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -28977,7 +29884,12 @@ impl instructionVar333 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -29072,7 +29984,12 @@ impl instructionVar334 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -29167,7 +30084,12 @@ impl instructionVar335 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -29267,7 +30189,12 @@ impl instructionVar336 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -29371,7 +30298,12 @@ impl instructionVar337 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -29475,7 +30407,12 @@ impl instructionVar338 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -29579,7 +30516,12 @@ impl instructionVar339 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 131i64 {
@@ -29678,7 +30620,12 @@ impl instructionVar340 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -29772,7 +30719,12 @@ impl instructionVar341 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -29866,7 +30818,12 @@ impl instructionVar342 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -29959,7 +30916,12 @@ impl instructionVar343 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30054,7 +31016,12 @@ impl instructionVar344 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30148,7 +31115,12 @@ impl instructionVar345 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30242,7 +31214,12 @@ impl instructionVar346 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30335,7 +31312,12 @@ impl instructionVar347 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30430,7 +31412,12 @@ impl instructionVar348 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30525,7 +31512,12 @@ impl instructionVar349 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 67i64 {
@@ -30625,7 +31617,12 @@ impl instructionVar350 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -30729,7 +31726,12 @@ impl instructionVar351 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -30833,7 +31835,12 @@ impl instructionVar352 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -30937,7 +31944,12 @@ impl instructionVar353 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31035,7 +32047,12 @@ impl instructionVar354 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31129,7 +32146,12 @@ impl instructionVar355 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31223,7 +32245,12 @@ impl instructionVar356 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31317,7 +32344,12 @@ impl instructionVar357 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31411,7 +32443,12 @@ impl instructionVar358 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31505,7 +32542,12 @@ impl instructionVar359 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31599,7 +32641,12 @@ impl instructionVar360 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31693,7 +32740,12 @@ impl instructionVar361 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31787,7 +32839,12 @@ impl instructionVar362 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31881,7 +32938,12 @@ impl instructionVar363 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -31975,7 +33037,12 @@ impl instructionVar364 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32069,7 +33136,12 @@ impl instructionVar365 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32163,7 +33235,12 @@ impl instructionVar366 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32257,7 +33334,12 @@ impl instructionVar367 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32351,7 +33433,12 @@ impl instructionVar368 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32445,7 +33532,12 @@ impl instructionVar369 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32545,7 +33637,12 @@ impl instructionVar370 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32649,7 +33746,12 @@ impl instructionVar371 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32753,7 +33855,12 @@ impl instructionVar372 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32857,7 +33964,12 @@ impl instructionVar373 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 195i64 {
@@ -32948,7 +34060,12 @@ impl instructionVar374 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -33044,7 +34161,12 @@ impl instructionVar375 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -33140,7 +34262,12 @@ impl instructionVar376 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -33236,7 +34363,12 @@ impl instructionVar377 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -33345,7 +34477,12 @@ impl instructionVar378 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -33449,7 +34586,12 @@ impl instructionVar379 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -33553,7 +34695,12 @@ impl instructionVar380 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -33657,7 +34804,12 @@ impl instructionVar381 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -33756,7 +34908,12 @@ impl instructionVar382 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -33850,7 +35007,12 @@ impl instructionVar383 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -33944,7 +35106,12 @@ impl instructionVar384 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34037,7 +35204,12 @@ impl instructionVar385 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34132,7 +35304,12 @@ impl instructionVar386 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34226,7 +35403,12 @@ impl instructionVar387 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34320,7 +35502,12 @@ impl instructionVar388 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34413,7 +35600,12 @@ impl instructionVar389 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34508,7 +35700,12 @@ impl instructionVar390 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34603,7 +35800,12 @@ impl instructionVar391 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -34703,7 +35905,12 @@ impl instructionVar392 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -34807,7 +36014,12 @@ impl instructionVar393 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -34911,7 +36123,12 @@ impl instructionVar394 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35015,7 +36232,12 @@ impl instructionVar395 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35113,7 +36335,12 @@ impl instructionVar396 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35207,7 +36434,12 @@ impl instructionVar397 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35301,7 +36533,12 @@ impl instructionVar398 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35395,7 +36632,12 @@ impl instructionVar399 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35489,7 +36731,12 @@ impl instructionVar400 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35583,7 +36830,12 @@ impl instructionVar401 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35677,7 +36929,12 @@ impl instructionVar402 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35771,7 +37028,12 @@ impl instructionVar403 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35865,7 +37127,12 @@ impl instructionVar404 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -35959,7 +37226,12 @@ impl instructionVar405 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36053,7 +37325,12 @@ impl instructionVar406 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36147,7 +37424,12 @@ impl instructionVar407 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36241,7 +37523,12 @@ impl instructionVar408 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36335,7 +37622,12 @@ impl instructionVar409 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36429,7 +37721,12 @@ impl instructionVar410 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36523,7 +37820,12 @@ impl instructionVar411 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36623,7 +37925,12 @@ impl instructionVar412 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36727,7 +38034,12 @@ impl instructionVar413 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36831,7 +38143,12 @@ impl instructionVar414 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -36935,7 +38252,12 @@ impl instructionVar415 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 227i64 {
@@ -37033,7 +38355,12 @@ impl instructionVar416 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37127,7 +38454,12 @@ impl instructionVar417 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37221,7 +38553,12 @@ impl instructionVar418 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37315,7 +38652,12 @@ impl instructionVar419 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37409,7 +38751,12 @@ impl instructionVar420 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37503,7 +38850,12 @@ impl instructionVar421 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37597,7 +38949,12 @@ impl instructionVar422 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37691,7 +39048,12 @@ impl instructionVar423 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37788,7 +39150,12 @@ impl instructionVar424 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -37884,7 +39251,12 @@ impl instructionVar425 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -37978,7 +39350,12 @@ impl instructionVar426 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38072,7 +39449,12 @@ impl instructionVar427 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38166,7 +39548,12 @@ impl instructionVar428 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38261,7 +39648,12 @@ impl instructionVar429 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -38356,7 +39748,12 @@ impl instructionVar430 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -38453,7 +39850,12 @@ impl instructionVar431 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -38549,7 +39951,12 @@ impl instructionVar432 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38643,7 +40050,12 @@ impl instructionVar433 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38737,7 +40149,12 @@ impl instructionVar434 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38831,7 +40248,12 @@ impl instructionVar435 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -38926,7 +40348,12 @@ impl instructionVar436 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39021,7 +40448,12 @@ impl instructionVar437 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39121,7 +40553,12 @@ impl instructionVar438 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -39225,7 +40662,12 @@ impl instructionVar439 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -39329,7 +40771,12 @@ impl instructionVar440 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -39433,7 +40880,12 @@ impl instructionVar441 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 163i64 {
@@ -39532,7 +40984,12 @@ impl instructionVar442 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39626,7 +41083,12 @@ impl instructionVar443 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39720,7 +41182,12 @@ impl instructionVar444 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39813,7 +41280,12 @@ impl instructionVar445 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -39908,7 +41380,12 @@ impl instructionVar446 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40002,7 +41479,12 @@ impl instructionVar447 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40096,7 +41578,12 @@ impl instructionVar448 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40189,7 +41676,12 @@ impl instructionVar449 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40284,7 +41776,12 @@ impl instructionVar450 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40379,7 +41876,12 @@ impl instructionVar451 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 99i64 {
@@ -40466,7 +41968,12 @@ impl instructionVar452 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -40562,7 +42069,12 @@ impl instructionVar453 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -40658,7 +42170,12 @@ impl instructionVar454 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -40754,7 +42271,12 @@ impl instructionVar455 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -40850,7 +42372,12 @@ impl instructionVar456 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -40946,7 +42473,12 @@ impl instructionVar457 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -41042,7 +42574,12 @@ impl instructionVar458 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -41138,7 +42675,12 @@ impl instructionVar459 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -41234,7 +42776,12 @@ impl instructionVar460 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -41330,7 +42877,12 @@ impl instructionVar461 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -41426,7 +42978,12 @@ impl instructionVar462 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -41522,7 +43079,12 @@ impl instructionVar463 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -41618,7 +43180,12 @@ impl instructionVar464 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -41714,7 +43281,12 @@ impl instructionVar465 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -41810,7 +43382,12 @@ impl instructionVar466 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -41906,7 +43483,12 @@ impl instructionVar467 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -42002,7 +43584,12 @@ impl instructionVar468 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -42098,7 +43685,12 @@ impl instructionVar469 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -42194,7 +43786,12 @@ impl instructionVar470 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -42290,7 +43887,12 @@ impl instructionVar471 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -42386,7 +43988,12 @@ impl instructionVar472 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -42482,7 +44089,12 @@ impl instructionVar473 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -42578,7 +44190,12 @@ impl instructionVar474 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -42674,7 +44291,12 @@ impl instructionVar475 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -42770,7 +44392,12 @@ impl instructionVar476 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -42866,7 +44493,12 @@ impl instructionVar477 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -42962,7 +44594,12 @@ impl instructionVar478 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -43058,7 +44695,12 @@ impl instructionVar479 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -43154,7 +44796,12 @@ impl instructionVar480 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -43250,7 +44897,12 @@ impl instructionVar481 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -43346,7 +44998,12 @@ impl instructionVar482 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -43442,7 +45099,12 @@ impl instructionVar483 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -43538,7 +45200,12 @@ impl instructionVar484 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -43634,7 +45301,12 @@ impl instructionVar485 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c53 = |tokens: &[u8], context_param: &mut T| {
@@ -43730,7 +45402,12 @@ impl instructionVar486 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -43826,7 +45503,12 @@ impl instructionVar487 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c53 = |tokens: &[u8], context_param: &mut T| {
@@ -43922,7 +45604,12 @@ impl instructionVar488 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c51 = |tokens: &[u8], context_param: &mut T| {
@@ -44021,7 +45708,12 @@ impl instructionVar489 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -44122,7 +45814,12 @@ impl instructionVar490 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -44223,7 +45920,12 @@ impl instructionVar491 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 119i64 {
@@ -44314,7 +46016,12 @@ impl instructionVar492 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 55i64 {
@@ -44417,7 +46124,12 @@ impl instructionVar493 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 55i64 {
@@ -44523,7 +46235,12 @@ impl instructionVar494 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 55i64 {
@@ -44634,7 +46351,12 @@ impl instructionVar495 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 183i64 {
@@ -44748,7 +46470,12 @@ impl instructionVar496 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 87i64 {
@@ -44846,7 +46573,12 @@ impl instructionVar497 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 215i64 {
@@ -44945,7 +46677,12 @@ impl instructionVar498 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -45046,7 +46783,12 @@ impl instructionVar499 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -45147,7 +46889,12 @@ impl instructionVar500 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c58 = |tokens: &[u8], context_param: &mut T| {
@@ -45248,7 +46995,12 @@ impl instructionVar501 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -45349,7 +47101,12 @@ impl instructionVar502 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -45450,7 +47207,12 @@ impl instructionVar503 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -45551,7 +47313,12 @@ impl instructionVar504 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -45652,7 +47419,12 @@ impl instructionVar505 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -45753,7 +47525,12 @@ impl instructionVar506 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -45854,7 +47631,12 @@ impl instructionVar507 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c58 = |tokens: &[u8], context_param: &mut T| {
@@ -45955,7 +47737,12 @@ impl instructionVar508 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -46056,7 +47843,12 @@ impl instructionVar509 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c57 = |tokens: &[u8], context_param: &mut T| {
@@ -46157,7 +47949,12 @@ impl instructionVar510 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -46258,7 +48055,12 @@ impl instructionVar511 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c59 = |tokens: &[u8], context_param: &mut T| {
@@ -46359,7 +48161,12 @@ impl instructionVar512 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c55 = |tokens: &[u8], context_param: &mut T| {
@@ -46460,7 +48267,12 @@ impl instructionVar513 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c56 = |tokens: &[u8], context_param: &mut T| {
@@ -46569,7 +48381,12 @@ impl instructionVar514 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 71i64 {
@@ -46676,7 +48493,12 @@ impl instructionVar515 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 71i64 {
@@ -46783,7 +48605,12 @@ impl instructionVar516 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 71i64 {
@@ -46890,7 +48717,12 @@ impl instructionVar517 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 71i64 {
@@ -46997,7 +48829,12 @@ impl instructionVar518 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 135i64 {
@@ -47104,7 +48941,12 @@ impl instructionVar519 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 135i64 {
@@ -47201,7 +49043,12 @@ impl instructionVar520 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -47286,7 +49133,12 @@ impl instructionVar521 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -47371,7 +49223,12 @@ impl instructionVar522 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -47449,7 +49306,12 @@ impl instructionVar523 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c28 = |tokens: &[u8], context_param: &mut T| {
@@ -47539,7 +49401,12 @@ impl instructionVar524 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c28 = |tokens: &[u8], context_param: &mut T| {
@@ -47628,7 +49495,12 @@ impl instructionVar525 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c28 = |tokens: &[u8], context_param: &mut T| {
@@ -47709,7 +49581,12 @@ impl instructionVar526 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c28 = |tokens: &[u8], context_param: &mut T| {
@@ -47807,7 +49684,12 @@ impl instructionVar527 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 105i64 {
@@ -47896,7 +49778,12 @@ impl instructionVar528 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 75i64 {
@@ -47981,7 +49868,12 @@ impl instructionVar529 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 107i64 {
@@ -48072,7 +49964,12 @@ impl instructionVar530 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 103i64 {
@@ -48177,7 +50074,12 @@ impl instructionVar531 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 55i64 {
@@ -48285,7 +50187,12 @@ impl instructionVar532 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 183i64 {
@@ -48401,7 +50308,12 @@ impl instructionVar533 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 103i64 {
@@ -48491,7 +50403,12 @@ impl instructionVar534 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 253i64 {
@@ -48565,7 +50482,12 @@ impl instructionVar535 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 189i64 {
@@ -48646,7 +50568,12 @@ impl instructionVar536 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 189i64 {
@@ -48727,7 +50654,12 @@ impl instructionVar537 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 253i64 {
@@ -48809,7 +50741,12 @@ impl instructionVar538 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c42 = |tokens: &[u8], context_param: &mut T| {
@@ -48897,7 +50834,12 @@ impl instructionVar539 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 95i64 {
@@ -48983,7 +50925,12 @@ impl instructionVar540 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 223i64 {
@@ -49075,7 +51022,12 @@ impl instructionVar541 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 125i64 {
@@ -49158,7 +51110,12 @@ impl instructionVar542 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 127i64 {
@@ -49244,7 +51201,12 @@ impl instructionVar543 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 255i64 {
@@ -49336,7 +51298,12 @@ impl instructionVar544 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 127i64 {
@@ -49422,7 +51389,12 @@ impl instructionVar545 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 255i64 {
@@ -49514,7 +51486,12 @@ impl instructionVar546 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 63i64 {
@@ -49600,7 +51577,12 @@ impl instructionVar547 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 191i64 {
@@ -49692,7 +51674,12 @@ impl instructionVar548 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 63i64 {
@@ -49778,7 +51765,12 @@ impl instructionVar549 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 191i64 {
@@ -49870,7 +51862,12 @@ impl instructionVar550 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 95i64 {
@@ -49956,7 +51953,12 @@ impl instructionVar551 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 223i64 {
@@ -50048,7 +52050,12 @@ impl instructionVar552 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 125i64 {
@@ -50131,7 +52138,12 @@ impl instructionVar553 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 31i64 {
@@ -50217,7 +52229,12 @@ impl instructionVar554 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 159i64 {
@@ -50309,7 +52326,12 @@ impl instructionVar555 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 31i64 {
@@ -50395,7 +52417,12 @@ impl instructionVar556 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 159i64 {
@@ -50491,7 +52518,12 @@ impl instructionVar557 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -50578,7 +52610,12 @@ impl instructionVar558 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -50665,7 +52702,12 @@ impl instructionVar559 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -50752,7 +52794,12 @@ impl instructionVar560 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -50842,7 +52889,12 @@ impl instructionVar561 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -50927,7 +52979,12 @@ impl instructionVar562 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -51021,7 +53078,12 @@ impl instructionVar563 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -51122,7 +53184,12 @@ impl instructionVar564 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -51207,7 +53274,12 @@ impl instructionVar565 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -51305,7 +53377,12 @@ impl instructionVar566 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -51392,7 +53469,12 @@ impl instructionVar567 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -51479,7 +53561,12 @@ impl instructionVar568 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -51566,7 +53653,12 @@ impl instructionVar569 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 41i64 {
@@ -51642,7 +53734,12 @@ impl instructionVar570 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -51740,7 +53837,12 @@ impl instructionVar571 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 105i64 {
@@ -51818,7 +53920,12 @@ impl instructionVar572 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -51903,7 +54010,12 @@ impl instructionVar573 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c33 = |tokens: &[u8], context_param: &mut T| {
@@ -51994,7 +54106,12 @@ impl instructionVar574 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52082,7 +54199,12 @@ impl instructionVar575 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52170,7 +54292,12 @@ impl instructionVar576 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52258,7 +54385,12 @@ impl instructionVar577 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52344,7 +54476,12 @@ impl instructionVar578 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -52441,7 +54578,12 @@ impl instructionVar579 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -52545,7 +54687,12 @@ impl instructionVar580 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52633,7 +54780,12 @@ impl instructionVar581 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -52732,7 +54884,12 @@ impl instructionVar582 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52820,7 +54977,12 @@ impl instructionVar583 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52908,7 +55070,12 @@ impl instructionVar584 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 169i64 {
@@ -52984,7 +55151,12 @@ impl instructionVar585 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -53065,7 +55237,12 @@ impl instructionVar586 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -53158,7 +55335,12 @@ impl instructionVar587 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 105i64 {
@@ -53251,7 +55433,12 @@ impl instructionVar588 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 105i64 {
@@ -53333,7 +55520,12 @@ impl instructionVar589 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -53416,7 +55608,12 @@ impl instructionVar590 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -53499,7 +55696,12 @@ impl instructionVar591 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -53582,7 +55784,12 @@ impl instructionVar592 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -53665,7 +55872,12 @@ impl instructionVar593 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -53748,7 +55960,12 @@ impl instructionVar594 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -53831,7 +56048,12 @@ impl instructionVar595 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -53914,7 +56136,12 @@ impl instructionVar596 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -53997,7 +56224,12 @@ impl instructionVar597 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -54086,7 +56318,12 @@ impl instructionVar598 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c47 = |tokens: &[u8], context_param: &mut T| {
@@ -54177,7 +56414,12 @@ impl instructionVar599 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c36 = |tokens: &[u8], context_param: &mut T| {
@@ -54260,7 +56502,12 @@ impl instructionVar600 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c42 = |tokens: &[u8], context_param: &mut T| {
@@ -54345,7 +56592,12 @@ impl instructionVar601 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c41 = |tokens: &[u8], context_param: &mut T| {
@@ -54430,7 +56682,12 @@ impl instructionVar602 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c41 = |tokens: &[u8], context_param: &mut T| {
@@ -54515,7 +56772,12 @@ impl instructionVar603 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c43 = |tokens: &[u8], context_param: &mut T| {
@@ -54600,7 +56862,12 @@ impl instructionVar604 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c42 = |tokens: &[u8], context_param: &mut T| {
@@ -54685,7 +56952,12 @@ impl instructionVar605 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -54784,7 +57056,12 @@ impl instructionVar606 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 7i64 {
@@ -54891,7 +57168,12 @@ impl instructionVar607 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 135i64 {
@@ -54998,7 +57280,12 @@ impl instructionVar608 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 199i64 {
@@ -55105,7 +57392,12 @@ impl instructionVar609 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 199i64 {
@@ -55212,7 +57504,12 @@ impl instructionVar610 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 199i64 {
@@ -55319,7 +57616,12 @@ impl instructionVar611 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 199i64 {
@@ -55426,7 +57728,12 @@ impl instructionVar612 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 135i64 {
@@ -55533,7 +57840,12 @@ impl instructionVar613 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 7i64 {
@@ -55640,7 +57952,12 @@ impl instructionVar614 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 39i64 {
@@ -55747,7 +58064,12 @@ impl instructionVar615 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 39i64 {
@@ -55854,7 +58176,12 @@ impl instructionVar616 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 167i64 {
@@ -55961,7 +58288,12 @@ impl instructionVar617 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 39i64 {
@@ -56068,7 +58400,12 @@ impl instructionVar618 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 39i64 {
@@ -56175,7 +58512,12 @@ impl instructionVar619 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 167i64 {
@@ -56282,7 +58624,12 @@ impl instructionVar620 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 167i64 {
@@ -56389,7 +58736,12 @@ impl instructionVar621 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 167i64 {
@@ -56483,7 +58835,12 @@ impl instructionVar622 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -56567,7 +58924,12 @@ impl instructionVar623 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -56651,7 +59013,12 @@ impl instructionVar624 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -56735,7 +59102,12 @@ impl instructionVar625 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c38 = |tokens: &[u8], context_param: &mut T| {
@@ -56819,7 +59191,12 @@ impl instructionVar626 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -56903,7 +59280,12 @@ impl instructionVar627 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -56994,7 +59376,12 @@ impl instructionVar628 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -57104,7 +59491,12 @@ impl instructionVar629 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c37 = |tokens: &[u8], context_param: &mut T| {
@@ -57188,7 +59580,12 @@ impl instructionVar630 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c39 = |tokens: &[u8], context_param: &mut T| {
@@ -57285,7 +59682,12 @@ impl instructionVar631 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 7i64 {
@@ -57392,7 +59794,12 @@ impl instructionVar632 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 7i64 {
@@ -57488,7 +59895,12 @@ impl instructionVar633 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c49 = |tokens: &[u8], context_param: &mut T| {
@@ -57581,7 +59993,12 @@ impl instructionVar634 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c50 = |tokens: &[u8], context_param: &mut T| {
@@ -57674,7 +60091,12 @@ impl instructionVar635 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c52 = |tokens: &[u8], context_param: &mut T| {
@@ -57762,7 +60184,12 @@ impl instructionVar636 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 34i64 {
@@ -57815,7 +60242,12 @@ impl instructionVar637 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 38i64 {
@@ -57869,7 +60301,12 @@ impl instructionVar638 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 22i64 {
@@ -57929,7 +60366,12 @@ impl instructionVar639 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 224i64 {
@@ -57994,7 +60436,12 @@ impl instructionVar640 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 138i64 {
@@ -58060,7 +60507,12 @@ impl instructionVar641 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 202i64 {
@@ -58121,7 +60573,12 @@ impl instructionVar642 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 92i64 {
@@ -58180,7 +60637,12 @@ impl instructionVar643 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -58253,7 +60715,12 @@ impl instructionVar644 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -58330,7 +60797,12 @@ impl instructionVar645 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 42i64 {
@@ -58387,7 +60859,12 @@ impl instructionVar646 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 170i64 {
@@ -58451,7 +60928,12 @@ impl instructionVar647 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 106i64 {
@@ -58508,7 +60990,12 @@ impl instructionVar648 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 234i64 {
@@ -58572,7 +61059,12 @@ impl instructionVar649 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 58i64 {
@@ -58629,7 +61121,12 @@ impl instructionVar650 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 186i64 {
@@ -58689,7 +61186,12 @@ impl instructionVar651 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c33 = |tokens: &[u8], context_param: &mut T| {
@@ -58762,7 +61264,12 @@ impl instructionVar652 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -58834,7 +61341,12 @@ impl instructionVar653 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 60i64 {
@@ -58891,7 +61403,12 @@ impl instructionVar654 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c29 = |tokens: &[u8], context_param: &mut T| {
@@ -58962,7 +61479,12 @@ impl instructionVar655 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -59041,7 +61563,12 @@ impl instructionVar656 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 190i64 {
@@ -59117,7 +61644,12 @@ impl instructionVar657 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 158i64 {
@@ -59199,7 +61731,12 @@ impl instructionVar658 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 62i64 {
@@ -59274,7 +61811,12 @@ impl instructionVar659 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 30i64 {
@@ -59353,7 +61895,12 @@ impl instructionVar660 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 206i64 {
@@ -59423,7 +61970,12 @@ impl instructionVar661 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 78i64 {
@@ -59487,7 +62039,12 @@ impl instructionVar662 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c30 = |tokens: &[u8], context_param: &mut T| {
@@ -59558,7 +62115,12 @@ impl instructionVar663 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -59635,7 +62197,12 @@ impl instructionVar664 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 142i64 {
@@ -59705,7 +62272,12 @@ impl instructionVar665 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 14i64 {
@@ -59777,7 +62349,12 @@ impl instructionVar666 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 254i64 {
@@ -59853,7 +62430,12 @@ impl instructionVar667 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 222i64 {
@@ -59935,7 +62517,12 @@ impl instructionVar668 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 126i64 {
@@ -60010,7 +62597,12 @@ impl instructionVar669 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 94i64 {
@@ -60088,7 +62680,12 @@ impl instructionVar670 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 238i64 {
@@ -60151,7 +62748,12 @@ impl instructionVar671 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 246i64 {
@@ -60221,7 +62823,12 @@ impl instructionVar672 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 124i64 {
@@ -60296,7 +62903,12 @@ impl instructionVar673 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 174i64 {
@@ -60374,7 +62986,12 @@ impl instructionVar674 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 110i64 {
@@ -60437,7 +63054,12 @@ impl instructionVar675 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 118i64 {
@@ -60507,7 +63129,12 @@ impl instructionVar676 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 188i64 {
@@ -60582,7 +63209,12 @@ impl instructionVar677 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 46i64 {
@@ -60660,7 +63292,12 @@ impl instructionVar678 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 216i64 {
@@ -60721,7 +63358,12 @@ impl instructionVar679 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 200i64 {
@@ -60782,7 +63424,12 @@ impl instructionVar680 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 204i64 {
@@ -60843,7 +63490,12 @@ impl instructionVar681 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -60919,7 +63571,12 @@ impl instructionVar682 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -60995,7 +63652,12 @@ impl instructionVar683 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c36 = |tokens: &[u8], context_param: &mut T| {
@@ -61070,7 +63732,12 @@ impl instructionVar684 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 12i64 {
@@ -61131,7 +63798,12 @@ impl instructionVar685 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 8i64 {
@@ -61192,7 +63864,12 @@ impl instructionVar686 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 140i64 {
@@ -61253,7 +63930,12 @@ impl instructionVar687 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 136i64 {
@@ -61315,7 +63997,12 @@ impl instructionVar688 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -61391,7 +64078,12 @@ impl instructionVar689 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c36 = |tokens: &[u8], context_param: &mut T| {
@@ -61466,7 +64158,12 @@ impl instructionVar690 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 88i64 {
@@ -61526,7 +64223,12 @@ impl instructionVar691 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 76i64 {
@@ -61587,7 +64289,12 @@ impl instructionVar692 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 72i64 {
@@ -61649,7 +64356,12 @@ impl instructionVar693 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -61725,7 +64437,12 @@ impl instructionVar694 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -61801,7 +64518,12 @@ impl instructionVar695 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 252i64 {
@@ -61871,7 +64593,12 @@ impl instructionVar696 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 122i64 {
@@ -61928,7 +64655,12 @@ impl instructionVar697 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 250i64 {
@@ -61990,7 +64722,12 @@ impl instructionVar698 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 2i64 {
@@ -62045,7 +64782,12 @@ impl instructionVar699 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 130i64 {
@@ -62109,7 +64851,12 @@ impl instructionVar700 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 210i64 {
@@ -62172,7 +64919,12 @@ impl instructionVar701 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 218i64 {
@@ -62235,7 +64987,12 @@ impl instructionVar702 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 160i64 {
@@ -62297,7 +65054,12 @@ impl instructionVar703 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 96i64 {
@@ -62350,7 +65112,12 @@ impl instructionVar704 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 64i64 {
@@ -62403,7 +65170,12 @@ impl instructionVar705 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 128i64 {
@@ -62456,7 +65228,12 @@ impl instructionVar706 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 226i64 {
@@ -62509,7 +65286,12 @@ impl instructionVar707 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 166i64 {
@@ -62563,7 +65345,12 @@ impl instructionVar708 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 150i64 {
@@ -62626,7 +65413,12 @@ impl instructionVar709 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 134i64 {
@@ -62692,7 +65484,12 @@ impl instructionVar710 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 248i64 {
@@ -62755,7 +65552,12 @@ impl instructionVar711 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 236i64 {
@@ -62817,7 +65619,12 @@ impl instructionVar712 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 232i64 {
@@ -62880,7 +65687,12 @@ impl instructionVar713 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -62957,7 +65769,12 @@ impl instructionVar714 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 40i64 {
@@ -63021,7 +65838,12 @@ impl instructionVar715 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 44i64 {
@@ -63083,7 +65905,12 @@ impl instructionVar716 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -63160,7 +65987,12 @@ impl instructionVar717 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 168i64 {
@@ -63224,7 +66056,12 @@ impl instructionVar718 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 172i64 {
@@ -63286,7 +66123,12 @@ impl instructionVar719 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -63364,7 +66206,12 @@ impl instructionVar720 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 120i64 {
@@ -63426,7 +66273,12 @@ impl instructionVar721 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 104i64 {
@@ -63490,7 +66342,12 @@ impl instructionVar722 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 108i64 {
@@ -63552,7 +66409,12 @@ impl instructionVar723 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -63628,7 +66490,12 @@ impl instructionVar724 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 82i64 {
@@ -63683,7 +66550,12 @@ impl instructionVar725 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 90i64 {
@@ -63736,7 +66608,12 @@ impl instructionVar726 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 162i64 {
@@ -63790,7 +66667,12 @@ impl instructionVar727 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 32i64 {
@@ -63851,7 +66733,12 @@ impl instructionVar728 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 98i64 {
@@ -63904,7 +66791,12 @@ impl instructionVar729 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0007().disassembly() != 198i64 {
@@ -63959,7 +66851,12 @@ impl instructionVar730 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -64031,7 +66928,12 @@ impl instructionVar731 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -64106,7 +67008,12 @@ impl instructionVar732 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -64194,7 +67101,12 @@ impl instructionVar733 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0005().disassembly() != 16i64 {
@@ -64262,7 +67174,12 @@ impl instructionVar734 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -64343,7 +67260,12 @@ impl instructionVar735 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -64424,7 +67346,12 @@ impl instructionVar736 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -64505,7 +67432,12 @@ impl instructionVar737 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -64586,7 +67518,12 @@ impl instructionVar738 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c31 = |tokens: &[u8], context_param: &mut T| {
@@ -64667,7 +67604,12 @@ impl instructionVar739 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c32 = |tokens: &[u8], context_param: &mut T| {
@@ -64758,7 +67700,12 @@ impl instructionVar740 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -64855,7 +67802,12 @@ impl instructionVar741 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0006().disassembly() != 111i64 {
@@ -64948,7 +67900,12 @@ impl instructionVar742 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0006().disassembly() != 111i64 {
@@ -65035,7 +67992,12 @@ impl instructionVar743 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 3i64 {
@@ -65097,7 +68059,12 @@ impl instructionVar744 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -65180,7 +68147,12 @@ impl instructionVar745 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -65263,7 +68235,12 @@ impl instructionVar746 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 0i64 {
@@ -65325,7 +68302,12 @@ impl instructionVar747 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -65408,7 +68390,12 @@ impl instructionVar748 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -65491,7 +68478,12 @@ impl instructionVar749 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -65574,7 +68566,12 @@ impl instructionVar750 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 2i64 {
@@ -65636,7 +68633,12 @@ impl instructionVar751 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -65719,7 +68721,12 @@ impl instructionVar752 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -65802,7 +68809,12 @@ impl instructionVar753 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -65885,7 +68897,12 @@ impl instructionVar754 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 1i64 {
@@ -65947,7 +68964,12 @@ impl instructionVar755 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66036,7 +69058,12 @@ impl instructionVar756 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c44 = |tokens: &[u8], context_param: &mut T| {
@@ -66128,7 +69155,12 @@ impl instructionVar757 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 3i64 {
@@ -66191,7 +69223,12 @@ impl instructionVar758 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66275,7 +69312,12 @@ impl instructionVar759 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 0i64 {
@@ -66338,7 +69380,12 @@ impl instructionVar760 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66422,7 +69469,12 @@ impl instructionVar761 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66506,7 +69558,12 @@ impl instructionVar762 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c35 = |tokens: &[u8], context_param: &mut T| {
@@ -66590,7 +69647,12 @@ impl instructionVar763 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 2i64 {
@@ -66653,7 +69715,12 @@ impl instructionVar764 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66737,7 +69804,12 @@ impl instructionVar765 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66821,7 +69893,12 @@ impl instructionVar766 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0607().disassembly() != 1i64 {
@@ -66884,7 +69961,12 @@ impl instructionVar767 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c34 = |tokens: &[u8], context_param: &mut T| {
@@ -66968,7 +70050,12 @@ impl instructionVar768 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c36 = |tokens: &[u8], context_param: &mut T| {
@@ -67057,7 +70144,12 @@ impl instructionVar769 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let mut sub_pattern_c48 = |tokens: &[u8], context_param: &mut T| {
@@ -67150,7 +70242,12 @@ impl instructionVar770 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 6i64 {
@@ -67213,7 +70310,12 @@ impl instructionVar771 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 6i64 {
@@ -67276,7 +70378,12 @@ impl instructionVar772 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 6i64 {
@@ -67335,7 +70442,12 @@ impl instructionVar773 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 6i64 {
@@ -67394,7 +70506,12 @@ impl instructionVar774 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 6i64 {
@@ -67455,7 +70572,12 @@ impl instructionVar775 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -67524,7 +70646,12 @@ impl instructionVar776 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -67593,7 +70720,12 @@ impl instructionVar777 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -67661,7 +70793,12 @@ impl instructionVar778 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -67730,7 +70867,12 @@ impl instructionVar779 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -67798,7 +70940,12 @@ impl instructionVar780 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -67867,7 +71014,12 @@ impl instructionVar781 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -67936,7 +71088,12 @@ impl instructionVar782 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68004,7 +71161,12 @@ impl instructionVar783 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68072,7 +71234,12 @@ impl instructionVar784 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68140,7 +71307,12 @@ impl instructionVar785 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68208,7 +71380,12 @@ impl instructionVar786 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68273,7 +71450,12 @@ impl instructionVar787 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -68342,7 +71524,12 @@ impl instructionVar788 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -68408,7 +71595,12 @@ impl instructionVar789 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -68478,7 +71670,12 @@ impl instructionVar790 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 1i64 {
@@ -68550,7 +71747,12 @@ impl instructionVar791 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -68625,7 +71827,12 @@ impl instructionVar792 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -68690,7 +71897,12 @@ impl instructionVar793 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -68760,7 +71972,12 @@ impl instructionVar794 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -68835,7 +72052,12 @@ impl instructionVar795 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -68917,7 +72139,12 @@ impl instructionVar796 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 0i64 {
@@ -69028,7 +72255,12 @@ impl instructionVar797 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -69113,7 +72345,12 @@ impl instructionVar798 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -69188,7 +72425,12 @@ impl instructionVar799 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -69253,7 +72495,12 @@ impl instructionVar800 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -69341,7 +72588,12 @@ impl instructionVar801 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -69454,7 +72706,12 @@ impl instructionVar802 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -69529,7 +72786,12 @@ impl instructionVar803 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -69599,7 +72861,12 @@ impl instructionVar804 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -69669,7 +72936,12 @@ impl instructionVar805 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -69737,7 +73009,12 @@ impl instructionVar806 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -69812,7 +73089,12 @@ impl instructionVar807 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -69879,7 +73161,12 @@ impl instructionVar808 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -69950,7 +73237,12 @@ impl instructionVar809 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70025,7 +73317,12 @@ impl instructionVar810 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -70096,7 +73393,12 @@ impl instructionVar811 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70174,7 +73476,12 @@ impl instructionVar812 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70252,7 +73559,12 @@ impl instructionVar813 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70327,7 +73639,12 @@ impl instructionVar814 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -70397,7 +73714,12 @@ impl instructionVar815 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70475,7 +73797,12 @@ impl instructionVar816 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70547,7 +73874,12 @@ impl instructionVar817 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -70616,7 +73948,12 @@ impl instructionVar818 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70691,7 +74028,12 @@ impl instructionVar819 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 4i64 {
@@ -70756,7 +74098,12 @@ impl instructionVar820 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -70820,7 +74167,12 @@ impl instructionVar821 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -70890,7 +74242,12 @@ impl instructionVar822 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 3i64 {
@@ -70965,7 +74322,12 @@ impl instructionVar823 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 2i64 {
@@ -71038,7 +74400,12 @@ impl instructionVar824 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 5i64 {
@@ -71132,7 +74499,12 @@ impl instructionVar825 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 0i64 {
@@ -71246,7 +74618,12 @@ impl instructionVar826 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -71317,7 +74694,12 @@ impl instructionVar827 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 7i64 {
@@ -71389,7 +74771,12 @@ impl instructionVar828 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 5i64 {
@@ -71468,7 +74855,12 @@ impl instructionVar829 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 5i64 {
@@ -71538,7 +74930,12 @@ impl instructionVar830 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 5i64 {
@@ -71625,7 +75022,12 @@ impl instructionVar831 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldaddrmode().disassembly() != 0i64 {
@@ -85075,7 +88477,12 @@ impl off10Var0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = (token_parser.TokenFieldop1621().disassembly()
@@ -85183,7 +88590,12 @@ impl off16Var0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = ((token_parser.TokenFieldop1621().disassembly()
@@ -85310,7 +88722,12 @@ impl off18Var0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -85440,7 +88857,12 @@ impl off24pcVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let sop0815 = token_parser.TokenFieldsop0815();
@@ -85560,7 +88982,12 @@ impl off24absVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op0811 = token_parser.TokenFieldop0811();
@@ -85685,7 +89112,12 @@ impl off0811pc4oVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start).unwrap().wrapping_add(
@@ -85786,7 +89218,12 @@ impl off0811pc4zVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start).unwrap().wrapping_add(
@@ -85885,7 +89322,12 @@ impl off0815pc8sVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start).unwrap().wrapping_add(
@@ -85984,7 +89426,12 @@ impl off1630pc15sVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start).unwrap().wrapping_add(
@@ -86086,7 +89533,12 @@ impl off0811pc4z16Var0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start).unwrap().wrapping_add(
@@ -86181,7 +89633,12 @@ impl const0607ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op0607 = token_parser.TokenFieldop0607();
@@ -86269,7 +89726,12 @@ impl const0810ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op0810 = token_parser.TokenFieldop0810();
@@ -86366,7 +89828,12 @@ impl const0811Z6zzVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = token_parser
@@ -86459,7 +89926,12 @@ impl const0811ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op0811 = token_parser.TokenFieldop0811();
@@ -86556,7 +90028,12 @@ impl const0811Z5zVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = token_parser
@@ -86649,7 +90126,12 @@ impl const0815ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op0815 = token_parser.TokenFieldop0815();
@@ -86746,7 +90228,12 @@ impl const0815Z10zzVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = token_parser
@@ -86839,7 +90326,12 @@ impl const1111ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1111 = token_parser.TokenFieldop1111();
@@ -86927,7 +90419,12 @@ impl const1215SVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let sop1215 = token_parser.TokenFieldsop1215();
@@ -87015,7 +90512,12 @@ impl const1215ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -87112,7 +90614,12 @@ impl const1215Z6zzVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = token_parser
@@ -87214,7 +90721,12 @@ impl const1215Z5zVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = token_parser
@@ -87318,7 +90830,12 @@ impl const1220SVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -87429,7 +90946,12 @@ impl const1220ZVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -87540,7 +91062,12 @@ impl const1227SVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -87651,7 +91178,12 @@ impl const1227ZVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1215 = token_parser.TokenFieldop1215();
@@ -87751,7 +91283,12 @@ impl const1617ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1617 = token_parser.TokenFieldop1617();
@@ -87839,7 +91376,12 @@ impl const1620ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op1620 = token_parser.TokenFieldop1620();
@@ -87927,7 +91469,12 @@ impl const2327ZVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let op2327 = token_parser.TokenFieldop2327();
@@ -88026,7 +91573,12 @@ impl NbitVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         calc_reloc = (token_parser
@@ -88126,7 +91678,12 @@ impl BOVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 9i64 {
@@ -88197,7 +91754,12 @@ impl BOVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 9i64 {
@@ -88268,7 +91830,12 @@ impl BOVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 9i64 {
@@ -88340,7 +91907,12 @@ impl BOVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 9i64 {
@@ -88412,7 +91984,12 @@ impl BOVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 9i64 {
@@ -88583,7 +92160,12 @@ impl BOLVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let Ra1215 = token_parser.TokenFieldRa1215();
@@ -88684,7 +92266,12 @@ impl SSRVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -88742,7 +92329,12 @@ impl SSRVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -88800,7 +92392,12 @@ impl SSRVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -88855,7 +92452,12 @@ impl SSRVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -88992,7 +92594,12 @@ impl SLRVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -89050,7 +92657,12 @@ impl SLRVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -89108,7 +92720,12 @@ impl SLRVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -89163,7 +92780,12 @@ impl SLRVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 4i64 {
@@ -89304,7 +92926,12 @@ impl SROVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 12i64 {
@@ -89373,7 +93000,12 @@ impl SROVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 12i64 {
@@ -89448,7 +93080,12 @@ impl SROVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 12i64 {
@@ -89594,7 +93231,12 @@ impl SLROVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -89661,7 +93303,12 @@ impl SLROVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -89728,7 +93375,12 @@ impl SLROVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -89867,7 +93519,12 @@ impl SSROVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -89934,7 +93591,12 @@ impl SSROVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -90001,7 +93663,12 @@ impl SSROVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -90140,7 +93807,12 @@ impl SCVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldop0003().disassembly() != 8i64 {
@@ -90243,7 +93915,12 @@ impl CONDCAVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 0i64 {
@@ -90286,7 +93963,12 @@ impl CONDCAVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 1i64 {
@@ -90329,7 +94011,12 @@ impl CONDCAVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 2i64 {
@@ -90372,7 +94059,12 @@ impl CONDCAVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 3i64 {
@@ -90415,7 +94107,12 @@ impl CONDCAVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 4i64 {
@@ -90458,7 +94155,12 @@ impl CONDCAVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 5i64 {
@@ -90501,7 +94203,12 @@ impl CONDCAVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 6i64 {
@@ -90544,7 +94251,12 @@ impl CONDCAVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccA().disassembly() != 7i64 {
@@ -90728,7 +94440,12 @@ impl CONDCBVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 0i64 {
@@ -90771,7 +94488,12 @@ impl CONDCBVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 1i64 {
@@ -90814,7 +94536,12 @@ impl CONDCBVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 2i64 {
@@ -90857,7 +94584,12 @@ impl CONDCBVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 3i64 {
@@ -90900,7 +94632,12 @@ impl CONDCBVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 4i64 {
@@ -90943,7 +94680,12 @@ impl CONDCBVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 5i64 {
@@ -90986,7 +94728,12 @@ impl CONDCBVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 6i64 {
@@ -91029,7 +94776,12 @@ impl CONDCBVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 7i64 {
@@ -91072,7 +94824,12 @@ impl CONDCBVar8 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 8i64 {
@@ -91115,7 +94872,12 @@ impl CONDCBVar9 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 9i64 {
@@ -91158,7 +94920,12 @@ impl CONDCBVar10 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 10i64 {
@@ -91201,7 +94968,12 @@ impl CONDCBVar11 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 11i64 {
@@ -91244,7 +95016,12 @@ impl CONDCBVar12 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 12i64 {
@@ -91287,7 +95064,12 @@ impl CONDCBVar13 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 13i64 {
@@ -91330,7 +95112,12 @@ impl CONDCBVar14 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 14i64 {
@@ -91373,7 +95160,12 @@ impl CONDCBVar15 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccB().disassembly() != 15i64 {
@@ -91669,7 +95461,12 @@ impl CONDCABVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 0i64 {
@@ -91712,7 +95509,12 @@ impl CONDCABVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 1i64 {
@@ -91755,7 +95557,12 @@ impl CONDCABVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 2i64 {
@@ -91798,7 +95605,12 @@ impl CONDCABVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 3i64 {
@@ -91841,7 +95653,12 @@ impl CONDCABVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 4i64 {
@@ -91884,7 +95701,12 @@ impl CONDCABVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 5i64 {
@@ -91927,7 +95749,12 @@ impl CONDCABVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 6i64 {
@@ -91970,7 +95797,12 @@ impl CONDCABVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 7i64 {
@@ -92013,7 +95845,12 @@ impl CONDCABVar8 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 8i64 {
@@ -92056,7 +95893,12 @@ impl CONDCABVar9 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 9i64 {
@@ -92099,7 +95941,12 @@ impl CONDCABVar10 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 10i64 {
@@ -92142,7 +95989,12 @@ impl CONDCABVar11 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 11i64 {
@@ -92185,7 +96037,12 @@ impl CONDCABVar12 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 12i64 {
@@ -92228,7 +96085,12 @@ impl CONDCABVar13 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 13i64 {
@@ -92271,7 +96133,12 @@ impl CONDCABVar14 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 14i64 {
@@ -92314,7 +96181,12 @@ impl CONDCABVar15 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldccAB().disassembly() != 15i64 {
@@ -93125,7 +96997,12 @@ impl SRCVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0708().disassembly() != 0i64 {
@@ -93170,7 +97047,12 @@ impl SRCVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0708().disassembly() != 1i64 {
@@ -93215,7 +97097,12 @@ impl SRCVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0708().disassembly() != 2i64 {
@@ -93329,7 +97216,12 @@ impl DSTVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0910().disassembly() != 0i64 {
@@ -93374,7 +97266,12 @@ impl DSTVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0910().disassembly() != 1i64 {
@@ -93419,7 +97316,12 @@ impl DSTVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0910().disassembly() != 2i64 {
@@ -93532,7 +97434,12 @@ impl SIZE0Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 0i64 {
@@ -93574,7 +97481,12 @@ impl SIZE0Var1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 1i64 {
@@ -93616,7 +97528,12 @@ impl SIZE0Var2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 2i64 {
@@ -93736,7 +97653,12 @@ impl SIZE1Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 0i64 {
@@ -93786,7 +97708,12 @@ impl SIZE1Var1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 1i64 {
@@ -93836,7 +97763,12 @@ impl SIZE1Var2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 2i64 {
@@ -93959,7 +97891,12 @@ impl SIZE1WVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 0i64 {
@@ -94012,7 +97949,12 @@ impl SIZE1WVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 1i64 {
@@ -94065,7 +98007,12 @@ impl SIZE1WVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 2i64 {
@@ -94189,7 +98136,12 @@ impl SIZE1RWVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 0i64 {
@@ -94242,7 +98194,12 @@ impl SIZE1RWVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 1i64 {
@@ -94295,7 +98252,12 @@ impl SIZE1RWVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0001().disassembly() != 2i64 {
@@ -94410,7 +98372,12 @@ impl SIZE5Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 0i64 {
@@ -94456,7 +98423,12 @@ impl SIZE5Var1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 1i64 {
@@ -94502,7 +98474,12 @@ impl SIZE5Var2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 0i64 {
@@ -94632,7 +98609,12 @@ impl SIZE5WVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 0i64 {
@@ -94699,7 +98681,12 @@ impl SIZE5WVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 1i64 {
@@ -94766,7 +98753,12 @@ impl SIZE5WVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 0i64 {
@@ -94893,7 +98885,12 @@ impl CNCVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0506 = token_parser.TokenFieldpcp_op0506();
@@ -94978,7 +98975,12 @@ impl CNT03Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0204 = token_parser.TokenFieldpcp_op0204();
@@ -95063,7 +99065,12 @@ impl CNT02Var0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0203 = token_parser.TokenFieldpcp_op0203();
@@ -95148,7 +99155,12 @@ impl ECVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0707 = token_parser.TokenFieldpcp_op0707();
@@ -95233,7 +99245,12 @@ impl EPVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0808 = token_parser.TokenFieldpcp_op0808();
@@ -95318,7 +99335,12 @@ impl INTVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0909 = token_parser.TokenFieldpcp_op0909();
@@ -95403,7 +99425,12 @@ impl STVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op1010 = token_parser.TokenFieldpcp_op1010();
@@ -95486,7 +99513,12 @@ impl SETCLRVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 1i64 {
@@ -95528,7 +99560,12 @@ impl SETCLRVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldpcp_op0505().disassembly() != 0i64 {
@@ -95629,7 +99666,12 @@ impl SDBVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0000 = token_parser.TokenFieldpcp_op0000();
@@ -95714,7 +99756,12 @@ impl EDAVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0101 = token_parser.TokenFieldpcp_op0101();
@@ -95799,7 +99846,12 @@ impl RTAVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0202 = token_parser.TokenFieldpcp_op0202();
@@ -95884,7 +99936,12 @@ impl DACVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op0303 = token_parser.TokenFieldpcp_op0303();
@@ -95975,7 +100032,12 @@ impl imm6pcVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start)
@@ -96069,7 +100131,12 @@ impl imm10pcVar0 {
         let mut calc_reloc: i64 = 0;
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         calc_reloc = i64::try_from(inst_start)
@@ -96157,7 +100224,12 @@ impl imm16absVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if context_instance.register().read_PCPMode_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_PCPMode_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let pcp_op1631 = token_parser.TokenFieldpcp_op1631();

@@ -11,28 +11,6 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 
-struct GlobalSetDummy;
-#[allow(non_snake_case)]
-#[allow(unused_variables)]
-impl GlobalSetTrait for GlobalSetDummy {
-    fn set_phase(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_temp1(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_nullifyEnable(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_branchCouldBeNullified(
-        &mut self,
-        inst_start: Option<AddrType>,
-        value: i64,
-    ) {
-    }
-    fn set_branchEnable(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_branchType(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_branchIsReturn(&mut self, inst_start: Option<AddrType>, value: i64) {
-    }
-    fn set_padding(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_branchImmDest(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_temp32(&mut self, inst_start: Option<AddrType>, value: i64) {}
-}
-
 #[no_mangle]
 pub fn parse_default(
     tokens: &[u8],
@@ -43,7 +21,7 @@ pub fn parse_default(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDummy,
+        &mut GlobalSetDefault::<SpacesStruct>::default(),
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

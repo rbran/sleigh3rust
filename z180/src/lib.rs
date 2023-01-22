@@ -11,29 +11,18 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 
-struct GlobalSetDummy;
-#[allow(non_snake_case)]
-#[allow(unused_variables)]
-impl GlobalSetTrait for GlobalSetDummy {
-    fn set_assume8bitIOSpace(
-        &mut self,
-        inst_start: Option<AddrType>,
-        value: i64,
-    ) {
-    }
-}
-
 #[no_mangle]
 pub fn parse_default(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
+    context.register_mut().write_assume8bitIOSpace_raw(0).unwrap();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDummy,
+        &mut GlobalSetDefault::<SpacesStruct>::default(),
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

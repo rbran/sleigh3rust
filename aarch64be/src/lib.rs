@@ -11,33 +11,24 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 
-struct GlobalSetDummy;
-#[allow(non_snake_case)]
-#[allow(unused_variables)]
-impl GlobalSetTrait for GlobalSetDummy {
-    fn set_ImmS_ImmR_TestSet(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ImmS_LT_ImmR(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ImmS_EQ_ImmR(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ImmS_LT_ImmR_minus_1(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ImmS_ne_1f(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ImmS_ne_3f(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ShowPAC(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_PAC_clobber(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ShowBTI(&mut self, inst_start: Option<AddrType>, value: i64) {}
-    fn set_ShowMemTag(&mut self, inst_start: Option<AddrType>, value: i64) {}
-}
-
 #[no_mangle]
 pub fn parse_default(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
+    context.register_mut().write_ImmS_ImmR_TestSet_raw(0).unwrap();
+    context.register_mut().write_ImmS_LT_ImmR_raw(0).unwrap();
+    context.register_mut().write_ImmS_EQ_ImmR_raw(0).unwrap();
+    context.register_mut().write_ImmS_LT_ImmR_minus_1_raw(0).unwrap();
+    context.register_mut().write_ImmS_ne_1f_raw(0).unwrap();
+    context.register_mut().write_ImmS_ne_3f_raw(0).unwrap();
+    context.register_mut().write_ShowMemTag_raw(0).unwrap();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDummy,
+        &mut GlobalSetDefault::<SpacesStruct>::default(),
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

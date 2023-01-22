@@ -1,267 +1,659 @@
+use sleigh4rust::*;
 pub type AddrType = u32;
-macro_rules! impl_read_to_type {
-    ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        fn $read_unsigned<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $unsigned_type {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(TYPE_BITS / 8 == $len);
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let mut data = if BIG_ENDIAN {
-                <$unsigned_type>::from_be_bytes(data)
-            } else {
-                <$unsigned_type>::from_le_bytes(data)
-            };
-            let value_mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            data = data >> start_bit;
-            data = data & value_mask;
-            data
-        }
-        fn $read_signed<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $signed_type {
-            const TYPE_BITS: usize = <$signed_type>::BITS as usize;
-            assert!(len_bits > 1);
-            assert!(TYPE_BITS / 8 == $len);
-            let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
-                .unwrap()
-                >> (TYPE_BITS - len_bits);
-            let sign_mask = !value_mask;
-            let value_part = data & value_mask;
-            let sign_part = data & sign_mask;
-            if sign_part != 0 {
-                let neg_value = (!value_part + 1) & value_mask;
-                <$signed_type>::try_from(neg_value)
-                    .unwrap()
-                    .checked_neg()
-                    .unwrap()
-            } else {
-                <$signed_type>::try_from(value_part).unwrap()
-            }
-        }
-        fn $write_unsigned<const BIG_ENDIAN: bool>(
-            value: $unsigned_type,
-            mem: $unsigned_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let mask = value_max << start_bit;
-            let mut value = value;
-            value <<= start_bit;
-            value = (mem & !mask) | value;
-            if BIG_ENDIAN {
-                value.to_be_bytes()
-            } else {
-                value.to_le_bytes()
-            }
-        }
-        fn $write_signed<const BIG_ENDIAN: bool>(
-            value: $signed_type,
-            mem: $signed_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value: $unsigned_type = if value < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mem: $unsigned_type = if mem < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value & mask;
-            $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
-        }
-    };
-}
-impl_read_to_type!(u8, i8, 1, read_u8, read_i8, write_u8, write_i8);
-impl_read_to_type!(u16, i16, 2, read_u16, read_i16, write_u16, write_i16);
-impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
-impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
-impl_read_to_type!(
-    u128, i128, 16, read_u128, read_i128, write_u128, write_i128
-);
-impl_read_to_type!(
-    ethnum::u256,
-    ethnum::i256,
-    32,
-    read_u256,
-    read_i256,
-    write_u256,
-    write_i256
-);
 pub trait GlobalSetTrait {
     fn set_phase(&mut self, address: Option<u32>, value: i64);
     fn set_srcMode(&mut self, address: Option<u32>, value: i64);
     fn set_A5Prefix(&mut self, address: Option<u32>, value: i64);
 }
-pub trait MemoryRead {
-    type AddressType;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]);
-}
-pub trait MemoryWrite {
-    type AddressType;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
+#[derive(Default)]
+pub struct GlobalSetDefault<C: ContextTrait>(
+    pub std::collections::HashMap<AddrType, C>,
+);
+impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
+    fn set_phase(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_phase_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_srcMode(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_srcMode_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_A5Prefix(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_A5Prefix_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
 }
 pub trait ContextregisterTrait:
-    MemoryRead<AddressType = u8> + MemoryWrite<AddressType = u8>
+    MemoryRead<AddressType = u8> + MemoryWrite
 {
-    fn read_phase_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u8, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_phase_raw(&self) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 0, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_phase_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u8, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 0u64 as usize, 1u64 as usize);
-        self.write(3u64 as u8, &mem[0..1]);
+    fn write_phase_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 0, 1)
     }
-    fn read_phase_disassembly(&self) -> i64 {
-        i64::try_from(self.read_phase_raw()).unwrap()
+    fn read_phase_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_phase_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_phase_disassembly(&mut self, param: i64) {
+    fn write_phase_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_phase_raw(param as u8)
     }
-    fn read_phase_execution(&self) -> u8 {
+    fn read_phase_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_phase_raw()
     }
-    fn write_phase_execution(&mut self, param: u8) {
+    fn write_phase_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_phase_raw(param)
     }
-    fn phase_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_phase_raw())
+    fn phase_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_phase_raw()?))
     }
-    fn read_srcMode_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u8, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_srcMode_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 1, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_srcMode_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u8, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 1u64 as usize, 1u64 as usize);
-        self.write(3u64 as u8, &mem[0..1]);
+    fn write_srcMode_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 1, 1)
     }
-    fn read_srcMode_disassembly(&self) -> i64 {
-        i64::try_from(self.read_srcMode_raw()).unwrap()
+    fn read_srcMode_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_srcMode_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_srcMode_disassembly(&mut self, param: i64) {
+    fn write_srcMode_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_srcMode_raw(param as u8)
     }
-    fn read_srcMode_execution(&self) -> u8 {
+    fn read_srcMode_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_srcMode_raw()
     }
-    fn write_srcMode_execution(&mut self, param: u8) {
+    fn write_srcMode_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_srcMode_raw(param)
     }
-    fn srcMode_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_srcMode_raw())
+    fn srcMode_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_srcMode_raw()?))
     }
-    fn read_A5Prefix_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(3u64 as u8, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_A5Prefix_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(3, 2, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_A5Prefix_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(3u64 as u8, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 2u64 as usize, 1u64 as usize);
-        self.write(3u64 as u8, &mem[0..1]);
+    fn write_A5Prefix_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 3, 2, 1)
     }
-    fn read_A5Prefix_disassembly(&self) -> i64 {
-        i64::try_from(self.read_A5Prefix_raw()).unwrap()
+    fn read_A5Prefix_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_A5Prefix_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_A5Prefix_disassembly(&mut self, param: i64) {
+    fn write_A5Prefix_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_A5Prefix_raw(param as u8)
     }
-    fn read_A5Prefix_execution(&self) -> u8 {
+    fn read_A5Prefix_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_A5Prefix_raw()
     }
-    fn write_A5Prefix_execution(&mut self, param: u8) {
+    fn write_A5Prefix_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_A5Prefix_raw(param)
     }
-    fn A5Prefix_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_A5Prefix_raw())
+    fn A5Prefix_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_A5Prefix_raw()?))
     }
 }
-pub trait ContextTrait {
+pub trait ContextTrait: Default {
     type Typeregister: ContextregisterTrait;
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ContextregisterStruct {
-    pub chunk_0x0: [u8; 4u64 as usize],
+#[derive(Debug, Clone, Copy)]
+pub struct ContextregisterStructDebug {
+    pub chunk_0x0: [Option<bool>; 32],
 }
-impl ContextregisterTrait for ContextregisterStruct {}
-impl MemoryRead for ContextregisterStruct {
-    type AddressType = u8;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
-        match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                buf.copy_from_slice(&self.chunk_0x0[start..end]);
-            }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+impl Default for ContextregisterStructDebug {
+    fn default() -> Self {
+        Self {
+            chunk_0x0: [None; 32],
         }
     }
 }
-impl MemoryWrite for ContextregisterStruct {
-    type AddressType = u8;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
+impl ContextregisterStructDebug {
+    fn read_bits(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
-            (0u64..=3u64, 0u64..=4u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                self.chunk_0x0[start..end].copy_from_slice(buf);
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                            as u8)
+                            << bit;
+                    }
+                }
             }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+            (addr_start, addr_end) => {
+                return Err(MemoryReadError::UnableToReadMemory(
+                    addr_start, addr_end,
+                ))
+            }
         }
+        Ok(())
+    }
+    fn write_bits(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
+        match (addr, addr_end) {
+            (0..=3, 0..=4) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        self.chunk_0x0[chunk_index + bit] =
+                            Some(*buf_byte & (1 << bit) != 0);
+                    }
+                }
+            }
+            (addr_start, addr_end) => {
+                return Err(MemoryWriteError::UnableToWriteMemory(
+                    addr_start, addr_end,
+                ))
+            }
+        }
+        Ok(())
+    }
+}
+impl ContextregisterTrait for ContextregisterStructDebug {}
+impl MemoryRead for ContextregisterStructDebug {
+    type AddressType = u8;
+    fn read(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.read_bits(addr, buf, &mut inner_buf)
+    }
+    fn read_u8<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u8, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u8>::from_be_bytes(data)
+        } else {
+            <u8>::from_le_bytes(data)
+        };
+        let value_mask = <u8>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u16<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u16, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u16>::from_be_bytes(data)
+        } else {
+            <u16>::from_le_bytes(data)
+        };
+        let value_mask = <u16>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u32<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u32, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u32>::from_be_bytes(data)
+        } else {
+            <u32>::from_le_bytes(data)
+        };
+        let value_mask = <u32>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u64<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u64, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u64>::from_be_bytes(data)
+        } else {
+            <u64>::from_le_bytes(data)
+        };
+        let value_mask = <u64>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u128<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u128, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u128>::from_be_bytes(data)
+        } else {
+            <u128>::from_le_bytes(data)
+        };
+        let value_mask = <u128>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+}
+impl MemoryWrite for ContextregisterStructDebug {
+    fn write(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.write_bits(addr, buf, &inner_buf)
+    }
+    fn write_u8<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u8,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u16<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u16,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u32<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u32,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u64<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u64,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u128<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u128,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
     }
 }
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
-    pub register: ContextregisterStruct,
+    pub register: ContextregisterStructDebug,
 }
 impl ContextTrait for SpacesStruct {
-    type Typeregister = ContextregisterStruct;
+    type Typeregister = ContextregisterStructDebug;
     fn register(&self) -> &Self::Typeregister {
         &self.register
     }
@@ -1659,6 +2051,20 @@ impl TokenField_data24 {
     }
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
+impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
+    type AddressType = usize;
+    fn read(
+        &self,
+        addr: Self::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<Self::AddressType>> {
+        let end = addr + buf.len();
+        self.0
+            .get(addr..end)
+            .map(|src| buf.copy_from_slice(src))
+            .ok_or(MemoryReadError::UnableToReadMemory(addr, end))
+    }
+}
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
@@ -1666,1264 +2072,340 @@ impl<const LEN: usize> TokenParser<LEN> {
         Some(Self(token_data))
     }
     fn TokenFieldopfull(&self) -> TokenField_opfull {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_opfull(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_opfull(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldoplo(&self) -> TokenField_oplo {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_oplo(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_oplo(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldophi(&self) -> TokenField_ophi {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ophi(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_ophi(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrn(&self) -> TokenField_rn {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rn(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_rn(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrnfill(&self) -> TokenField_rnfill {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rnfill(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_rnfill(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldri(&self) -> TokenField_ri {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ri(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_ri(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrifill(&self) -> TokenField_rifill {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rifill(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 3).unwrap();
+        TokenField_rifill(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldopaddr(&self) -> TokenField_opaddr {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_opaddr(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_opaddr(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaddrfill(&self) -> TokenField_addrfill {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_addrfill(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 1).unwrap();
+        TokenField_addrfill(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0000(&self) -> TokenField_b_0000 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0000(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_b_0000(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0001(&self) -> TokenField_b_0001 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0001(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 2).unwrap();
+        TokenField_b_0001(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0002(&self) -> TokenField_b_0002 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0002(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_b_0002(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0005(&self) -> TokenField_b_0005 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0005(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 6).unwrap();
+        TokenField_b_0005(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0101(&self) -> TokenField_b_0101 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0101(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 1).unwrap();
+        TokenField_b_0101(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0107(&self) -> TokenField_b_0107 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0107(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 7).unwrap();
+        TokenField_b_0107(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0207(&self) -> TokenField_b_0207 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0207(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 6).unwrap();
+        TokenField_b_0207(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0307(&self) -> TokenField_b_0307 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0307(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 5).unwrap();
+        TokenField_b_0307(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb_0607(&self) -> TokenField_b_0607 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b_0607(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 2).unwrap();
+        TokenField_b_0607(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddirect(&self) -> TokenField_direct {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_direct(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_direct(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbank(&self) -> TokenField_bank {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bank(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_bank(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfr(&self) -> TokenField_sfr {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfr(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 7).unwrap();
+        TokenField_sfr(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfr6(&self) -> TokenField_sfr6 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfr6(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 1).unwrap();
+        TokenField_sfr6(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfrlo(&self) -> TokenField_sfrlo {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfrlo(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_sfrlo(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmainreg(&self) -> TokenField_mainreg {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_mainreg(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 7).unwrap();
+        TokenField_mainreg(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddirect17(&self) -> TokenField_direct17 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_direct17(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 7).unwrap();
+        TokenField_direct17(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddirect2(&self) -> TokenField_direct2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_direct2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_direct2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbank2(&self) -> TokenField_bank2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bank2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_bank2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfr2(&self) -> TokenField_sfr2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfr2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 7).unwrap();
+        TokenField_sfr2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfr26(&self) -> TokenField_sfr26 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfr26(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 1).unwrap();
+        TokenField_sfr26(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfr2lo(&self) -> TokenField_sfr2lo {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfr2lo(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_sfr2lo(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldmainreg2(&self) -> TokenField_mainreg2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_mainreg2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 7).unwrap();
+        TokenField_mainreg2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbitaddr8(&self) -> TokenField_bitaddr8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bitaddr8(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_bitaddr8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbitaddr27(&self) -> TokenField_bitaddr27 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bitaddr27(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 6).unwrap();
+        TokenField_bitaddr27(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbitbank(&self) -> TokenField_bitbank {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bitbank(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_bitbank(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfrbyte(&self) -> TokenField_sfrbyte {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfrbyte(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 5).unwrap();
+        TokenField_sfrbyte(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbitaddr57(&self) -> TokenField_bitaddr57 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bitaddr57(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_bitaddr57(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfrbit6(&self) -> TokenField_sfrbit6 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfrbit6(inner_value)
+        let inner_value = self.read_u8::<true>(0, 6, 1).unwrap();
+        TokenField_sfrbit6(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfrbit3(&self) -> TokenField_sfrbit3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfrbit3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_sfrbit3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfrbit(&self) -> TokenField_sfrbit {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfrbit(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_sfrbit(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldlowbyte(&self) -> TokenField_lowbyte {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_lowbyte(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 4).unwrap();
+        TokenField_lowbyte(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbitaddr0(&self) -> TokenField_bitaddr0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bitaddr0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_bitaddr0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaddr16(&self) -> TokenField_addr16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_addr16(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 16).unwrap();
+        TokenField_addr16(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldrel8(&self) -> TokenField_rel8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_rel8(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 8).unwrap();
+        TokenField_rel8(i8::try_from(inner_value).unwrap())
     }
     fn TokenFielddata(&self) -> TokenField_data {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_data(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 8).unwrap();
+        TokenField_data(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddata16(&self) -> TokenField_data16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_data16(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 16).unwrap();
+        TokenField_data16(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldrel16(&self) -> TokenField_rel16 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<true>(work_value, 0u64 as usize, 16u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_rel16(inner_value)
+        let inner_value = self.read_i16::<true>(0, 0, 16).unwrap();
+        TokenField_rel16(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldaoplo(&self) -> TokenField_aoplo {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_aoplo(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_aoplo(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaopaddr(&self) -> TokenField_aopaddr {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_aopaddr(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_aopaddr(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaaddrfill(&self) -> TokenField_aaddrfill {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_aaddrfill(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 1).unwrap();
+        TokenField_aaddrfill(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldadata(&self) -> TokenField_adata {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_adata(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 8).unwrap();
+        TokenField_adata(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm47(&self) -> TokenField_rm47 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm47(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_rm47(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm47_d1(&self) -> TokenField_rm47_d1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm47_d1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_rm47_d1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm47_d2(&self) -> TokenField_rm47_d2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm47_d2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_rm47_d2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm03(&self) -> TokenField_rm03 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm03(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_rm03(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj47(&self) -> TokenField_wrj47 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj47(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_wrj47(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj47_d1(&self) -> TokenField_wrj47_d1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj47_d1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_wrj47_d1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj47_d2(&self) -> TokenField_wrj47_d2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj47_d2(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_wrj47_d2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj03(&self) -> TokenField_wrj03 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj03(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_wrj03(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddrk47(&self) -> TokenField_drk47 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_drk47(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_drk47(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddrk03(&self) -> TokenField_drk03 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_drk03(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_drk03(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldd7(&self) -> TokenField_d7 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_d7(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_d7(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldd57(&self) -> TokenField_d57 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_d57(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_d57(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldd47(&self) -> TokenField_d47 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_d47(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_d47(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields3(&self) -> TokenField_s3 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s3(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_s3(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields23(&self) -> TokenField_s23 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s23(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 2).unwrap();
+        TokenField_s23(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields13(&self) -> TokenField_s13 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s13(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 3).unwrap();
+        TokenField_s13(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields03(&self) -> TokenField_s03 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s03(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_s03(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields1(&self) -> TokenField_s1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s1(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 1).unwrap();
+        TokenField_s1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields0(&self) -> TokenField_s0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s0(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 1).unwrap();
+        TokenField_s0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldshort01(&self) -> TokenField_short01 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 2u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_short01(inner_value)
+        let inner_value = self.read_i8::<true>(0, 0, 2).unwrap();
+        TokenField_short01(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit02(&self) -> TokenField_bit02 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit02(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 3).unwrap();
+        TokenField_bit02(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm47_(&self) -> TokenField_rm47_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm47_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_rm47_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldrm03_(&self) -> TokenField_rm03_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_rm03_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_rm03_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj47_(&self) -> TokenField_wrj47_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj47_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_wrj47_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldwrj03_(&self) -> TokenField_wrj03_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_wrj03_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_wrj03_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddrk47_(&self) -> TokenField_drk47_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_drk47_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 4, 4).unwrap();
+        TokenField_drk47_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielddrk03_(&self) -> TokenField_drk03_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_drk03_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_drk03_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldd7_(&self) -> TokenField_d7_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_d7_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 7, 1).unwrap();
+        TokenField_d7_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldd57_(&self) -> TokenField_d57_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_d57_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 5, 3).unwrap();
+        TokenField_d57_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields3_(&self) -> TokenField_s3_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s3_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 3, 1).unwrap();
+        TokenField_s3_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields13_(&self) -> TokenField_s13_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s13_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 1, 3).unwrap();
+        TokenField_s13_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields03_(&self) -> TokenField_s03_ {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s03_(inner_value)
+        let inner_value = self.read_u8::<true>(0, 0, 4).unwrap();
+        TokenField_s03_(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldaddr24(&self) -> TokenField_addr24 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u32::<true>(work_value, 0u64 as usize, 24u64 as usize);
-            u32::try_from(value).unwrap()
-        };
-        TokenField_addr24(inner_value)
+        let inner_value = self.read_u32::<true>(0, 0, 24).unwrap();
+        TokenField_addr24(u32::try_from(inner_value).unwrap())
     }
     fn TokenFielddata24(&self) -> TokenField_data24 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u32::<true>(work_value, 0u64 as usize, 24u64 as usize);
-            u32::try_from(value).unwrap()
-        };
-        TokenField_data24(inner_value)
+        let inner_value = self.read_u32::<true>(0, 0, 24).unwrap();
+        TokenField_data24(u32::try_from(inner_value).unwrap())
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -3130,7 +2612,12 @@ impl instructionVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 1u64 as u32;
         let token_parser = <TokenParser<1usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if token_parser.TokenFieldophi().disassembly() != 10i64 {
@@ -3140,11 +2627,15 @@ impl instructionVar0 {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_A5Prefix_disassembly(tmp);
+            .write_A5Prefix_disassembly(tmp)
+            .unwrap();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];
@@ -3197,15 +2688,24 @@ impl instructionVar1 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let tmp = 0i64;
         context_instance
             .register_mut()
-            .write_A5Prefix_disassembly(tmp);
+            .write_A5Prefix_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -3280,6 +2780,7 @@ impl instructionVar2 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -3287,6 +2788,7 @@ impl instructionVar2 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -3313,6 +2815,7 @@ impl instructionVar2 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -3320,6 +2823,7 @@ impl instructionVar2 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -3435,6 +2939,7 @@ impl instructionVar3 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -3442,6 +2947,7 @@ impl instructionVar3 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -3468,6 +2974,7 @@ impl instructionVar3 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -3475,6 +2982,7 @@ impl instructionVar3 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4036,6 +3544,7 @@ impl instructionVar10 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4043,6 +3552,7 @@ impl instructionVar10 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4069,6 +3579,7 @@ impl instructionVar10 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -4076,6 +3587,7 @@ impl instructionVar10 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -4644,6 +4156,7 @@ impl instructionVar17 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4651,6 +4164,7 @@ impl instructionVar17 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4677,6 +4191,7 @@ impl instructionVar17 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -4684,6 +4199,7 @@ impl instructionVar17 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -4782,6 +4298,7 @@ impl instructionVar18 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4789,6 +4306,7 @@ impl instructionVar18 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -4815,6 +4333,7 @@ impl instructionVar18 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -4822,6 +4341,7 @@ impl instructionVar18 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8166,6 +7686,7 @@ impl instructionVar68 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8173,6 +7694,7 @@ impl instructionVar68 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8199,6 +7721,7 @@ impl instructionVar68 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8206,6 +7729,7 @@ impl instructionVar68 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8312,6 +7836,7 @@ impl instructionVar69 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8319,6 +7844,7 @@ impl instructionVar69 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8345,6 +7871,7 @@ impl instructionVar69 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8352,6 +7879,7 @@ impl instructionVar69 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8451,6 +7979,7 @@ impl instructionVar70 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8458,6 +7987,7 @@ impl instructionVar70 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8484,6 +8014,7 @@ impl instructionVar70 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8491,6 +8022,7 @@ impl instructionVar70 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8581,6 +8113,7 @@ impl instructionVar71 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8588,6 +8121,7 @@ impl instructionVar71 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8614,6 +8148,7 @@ impl instructionVar71 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8621,6 +8156,7 @@ impl instructionVar71 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8723,6 +8259,7 @@ impl instructionVar72 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8730,6 +8267,7 @@ impl instructionVar72 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8756,6 +8294,7 @@ impl instructionVar72 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8763,6 +8302,7 @@ impl instructionVar72 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8865,6 +8405,7 @@ impl instructionVar73 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -8872,6 +8413,7 @@ impl instructionVar73 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8898,6 +8440,7 @@ impl instructionVar73 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -8905,6 +8448,7 @@ impl instructionVar73 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9007,6 +8551,7 @@ impl instructionVar74 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9014,6 +8559,7 @@ impl instructionVar74 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9040,6 +8586,7 @@ impl instructionVar74 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9047,6 +8594,7 @@ impl instructionVar74 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9149,6 +8697,7 @@ impl instructionVar75 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9156,6 +8705,7 @@ impl instructionVar75 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9182,6 +8732,7 @@ impl instructionVar75 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9189,6 +8740,7 @@ impl instructionVar75 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9293,6 +8845,7 @@ impl instructionVar76 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9300,6 +8853,7 @@ impl instructionVar76 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9326,6 +8880,7 @@ impl instructionVar76 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9333,6 +8888,7 @@ impl instructionVar76 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9435,6 +8991,7 @@ impl instructionVar77 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9442,6 +8999,7 @@ impl instructionVar77 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9468,6 +9026,7 @@ impl instructionVar77 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9475,6 +9034,7 @@ impl instructionVar77 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9579,6 +9139,7 @@ impl instructionVar78 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9586,6 +9147,7 @@ impl instructionVar78 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9612,6 +9174,7 @@ impl instructionVar78 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9619,6 +9182,7 @@ impl instructionVar78 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9727,6 +9291,7 @@ impl instructionVar79 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9734,6 +9299,7 @@ impl instructionVar79 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9760,6 +9326,7 @@ impl instructionVar79 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9767,6 +9334,7 @@ impl instructionVar79 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9881,6 +9449,7 @@ impl instructionVar80 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9888,6 +9457,7 @@ impl instructionVar80 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -9914,6 +9484,7 @@ impl instructionVar80 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -9921,6 +9492,7 @@ impl instructionVar80 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10033,6 +9605,7 @@ impl instructionVar81 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10040,6 +9613,7 @@ impl instructionVar81 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10066,6 +9640,7 @@ impl instructionVar81 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10073,6 +9648,7 @@ impl instructionVar81 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10193,6 +9769,7 @@ impl instructionVar82 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10200,6 +9777,7 @@ impl instructionVar82 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10226,6 +9804,7 @@ impl instructionVar82 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10233,6 +9812,7 @@ impl instructionVar82 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10355,6 +9935,7 @@ impl instructionVar83 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10362,6 +9943,7 @@ impl instructionVar83 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10388,6 +9970,7 @@ impl instructionVar83 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10395,6 +9978,7 @@ impl instructionVar83 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10493,6 +10077,7 @@ impl instructionVar84 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10500,6 +10085,7 @@ impl instructionVar84 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10526,6 +10112,7 @@ impl instructionVar84 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10533,6 +10120,7 @@ impl instructionVar84 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10637,6 +10225,7 @@ impl instructionVar85 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10644,6 +10233,7 @@ impl instructionVar85 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10670,6 +10260,7 @@ impl instructionVar85 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10677,6 +10268,7 @@ impl instructionVar85 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10789,6 +10381,7 @@ impl instructionVar86 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10796,6 +10389,7 @@ impl instructionVar86 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10822,6 +10416,7 @@ impl instructionVar86 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10829,6 +10424,7 @@ impl instructionVar86 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10947,6 +10543,7 @@ impl instructionVar87 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10954,6 +10551,7 @@ impl instructionVar87 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -10980,6 +10578,7 @@ impl instructionVar87 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -10987,6 +10586,7 @@ impl instructionVar87 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11099,6 +10699,7 @@ impl instructionVar88 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11106,6 +10707,7 @@ impl instructionVar88 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11132,6 +10734,7 @@ impl instructionVar88 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11139,6 +10742,7 @@ impl instructionVar88 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11257,6 +10861,7 @@ impl instructionVar89 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11264,6 +10869,7 @@ impl instructionVar89 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11290,6 +10896,7 @@ impl instructionVar89 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11297,6 +10904,7 @@ impl instructionVar89 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11415,6 +11023,7 @@ impl instructionVar90 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11422,6 +11031,7 @@ impl instructionVar90 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11448,6 +11058,7 @@ impl instructionVar90 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11455,6 +11066,7 @@ impl instructionVar90 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11569,6 +11181,7 @@ impl instructionVar91 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11576,6 +11189,7 @@ impl instructionVar91 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11602,6 +11216,7 @@ impl instructionVar91 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11609,6 +11224,7 @@ impl instructionVar91 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11721,6 +11337,7 @@ impl instructionVar92 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11728,6 +11345,7 @@ impl instructionVar92 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11754,6 +11372,7 @@ impl instructionVar92 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11761,6 +11380,7 @@ impl instructionVar92 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11875,6 +11495,7 @@ impl instructionVar93 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11882,6 +11503,7 @@ impl instructionVar93 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -11908,6 +11530,7 @@ impl instructionVar93 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -11915,6 +11538,7 @@ impl instructionVar93 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12029,6 +11653,7 @@ impl instructionVar94 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12036,6 +11661,7 @@ impl instructionVar94 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12062,6 +11688,7 @@ impl instructionVar94 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12069,6 +11696,7 @@ impl instructionVar94 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12253,6 +11881,7 @@ impl instructionVar96 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12260,6 +11889,7 @@ impl instructionVar96 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12286,6 +11916,7 @@ impl instructionVar96 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12293,6 +11924,7 @@ impl instructionVar96 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12403,6 +12035,7 @@ impl instructionVar97 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12410,6 +12043,7 @@ impl instructionVar97 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12436,6 +12070,7 @@ impl instructionVar97 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12443,6 +12078,7 @@ impl instructionVar97 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12548,6 +12184,7 @@ impl instructionVar98 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12555,6 +12192,7 @@ impl instructionVar98 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12581,6 +12219,7 @@ impl instructionVar98 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12588,6 +12227,7 @@ impl instructionVar98 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12751,6 +12391,7 @@ impl instructionVar100 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12758,6 +12399,7 @@ impl instructionVar100 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12784,6 +12426,7 @@ impl instructionVar100 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12791,6 +12434,7 @@ impl instructionVar100 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12895,6 +12539,7 @@ impl instructionVar101 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -12902,6 +12547,7 @@ impl instructionVar101 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12928,6 +12574,7 @@ impl instructionVar101 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -12935,6 +12582,7 @@ impl instructionVar101 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13086,6 +12734,7 @@ impl instructionVar102 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13093,6 +12742,7 @@ impl instructionVar102 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13119,6 +12769,7 @@ impl instructionVar102 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13126,6 +12777,7 @@ impl instructionVar102 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13273,6 +12925,7 @@ impl instructionVar103 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13280,6 +12933,7 @@ impl instructionVar103 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13306,6 +12960,7 @@ impl instructionVar103 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13313,6 +12968,7 @@ impl instructionVar103 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13460,6 +13116,7 @@ impl instructionVar104 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13467,6 +13124,7 @@ impl instructionVar104 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13493,6 +13151,7 @@ impl instructionVar104 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13500,6 +13159,7 @@ impl instructionVar104 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13653,6 +13313,7 @@ impl instructionVar105 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13660,6 +13321,7 @@ impl instructionVar105 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13686,6 +13348,7 @@ impl instructionVar105 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13693,6 +13356,7 @@ impl instructionVar105 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13859,6 +13523,7 @@ impl instructionVar106 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -13866,6 +13531,7 @@ impl instructionVar106 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13892,6 +13558,7 @@ impl instructionVar106 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -13899,6 +13566,7 @@ impl instructionVar106 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14065,6 +13733,7 @@ impl instructionVar107 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14072,6 +13741,7 @@ impl instructionVar107 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14098,6 +13768,7 @@ impl instructionVar107 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14105,6 +13776,7 @@ impl instructionVar107 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14268,6 +13940,7 @@ impl instructionVar108 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14275,6 +13948,7 @@ impl instructionVar108 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14301,6 +13975,7 @@ impl instructionVar108 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14308,6 +13983,7 @@ impl instructionVar108 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14459,6 +14135,7 @@ impl instructionVar109 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14466,6 +14143,7 @@ impl instructionVar109 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14492,6 +14170,7 @@ impl instructionVar109 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14499,6 +14178,7 @@ impl instructionVar109 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14650,6 +14330,7 @@ impl instructionVar110 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14657,6 +14338,7 @@ impl instructionVar110 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14683,6 +14365,7 @@ impl instructionVar110 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14690,6 +14373,7 @@ impl instructionVar110 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14841,6 +14525,7 @@ impl instructionVar111 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -14848,6 +14533,7 @@ impl instructionVar111 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14874,6 +14560,7 @@ impl instructionVar111 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -14881,6 +14568,7 @@ impl instructionVar111 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -15035,6 +14723,7 @@ impl instructionVar112 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -15042,6 +14731,7 @@ impl instructionVar112 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -15068,6 +14758,7 @@ impl instructionVar112 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -15075,6 +14766,7 @@ impl instructionVar112 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16419,6 +16111,7 @@ impl instructionVar125 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16426,6 +16119,7 @@ impl instructionVar125 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16452,6 +16146,7 @@ impl instructionVar125 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16459,6 +16154,7 @@ impl instructionVar125 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16601,6 +16297,7 @@ impl instructionVar126 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16608,6 +16305,7 @@ impl instructionVar126 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16634,6 +16332,7 @@ impl instructionVar126 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16641,6 +16340,7 @@ impl instructionVar126 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16783,6 +16483,7 @@ impl instructionVar127 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16790,6 +16491,7 @@ impl instructionVar127 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16816,6 +16518,7 @@ impl instructionVar127 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16823,6 +16526,7 @@ impl instructionVar127 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16962,6 +16666,7 @@ impl instructionVar128 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -16969,6 +16674,7 @@ impl instructionVar128 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -16995,6 +16701,7 @@ impl instructionVar128 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17002,6 +16709,7 @@ impl instructionVar128 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17136,6 +16844,7 @@ impl instructionVar129 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17143,6 +16852,7 @@ impl instructionVar129 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17169,6 +16879,7 @@ impl instructionVar129 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17176,6 +16887,7 @@ impl instructionVar129 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17312,6 +17024,7 @@ impl instructionVar130 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17319,6 +17032,7 @@ impl instructionVar130 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17345,6 +17059,7 @@ impl instructionVar130 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17352,6 +17067,7 @@ impl instructionVar130 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17494,6 +17210,7 @@ impl instructionVar131 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17501,6 +17218,7 @@ impl instructionVar131 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17527,6 +17245,7 @@ impl instructionVar131 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17534,6 +17253,7 @@ impl instructionVar131 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17671,6 +17391,7 @@ impl instructionVar132 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17678,6 +17399,7 @@ impl instructionVar132 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17704,6 +17426,7 @@ impl instructionVar132 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17711,6 +17434,7 @@ impl instructionVar132 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17834,6 +17558,7 @@ impl instructionVar133 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -17841,6 +17566,7 @@ impl instructionVar133 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17867,6 +17593,7 @@ impl instructionVar133 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -17874,6 +17601,7 @@ impl instructionVar133 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18002,6 +17730,7 @@ impl instructionVar134 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18009,6 +17738,7 @@ impl instructionVar134 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18035,6 +17765,7 @@ impl instructionVar134 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18042,6 +17773,7 @@ impl instructionVar134 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18184,6 +17916,7 @@ impl instructionVar135 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18191,6 +17924,7 @@ impl instructionVar135 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18217,6 +17951,7 @@ impl instructionVar135 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18224,6 +17959,7 @@ impl instructionVar135 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18384,6 +18120,7 @@ impl instructionVar136 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18391,6 +18128,7 @@ impl instructionVar136 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18417,6 +18155,7 @@ impl instructionVar136 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18424,6 +18163,7 @@ impl instructionVar136 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18582,6 +18322,7 @@ impl instructionVar137 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18589,6 +18330,7 @@ impl instructionVar137 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18615,6 +18357,7 @@ impl instructionVar137 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18622,6 +18365,7 @@ impl instructionVar137 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18772,6 +18516,7 @@ impl instructionVar138 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18779,6 +18524,7 @@ impl instructionVar138 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18805,6 +18551,7 @@ impl instructionVar138 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18812,6 +18559,7 @@ impl instructionVar138 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18928,6 +18676,7 @@ impl instructionVar139 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -18935,6 +18684,7 @@ impl instructionVar139 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18961,6 +18711,7 @@ impl instructionVar139 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -18968,6 +18719,7 @@ impl instructionVar139 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19086,6 +18838,7 @@ impl instructionVar140 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19093,6 +18846,7 @@ impl instructionVar140 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19119,6 +18873,7 @@ impl instructionVar140 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19126,6 +18881,7 @@ impl instructionVar140 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19244,6 +19000,7 @@ impl instructionVar141 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19251,6 +19008,7 @@ impl instructionVar141 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19277,6 +19035,7 @@ impl instructionVar141 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19284,6 +19043,7 @@ impl instructionVar141 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19402,6 +19162,7 @@ impl instructionVar142 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19409,6 +19170,7 @@ impl instructionVar142 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19435,6 +19197,7 @@ impl instructionVar142 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19442,6 +19205,7 @@ impl instructionVar142 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19560,6 +19324,7 @@ impl instructionVar143 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19567,6 +19332,7 @@ impl instructionVar143 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19593,6 +19359,7 @@ impl instructionVar143 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19600,6 +19367,7 @@ impl instructionVar143 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19718,6 +19486,7 @@ impl instructionVar144 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19725,6 +19494,7 @@ impl instructionVar144 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19751,6 +19521,7 @@ impl instructionVar144 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19758,6 +19529,7 @@ impl instructionVar144 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19874,6 +19646,7 @@ impl instructionVar145 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -19881,6 +19654,7 @@ impl instructionVar145 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19907,6 +19681,7 @@ impl instructionVar145 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -19914,6 +19689,7 @@ impl instructionVar145 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20032,6 +19808,7 @@ impl instructionVar146 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20039,6 +19816,7 @@ impl instructionVar146 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20065,6 +19843,7 @@ impl instructionVar146 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20072,6 +19851,7 @@ impl instructionVar146 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20190,6 +19970,7 @@ impl instructionVar147 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20197,6 +19978,7 @@ impl instructionVar147 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20223,6 +20005,7 @@ impl instructionVar147 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20230,6 +20013,7 @@ impl instructionVar147 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20348,6 +20132,7 @@ impl instructionVar148 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20355,6 +20140,7 @@ impl instructionVar148 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20381,6 +20167,7 @@ impl instructionVar148 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20388,6 +20175,7 @@ impl instructionVar148 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20506,6 +20294,7 @@ impl instructionVar149 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20513,6 +20302,7 @@ impl instructionVar149 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20539,6 +20329,7 @@ impl instructionVar149 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20546,6 +20337,7 @@ impl instructionVar149 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20662,6 +20454,7 @@ impl instructionVar150 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20669,6 +20462,7 @@ impl instructionVar150 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20695,6 +20489,7 @@ impl instructionVar150 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20702,6 +20497,7 @@ impl instructionVar150 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20852,6 +20648,7 @@ impl instructionVar151 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -20859,6 +20656,7 @@ impl instructionVar151 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20885,6 +20683,7 @@ impl instructionVar151 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -20892,6 +20691,7 @@ impl instructionVar151 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21008,6 +20808,7 @@ impl instructionVar152 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21015,6 +20816,7 @@ impl instructionVar152 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21041,6 +20843,7 @@ impl instructionVar152 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21048,6 +20851,7 @@ impl instructionVar152 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21166,6 +20970,7 @@ impl instructionVar153 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21173,6 +20978,7 @@ impl instructionVar153 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21199,6 +21005,7 @@ impl instructionVar153 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21206,6 +21013,7 @@ impl instructionVar153 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21324,6 +21132,7 @@ impl instructionVar154 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21331,6 +21140,7 @@ impl instructionVar154 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21357,6 +21167,7 @@ impl instructionVar154 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21364,6 +21175,7 @@ impl instructionVar154 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21482,6 +21294,7 @@ impl instructionVar155 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21489,6 +21302,7 @@ impl instructionVar155 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21515,6 +21329,7 @@ impl instructionVar155 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21522,6 +21337,7 @@ impl instructionVar155 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21640,6 +21456,7 @@ impl instructionVar156 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21647,6 +21464,7 @@ impl instructionVar156 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21673,6 +21491,7 @@ impl instructionVar156 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21680,6 +21499,7 @@ impl instructionVar156 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21795,6 +21615,7 @@ impl instructionVar157 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21802,6 +21623,7 @@ impl instructionVar157 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21828,6 +21650,7 @@ impl instructionVar157 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21835,6 +21658,7 @@ impl instructionVar157 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21945,6 +21769,7 @@ impl instructionVar158 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -21952,6 +21777,7 @@ impl instructionVar158 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21978,6 +21804,7 @@ impl instructionVar158 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -21985,6 +21812,7 @@ impl instructionVar158 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22098,6 +21926,7 @@ impl instructionVar159 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22105,6 +21934,7 @@ impl instructionVar159 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22131,6 +21961,7 @@ impl instructionVar159 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22138,6 +21969,7 @@ impl instructionVar159 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22254,6 +22086,7 @@ impl instructionVar160 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22261,6 +22094,7 @@ impl instructionVar160 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22287,6 +22121,7 @@ impl instructionVar160 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22294,6 +22129,7 @@ impl instructionVar160 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22412,6 +22248,7 @@ impl instructionVar161 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22419,6 +22256,7 @@ impl instructionVar161 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22445,6 +22283,7 @@ impl instructionVar161 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22452,6 +22291,7 @@ impl instructionVar161 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22570,6 +22410,7 @@ impl instructionVar162 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22577,6 +22418,7 @@ impl instructionVar162 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22603,6 +22445,7 @@ impl instructionVar162 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22610,6 +22453,7 @@ impl instructionVar162 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22728,6 +22572,7 @@ impl instructionVar163 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22735,6 +22580,7 @@ impl instructionVar163 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22761,6 +22607,7 @@ impl instructionVar163 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22768,6 +22615,7 @@ impl instructionVar163 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22886,6 +22734,7 @@ impl instructionVar164 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -22893,6 +22742,7 @@ impl instructionVar164 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22919,6 +22769,7 @@ impl instructionVar164 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -22926,6 +22777,7 @@ impl instructionVar164 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23044,6 +22896,7 @@ impl instructionVar165 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23051,6 +22904,7 @@ impl instructionVar165 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23077,6 +22931,7 @@ impl instructionVar165 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23084,6 +22939,7 @@ impl instructionVar165 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23202,6 +23058,7 @@ impl instructionVar166 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23209,6 +23066,7 @@ impl instructionVar166 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23235,6 +23093,7 @@ impl instructionVar166 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23242,6 +23101,7 @@ impl instructionVar166 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23360,6 +23220,7 @@ impl instructionVar167 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23367,6 +23228,7 @@ impl instructionVar167 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23393,6 +23255,7 @@ impl instructionVar167 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23400,6 +23263,7 @@ impl instructionVar167 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23518,6 +23382,7 @@ impl instructionVar168 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23525,6 +23390,7 @@ impl instructionVar168 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23551,6 +23417,7 @@ impl instructionVar168 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23558,6 +23425,7 @@ impl instructionVar168 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23675,6 +23543,7 @@ impl instructionVar169 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23682,6 +23551,7 @@ impl instructionVar169 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23708,6 +23578,7 @@ impl instructionVar169 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23715,6 +23586,7 @@ impl instructionVar169 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23832,6 +23704,7 @@ impl instructionVar170 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23839,6 +23712,7 @@ impl instructionVar170 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23865,6 +23739,7 @@ impl instructionVar170 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -23872,6 +23747,7 @@ impl instructionVar170 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23989,6 +23865,7 @@ impl instructionVar171 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -23996,6 +23873,7 @@ impl instructionVar171 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24022,6 +23900,7 @@ impl instructionVar171 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24029,6 +23908,7 @@ impl instructionVar171 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24147,6 +24027,7 @@ impl instructionVar172 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24154,6 +24035,7 @@ impl instructionVar172 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24180,6 +24062,7 @@ impl instructionVar172 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24187,6 +24070,7 @@ impl instructionVar172 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24303,6 +24187,7 @@ impl instructionVar173 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24310,6 +24195,7 @@ impl instructionVar173 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24336,6 +24222,7 @@ impl instructionVar173 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24343,6 +24230,7 @@ impl instructionVar173 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24461,6 +24349,7 @@ impl instructionVar174 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24468,6 +24357,7 @@ impl instructionVar174 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24494,6 +24384,7 @@ impl instructionVar174 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24501,6 +24392,7 @@ impl instructionVar174 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24619,6 +24511,7 @@ impl instructionVar175 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24626,6 +24519,7 @@ impl instructionVar175 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24652,6 +24546,7 @@ impl instructionVar175 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24659,6 +24554,7 @@ impl instructionVar175 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24777,6 +24673,7 @@ impl instructionVar176 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24784,6 +24681,7 @@ impl instructionVar176 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24810,6 +24708,7 @@ impl instructionVar176 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24817,6 +24716,7 @@ impl instructionVar176 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24935,6 +24835,7 @@ impl instructionVar177 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -24942,6 +24843,7 @@ impl instructionVar177 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24968,6 +24870,7 @@ impl instructionVar177 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -24975,6 +24878,7 @@ impl instructionVar177 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25088,6 +24992,7 @@ impl instructionVar178 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25095,6 +25000,7 @@ impl instructionVar178 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25121,6 +25027,7 @@ impl instructionVar178 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25128,6 +25035,7 @@ impl instructionVar178 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25227,6 +25135,7 @@ impl instructionVar179 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25234,6 +25143,7 @@ impl instructionVar179 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25260,6 +25170,7 @@ impl instructionVar179 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25267,6 +25178,7 @@ impl instructionVar179 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25366,6 +25278,7 @@ impl instructionVar180 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25373,6 +25286,7 @@ impl instructionVar180 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25399,6 +25313,7 @@ impl instructionVar180 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25406,6 +25321,7 @@ impl instructionVar180 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25505,6 +25421,7 @@ impl instructionVar181 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25512,6 +25429,7 @@ impl instructionVar181 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25538,6 +25456,7 @@ impl instructionVar181 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25545,6 +25464,7 @@ impl instructionVar181 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25644,6 +25564,7 @@ impl instructionVar182 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25651,6 +25572,7 @@ impl instructionVar182 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25677,6 +25599,7 @@ impl instructionVar182 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25684,6 +25607,7 @@ impl instructionVar182 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25783,6 +25707,7 @@ impl instructionVar183 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25790,6 +25715,7 @@ impl instructionVar183 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25816,6 +25742,7 @@ impl instructionVar183 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25823,6 +25750,7 @@ impl instructionVar183 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25922,6 +25850,7 @@ impl instructionVar184 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -25929,6 +25858,7 @@ impl instructionVar184 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25955,6 +25885,7 @@ impl instructionVar184 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -25962,6 +25893,7 @@ impl instructionVar184 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26061,6 +25993,7 @@ impl instructionVar185 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26068,6 +26001,7 @@ impl instructionVar185 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26094,6 +26028,7 @@ impl instructionVar185 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26101,6 +26036,7 @@ impl instructionVar185 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26200,6 +26136,7 @@ impl instructionVar186 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26207,6 +26144,7 @@ impl instructionVar186 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26233,6 +26171,7 @@ impl instructionVar186 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26240,6 +26179,7 @@ impl instructionVar186 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26339,6 +26279,7 @@ impl instructionVar187 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26346,6 +26287,7 @@ impl instructionVar187 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26372,6 +26314,7 @@ impl instructionVar187 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26379,6 +26322,7 @@ impl instructionVar187 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26483,6 +26427,7 @@ impl instructionVar188 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26490,6 +26435,7 @@ impl instructionVar188 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26516,6 +26462,7 @@ impl instructionVar188 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26523,6 +26470,7 @@ impl instructionVar188 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26639,6 +26587,7 @@ impl instructionVar189 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26646,6 +26595,7 @@ impl instructionVar189 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26672,6 +26622,7 @@ impl instructionVar189 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26679,6 +26630,7 @@ impl instructionVar189 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26797,6 +26749,7 @@ impl instructionVar190 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26804,6 +26757,7 @@ impl instructionVar190 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26830,6 +26784,7 @@ impl instructionVar190 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26837,6 +26792,7 @@ impl instructionVar190 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26955,6 +26911,7 @@ impl instructionVar191 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -26962,6 +26919,7 @@ impl instructionVar191 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26988,6 +26946,7 @@ impl instructionVar191 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -26995,6 +26954,7 @@ impl instructionVar191 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27113,6 +27073,7 @@ impl instructionVar192 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27120,6 +27081,7 @@ impl instructionVar192 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27146,6 +27108,7 @@ impl instructionVar192 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27153,6 +27116,7 @@ impl instructionVar192 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27271,6 +27235,7 @@ impl instructionVar193 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27278,6 +27243,7 @@ impl instructionVar193 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27304,6 +27270,7 @@ impl instructionVar193 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27311,6 +27278,7 @@ impl instructionVar193 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27429,6 +27397,7 @@ impl instructionVar194 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27436,6 +27405,7 @@ impl instructionVar194 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27462,6 +27432,7 @@ impl instructionVar194 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27469,6 +27440,7 @@ impl instructionVar194 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27585,6 +27557,7 @@ impl instructionVar195 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27592,6 +27565,7 @@ impl instructionVar195 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27618,6 +27592,7 @@ impl instructionVar195 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27625,6 +27600,7 @@ impl instructionVar195 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27743,6 +27719,7 @@ impl instructionVar196 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27750,6 +27727,7 @@ impl instructionVar196 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27776,6 +27754,7 @@ impl instructionVar196 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27783,6 +27762,7 @@ impl instructionVar196 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27901,6 +27881,7 @@ impl instructionVar197 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -27908,6 +27889,7 @@ impl instructionVar197 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27934,6 +27916,7 @@ impl instructionVar197 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -27941,6 +27924,7 @@ impl instructionVar197 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28059,6 +28043,7 @@ impl instructionVar198 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28066,6 +28051,7 @@ impl instructionVar198 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28092,6 +28078,7 @@ impl instructionVar198 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28099,6 +28086,7 @@ impl instructionVar198 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28217,6 +28205,7 @@ impl instructionVar199 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28224,6 +28213,7 @@ impl instructionVar199 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28250,6 +28240,7 @@ impl instructionVar199 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28257,6 +28248,7 @@ impl instructionVar199 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28375,6 +28367,7 @@ impl instructionVar200 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28382,6 +28375,7 @@ impl instructionVar200 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28408,6 +28402,7 @@ impl instructionVar200 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28415,6 +28410,7 @@ impl instructionVar200 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28551,6 +28547,7 @@ impl instructionVar201 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28558,6 +28555,7 @@ impl instructionVar201 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28584,6 +28582,7 @@ impl instructionVar201 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28591,6 +28590,7 @@ impl instructionVar201 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28727,6 +28727,7 @@ impl instructionVar202 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28734,6 +28735,7 @@ impl instructionVar202 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28760,6 +28762,7 @@ impl instructionVar202 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28767,6 +28770,7 @@ impl instructionVar202 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28903,6 +28907,7 @@ impl instructionVar203 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -28910,6 +28915,7 @@ impl instructionVar203 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28936,6 +28942,7 @@ impl instructionVar203 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -28943,6 +28950,7 @@ impl instructionVar203 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29077,6 +29085,7 @@ impl instructionVar204 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29084,6 +29093,7 @@ impl instructionVar204 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29110,6 +29120,7 @@ impl instructionVar204 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29117,6 +29128,7 @@ impl instructionVar204 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29267,6 +29279,7 @@ impl instructionVar205 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29274,6 +29287,7 @@ impl instructionVar205 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29300,6 +29314,7 @@ impl instructionVar205 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29307,6 +29322,7 @@ impl instructionVar205 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29467,6 +29483,7 @@ impl instructionVar206 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29474,6 +29491,7 @@ impl instructionVar206 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29500,6 +29518,7 @@ impl instructionVar206 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29507,6 +29526,7 @@ impl instructionVar206 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29666,6 +29686,7 @@ impl instructionVar207 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29673,6 +29694,7 @@ impl instructionVar207 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29699,6 +29721,7 @@ impl instructionVar207 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29706,6 +29729,7 @@ impl instructionVar207 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29865,6 +29889,7 @@ impl instructionVar208 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -29872,6 +29897,7 @@ impl instructionVar208 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29898,6 +29924,7 @@ impl instructionVar208 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -29905,6 +29932,7 @@ impl instructionVar208 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30263,6 +30291,7 @@ impl instructionVar211 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30270,6 +30299,7 @@ impl instructionVar211 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30296,6 +30326,7 @@ impl instructionVar211 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30303,6 +30334,7 @@ impl instructionVar211 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30580,6 +30612,7 @@ impl instructionVar214 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30587,6 +30620,7 @@ impl instructionVar214 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30613,6 +30647,7 @@ impl instructionVar214 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30620,6 +30655,7 @@ impl instructionVar214 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30719,6 +30755,7 @@ impl instructionVar215 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30726,6 +30763,7 @@ impl instructionVar215 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30752,6 +30790,7 @@ impl instructionVar215 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30759,6 +30798,7 @@ impl instructionVar215 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30862,6 +30902,7 @@ impl instructionVar216 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30869,6 +30910,7 @@ impl instructionVar216 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -30895,6 +30937,7 @@ impl instructionVar216 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -30902,6 +30945,7 @@ impl instructionVar216 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31297,6 +31341,7 @@ impl instructionVar220 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31304,6 +31349,7 @@ impl instructionVar220 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31330,6 +31376,7 @@ impl instructionVar220 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31337,6 +31384,7 @@ impl instructionVar220 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31441,6 +31489,7 @@ impl instructionVar221 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31448,6 +31497,7 @@ impl instructionVar221 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31474,6 +31524,7 @@ impl instructionVar221 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31481,6 +31532,7 @@ impl instructionVar221 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31585,6 +31637,7 @@ impl instructionVar222 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31592,6 +31645,7 @@ impl instructionVar222 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31618,6 +31672,7 @@ impl instructionVar222 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31625,6 +31680,7 @@ impl instructionVar222 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31735,6 +31791,7 @@ impl instructionVar223 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31742,6 +31799,7 @@ impl instructionVar223 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31768,6 +31826,7 @@ impl instructionVar223 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31775,6 +31834,7 @@ impl instructionVar223 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31882,6 +31942,7 @@ impl instructionVar224 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31889,6 +31950,7 @@ impl instructionVar224 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -31915,6 +31977,7 @@ impl instructionVar224 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -31922,6 +31985,7 @@ impl instructionVar224 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32223,6 +32287,7 @@ impl instructionVar227 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32230,6 +32295,7 @@ impl instructionVar227 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32256,6 +32322,7 @@ impl instructionVar227 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32263,6 +32330,7 @@ impl instructionVar227 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32643,6 +32711,7 @@ impl instructionVar231 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32650,6 +32719,7 @@ impl instructionVar231 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32676,6 +32746,7 @@ impl instructionVar231 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32683,6 +32754,7 @@ impl instructionVar231 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32788,6 +32860,7 @@ impl instructionVar232 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32795,6 +32868,7 @@ impl instructionVar232 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32821,6 +32895,7 @@ impl instructionVar232 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32828,6 +32903,7 @@ impl instructionVar232 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32931,6 +33007,7 @@ impl instructionVar233 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32938,6 +33015,7 @@ impl instructionVar233 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -32964,6 +33042,7 @@ impl instructionVar233 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -32971,6 +33050,7 @@ impl instructionVar233 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33073,6 +33153,7 @@ impl instructionVar234 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33080,6 +33161,7 @@ impl instructionVar234 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33106,6 +33188,7 @@ impl instructionVar234 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33113,6 +33196,7 @@ impl instructionVar234 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33213,6 +33297,7 @@ impl instructionVar235 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33220,6 +33305,7 @@ impl instructionVar235 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33246,6 +33332,7 @@ impl instructionVar235 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33253,6 +33340,7 @@ impl instructionVar235 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33355,6 +33443,7 @@ impl instructionVar236 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33362,6 +33451,7 @@ impl instructionVar236 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33388,6 +33478,7 @@ impl instructionVar236 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33395,6 +33486,7 @@ impl instructionVar236 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33541,6 +33633,7 @@ impl instructionVar237 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33548,6 +33641,7 @@ impl instructionVar237 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33574,6 +33668,7 @@ impl instructionVar237 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33581,6 +33676,7 @@ impl instructionVar237 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33727,6 +33823,7 @@ impl instructionVar238 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33734,6 +33831,7 @@ impl instructionVar238 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33760,6 +33858,7 @@ impl instructionVar238 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33767,6 +33866,7 @@ impl instructionVar238 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33913,6 +34013,7 @@ impl instructionVar239 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -33920,6 +34021,7 @@ impl instructionVar239 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33946,6 +34048,7 @@ impl instructionVar239 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -33953,6 +34056,7 @@ impl instructionVar239 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34099,6 +34203,7 @@ impl instructionVar240 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34106,6 +34211,7 @@ impl instructionVar240 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34132,6 +34238,7 @@ impl instructionVar240 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34139,6 +34246,7 @@ impl instructionVar240 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34284,6 +34392,7 @@ impl instructionVar241 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34291,6 +34400,7 @@ impl instructionVar241 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34317,6 +34427,7 @@ impl instructionVar241 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34324,6 +34435,7 @@ impl instructionVar241 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34469,6 +34581,7 @@ impl instructionVar242 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34476,6 +34589,7 @@ impl instructionVar242 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34502,6 +34616,7 @@ impl instructionVar242 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34509,6 +34624,7 @@ impl instructionVar242 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34655,6 +34771,7 @@ impl instructionVar243 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34662,6 +34779,7 @@ impl instructionVar243 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34688,6 +34806,7 @@ impl instructionVar243 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34695,6 +34814,7 @@ impl instructionVar243 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34841,6 +34961,7 @@ impl instructionVar244 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -34848,6 +34969,7 @@ impl instructionVar244 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34874,6 +34996,7 @@ impl instructionVar244 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -34881,6 +35004,7 @@ impl instructionVar244 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35027,6 +35151,7 @@ impl instructionVar245 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35034,6 +35159,7 @@ impl instructionVar245 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35060,6 +35186,7 @@ impl instructionVar245 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35067,6 +35194,7 @@ impl instructionVar245 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35213,6 +35341,7 @@ impl instructionVar246 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35220,6 +35349,7 @@ impl instructionVar246 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35246,6 +35376,7 @@ impl instructionVar246 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35253,6 +35384,7 @@ impl instructionVar246 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35373,6 +35505,7 @@ impl instructionVar247 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35380,6 +35513,7 @@ impl instructionVar247 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35406,6 +35540,7 @@ impl instructionVar247 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35413,6 +35548,7 @@ impl instructionVar247 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35513,6 +35649,7 @@ impl instructionVar248 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35520,6 +35657,7 @@ impl instructionVar248 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35546,6 +35684,7 @@ impl instructionVar248 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35553,6 +35692,7 @@ impl instructionVar248 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35655,6 +35795,7 @@ impl instructionVar249 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35662,6 +35803,7 @@ impl instructionVar249 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35688,6 +35830,7 @@ impl instructionVar249 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35695,6 +35838,7 @@ impl instructionVar249 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35815,6 +35959,7 @@ impl instructionVar250 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35822,6 +35967,7 @@ impl instructionVar250 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35848,6 +35994,7 @@ impl instructionVar250 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35855,6 +36002,7 @@ impl instructionVar250 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35955,6 +36103,7 @@ impl instructionVar251 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -35962,6 +36111,7 @@ impl instructionVar251 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35988,6 +36138,7 @@ impl instructionVar251 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -35995,6 +36146,7 @@ impl instructionVar251 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36097,6 +36249,7 @@ impl instructionVar252 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36104,6 +36257,7 @@ impl instructionVar252 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36130,6 +36284,7 @@ impl instructionVar252 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36137,6 +36292,7 @@ impl instructionVar252 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36257,6 +36413,7 @@ impl instructionVar253 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36264,6 +36421,7 @@ impl instructionVar253 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36290,6 +36448,7 @@ impl instructionVar253 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36297,6 +36456,7 @@ impl instructionVar253 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36399,6 +36559,7 @@ impl instructionVar254 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36406,6 +36567,7 @@ impl instructionVar254 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36432,6 +36594,7 @@ impl instructionVar254 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36439,6 +36602,7 @@ impl instructionVar254 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36541,6 +36705,7 @@ impl instructionVar255 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36548,6 +36713,7 @@ impl instructionVar255 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36574,6 +36740,7 @@ impl instructionVar255 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36581,6 +36748,7 @@ impl instructionVar255 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36681,6 +36849,7 @@ impl instructionVar256 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36688,6 +36857,7 @@ impl instructionVar256 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36714,6 +36884,7 @@ impl instructionVar256 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36721,6 +36892,7 @@ impl instructionVar256 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36821,6 +36993,7 @@ impl instructionVar257 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36828,6 +37001,7 @@ impl instructionVar257 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36854,6 +37028,7 @@ impl instructionVar257 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36861,6 +37036,7 @@ impl instructionVar257 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36963,6 +37139,7 @@ impl instructionVar258 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -36970,6 +37147,7 @@ impl instructionVar258 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -36996,6 +37174,7 @@ impl instructionVar258 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37003,6 +37182,7 @@ impl instructionVar258 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37125,6 +37305,7 @@ impl instructionVar259 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37132,6 +37313,7 @@ impl instructionVar259 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37158,6 +37340,7 @@ impl instructionVar259 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37165,6 +37348,7 @@ impl instructionVar259 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37286,6 +37470,7 @@ impl instructionVar260 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37293,6 +37478,7 @@ impl instructionVar260 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37319,6 +37505,7 @@ impl instructionVar260 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37326,6 +37513,7 @@ impl instructionVar260 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37471,6 +37659,7 @@ impl instructionVar261 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37478,6 +37667,7 @@ impl instructionVar261 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37504,6 +37694,7 @@ impl instructionVar261 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37511,6 +37702,7 @@ impl instructionVar261 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37656,6 +37848,7 @@ impl instructionVar262 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37663,6 +37856,7 @@ impl instructionVar262 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37689,6 +37883,7 @@ impl instructionVar262 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37696,6 +37891,7 @@ impl instructionVar262 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37817,6 +38013,7 @@ impl instructionVar263 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37824,6 +38021,7 @@ impl instructionVar263 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37850,6 +38048,7 @@ impl instructionVar263 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -37857,6 +38056,7 @@ impl instructionVar263 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37978,6 +38178,7 @@ impl instructionVar264 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -37985,6 +38186,7 @@ impl instructionVar264 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38011,6 +38213,7 @@ impl instructionVar264 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38018,6 +38221,7 @@ impl instructionVar264 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38139,6 +38343,7 @@ impl instructionVar265 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38146,6 +38351,7 @@ impl instructionVar265 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38172,6 +38378,7 @@ impl instructionVar265 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38179,6 +38386,7 @@ impl instructionVar265 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38301,6 +38509,7 @@ impl instructionVar266 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38308,6 +38517,7 @@ impl instructionVar266 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38334,6 +38544,7 @@ impl instructionVar266 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38341,6 +38552,7 @@ impl instructionVar266 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38459,6 +38671,7 @@ impl instructionVar267 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38466,6 +38679,7 @@ impl instructionVar267 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38492,6 +38706,7 @@ impl instructionVar267 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38499,6 +38714,7 @@ impl instructionVar267 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38616,6 +38832,7 @@ impl instructionVar268 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38623,6 +38840,7 @@ impl instructionVar268 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38649,6 +38867,7 @@ impl instructionVar268 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38656,6 +38875,7 @@ impl instructionVar268 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38773,6 +38993,7 @@ impl instructionVar269 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38780,6 +39001,7 @@ impl instructionVar269 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38806,6 +39028,7 @@ impl instructionVar269 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38813,6 +39036,7 @@ impl instructionVar269 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38929,6 +39153,7 @@ impl instructionVar270 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -38936,6 +39161,7 @@ impl instructionVar270 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38962,6 +39188,7 @@ impl instructionVar270 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -38969,6 +39196,7 @@ impl instructionVar270 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39069,6 +39297,7 @@ impl instructionVar271 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39076,6 +39305,7 @@ impl instructionVar271 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39102,6 +39332,7 @@ impl instructionVar271 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39109,6 +39340,7 @@ impl instructionVar271 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39209,6 +39441,7 @@ impl instructionVar272 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39216,6 +39449,7 @@ impl instructionVar272 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39242,6 +39476,7 @@ impl instructionVar272 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39249,6 +39484,7 @@ impl instructionVar272 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39351,6 +39587,7 @@ impl instructionVar273 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39358,6 +39595,7 @@ impl instructionVar273 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39384,6 +39622,7 @@ impl instructionVar273 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39391,6 +39630,7 @@ impl instructionVar273 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39493,6 +39733,7 @@ impl instructionVar274 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39500,6 +39741,7 @@ impl instructionVar274 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39526,6 +39768,7 @@ impl instructionVar274 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39533,6 +39776,7 @@ impl instructionVar274 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39633,6 +39877,7 @@ impl instructionVar275 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39640,6 +39885,7 @@ impl instructionVar275 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39666,6 +39912,7 @@ impl instructionVar275 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39673,6 +39920,7 @@ impl instructionVar275 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39775,6 +40023,7 @@ impl instructionVar276 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39782,6 +40031,7 @@ impl instructionVar276 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39808,6 +40058,7 @@ impl instructionVar276 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39815,6 +40066,7 @@ impl instructionVar276 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39935,6 +40187,7 @@ impl instructionVar277 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -39942,6 +40195,7 @@ impl instructionVar277 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39968,6 +40222,7 @@ impl instructionVar277 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -39975,6 +40230,7 @@ impl instructionVar277 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40075,6 +40331,7 @@ impl instructionVar278 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40082,6 +40339,7 @@ impl instructionVar278 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40108,6 +40366,7 @@ impl instructionVar278 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40115,6 +40374,7 @@ impl instructionVar278 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40217,6 +40477,7 @@ impl instructionVar279 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40224,6 +40485,7 @@ impl instructionVar279 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40250,6 +40512,7 @@ impl instructionVar279 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40257,6 +40520,7 @@ impl instructionVar279 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40377,6 +40641,7 @@ impl instructionVar280 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40384,6 +40649,7 @@ impl instructionVar280 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40410,6 +40676,7 @@ impl instructionVar280 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40417,6 +40684,7 @@ impl instructionVar280 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40517,6 +40785,7 @@ impl instructionVar281 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40524,6 +40793,7 @@ impl instructionVar281 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40550,6 +40820,7 @@ impl instructionVar281 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40557,6 +40828,7 @@ impl instructionVar281 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40659,6 +40931,7 @@ impl instructionVar282 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;
@@ -40666,6 +40939,7 @@ impl instructionVar282 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40692,6 +40966,7 @@ impl instructionVar282 {
                         if context_instance
                             .register()
                             .read_srcMode_disassembly()
+                            .unwrap()
                             != 1i64
                         {
                             return None;
@@ -40699,6 +40974,7 @@ impl instructionVar282 {
                         if context_instance
                             .register()
                             .read_A5Prefix_disassembly()
+                            .unwrap()
                             != 0i64
                         {
                             return None;

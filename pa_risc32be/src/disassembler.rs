@@ -1,113 +1,5 @@
+use sleigh4rust::*;
 pub type AddrType = u32;
-macro_rules! impl_read_to_type {
-    ($ unsigned_type : ty , $ signed_type : ty , $ len : literal , $ read_unsigned : ident , $ read_signed : ident , $ write_unsigned : ident , $ write_signed : ident) => {
-        fn $read_unsigned<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $unsigned_type {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(TYPE_BITS / 8 == $len);
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let mut data = if BIG_ENDIAN {
-                <$unsigned_type>::from_be_bytes(data)
-            } else {
-                <$unsigned_type>::from_le_bytes(data)
-            };
-            let value_mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            data = data >> start_bit;
-            data = data & value_mask;
-            data
-        }
-        fn $read_signed<const BIG_ENDIAN: bool>(
-            data: [u8; $len],
-            start_bit: usize,
-            len_bits: usize,
-        ) -> $signed_type {
-            const TYPE_BITS: usize = <$signed_type>::BITS as usize;
-            assert!(len_bits > 1);
-            assert!(TYPE_BITS / 8 == $len);
-            let data = $read_unsigned::<BIG_ENDIAN>(data, start_bit, len_bits);
-            let value_mask = <$unsigned_type>::try_from(<$signed_type>::MAX)
-                .unwrap()
-                >> (TYPE_BITS - len_bits);
-            let sign_mask = !value_mask;
-            let value_part = data & value_mask;
-            let sign_part = data & sign_mask;
-            if sign_part != 0 {
-                let neg_value = (!value_part + 1) & value_mask;
-                <$signed_type>::try_from(neg_value)
-                    .unwrap()
-                    .checked_neg()
-                    .unwrap()
-            } else {
-                <$signed_type>::try_from(value_part).unwrap()
-            }
-        }
-        fn $write_unsigned<const BIG_ENDIAN: bool>(
-            value: $unsigned_type,
-            mem: $unsigned_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value_max = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let mask = value_max << start_bit;
-            let mut value = value;
-            value <<= start_bit;
-            value = (mem & !mask) | value;
-            if BIG_ENDIAN {
-                value.to_be_bytes()
-            } else {
-                value.to_le_bytes()
-            }
-        }
-        fn $write_signed<const BIG_ENDIAN: bool>(
-            value: $signed_type,
-            mem: $signed_type,
-            start_bit: usize,
-            len_bits: usize,
-        ) -> [u8; $len] {
-            const TYPE_BITS: usize = <$unsigned_type>::BITS as usize;
-            assert!(len_bits > 0);
-            assert!(len_bits + start_bit <= TYPE_BITS);
-            let value: $unsigned_type = if value < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(value.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mem: $unsigned_type = if mem < 0 {
-                <$unsigned_type>::MAX
-                    - <$unsigned_type>::try_from(mem.abs() - 1).unwrap()
-            } else {
-                <$unsigned_type>::try_from(value).unwrap()
-            };
-            let mask = <$unsigned_type>::MAX >> (TYPE_BITS - len_bits);
-            let value = value & mask;
-            $write_unsigned::<BIG_ENDIAN>(value, mem, start_bit, len_bits)
-        }
-    };
-}
-impl_read_to_type!(u8, i8, 1, read_u8, read_i8, write_u8, write_i8);
-impl_read_to_type!(u16, i16, 2, read_u16, read_i16, write_u16, write_i16);
-impl_read_to_type!(u32, i32, 4, read_u32, read_i32, write_u32, write_i32);
-impl_read_to_type!(u64, i64, 8, read_u64, read_i64, write_u64, write_i64);
-impl_read_to_type!(
-    u128, i128, 16, read_u128, read_i128, write_u128, write_i128
-);
-impl_read_to_type!(
-    ethnum::u256,
-    ethnum::i256,
-    32,
-    read_u256,
-    read_i256,
-    write_u256,
-    write_i256
-);
 pub trait GlobalSetTrait {
     fn set_phase(&mut self, address: Option<u32>, value: i64);
     fn set_temp1(&mut self, address: Option<u32>, value: i64);
@@ -120,358 +12,1017 @@ pub trait GlobalSetTrait {
     fn set_branchImmDest(&mut self, address: Option<u32>, value: i64);
     fn set_temp32(&mut self, address: Option<u32>, value: i64);
 }
-pub trait MemoryRead {
-    type AddressType;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]);
-}
-pub trait MemoryWrite {
-    type AddressType;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]);
+#[derive(Default)]
+pub struct GlobalSetDefault<C: ContextTrait>(
+    pub std::collections::HashMap<AddrType, C>,
+);
+impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
+    fn set_phase(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_phase_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_temp1(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_temp1_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_nullifyEnable(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_nullifyEnable_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_branchCouldBeNullified(
+        &mut self,
+        inst_start: Option<AddrType>,
+        value: i64,
+    ) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_branchCouldBeNullified_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_branchEnable(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_branchEnable_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_branchType(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_branchType_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_branchIsReturn(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_branchIsReturn_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_padding(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_padding_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_branchImmDest(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_branchImmDest_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
+    fn set_temp32(&mut self, inst_start: Option<AddrType>, value: i64) {
+        let Some (inst_start) = inst_start else { return } ;
+        self.0.entry(inst_start).or_insert_with(|| {
+            let mut context = C::default();
+            context
+                .register_mut()
+                .write_temp32_disassembly(value)
+                .unwrap();
+            context
+        });
+    }
 }
 pub trait ContextregisterTrait:
-    MemoryRead<AddressType = u32> + MemoryWrite<AddressType = u32>
+    MemoryRead<AddressType = u32> + MemoryWrite
 {
-    fn read_phase_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(11u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 0u64 as usize, 3u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_phase_raw(&self) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(11, 0, 3)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_phase_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(11u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 0u64 as usize, 3u64 as usize);
-        self.write(11u64 as u32, &mem[0..1]);
+    fn write_phase_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 11, 0, 3)
     }
-    fn read_phase_disassembly(&self) -> i64 {
-        i64::try_from(self.read_phase_raw()).unwrap()
+    fn read_phase_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_phase_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_phase_disassembly(&mut self, param: i64) {
+    fn write_phase_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_phase_raw(param as u8)
     }
-    fn read_phase_execution(&self) -> u8 {
+    fn read_phase_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_phase_raw()
     }
-    fn write_phase_execution(&mut self, param: u8) {
+    fn write_phase_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_phase_raw(param)
     }
-    fn phase_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_phase_raw())
+    fn phase_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_phase_raw()?))
     }
-    fn read_temp1_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(11u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_temp1_raw(&self) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(11, 3, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_temp1_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(11u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 3u64 as usize, 1u64 as usize);
-        self.write(11u64 as u32, &mem[0..1]);
+    fn write_temp1_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 11, 3, 1)
     }
-    fn read_temp1_disassembly(&self) -> i64 {
-        i64::try_from(self.read_temp1_raw()).unwrap()
+    fn read_temp1_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_temp1_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_temp1_disassembly(&mut self, param: i64) {
+    fn write_temp1_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_temp1_raw(param as u8)
     }
-    fn read_temp1_execution(&self) -> u8 {
+    fn read_temp1_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_temp1_raw()
     }
-    fn write_temp1_execution(&mut self, param: u8) {
+    fn write_temp1_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_temp1_raw(param)
     }
-    fn temp1_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_temp1_raw())
+    fn temp1_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_temp1_raw()?))
     }
-    fn read_nullifyEnable_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(11u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_nullifyEnable_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(11, 4, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_nullifyEnable_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(11u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 4u64 as usize, 1u64 as usize);
-        self.write(11u64 as u32, &mem[0..1]);
+    fn write_nullifyEnable_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 11, 4, 1)
     }
-    fn read_nullifyEnable_disassembly(&self) -> i64 {
-        i64::try_from(self.read_nullifyEnable_raw()).unwrap()
+    fn read_nullifyEnable_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_nullifyEnable_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_nullifyEnable_disassembly(&mut self, param: i64) {
+    fn write_nullifyEnable_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_nullifyEnable_raw(param as u8)
     }
-    fn read_nullifyEnable_execution(&self) -> u8 {
+    fn read_nullifyEnable_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_nullifyEnable_raw()
     }
-    fn write_nullifyEnable_execution(&mut self, param: u8) {
+    fn write_nullifyEnable_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_nullifyEnable_raw(param)
     }
-    fn nullifyEnable_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_nullifyEnable_raw())
+    fn nullifyEnable_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_nullifyEnable_raw()?))
     }
-    fn read_branchCouldBeNullified_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(11u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_branchCouldBeNullified_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(11, 5, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_branchCouldBeNullified_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(11u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 5u64 as usize, 1u64 as usize);
-        self.write(11u64 as u32, &mem[0..1]);
+    fn write_branchCouldBeNullified_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 11, 5, 1)
     }
-    fn read_branchCouldBeNullified_disassembly(&self) -> i64 {
-        i64::try_from(self.read_branchCouldBeNullified_raw()).unwrap()
+    fn read_branchCouldBeNullified_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_branchCouldBeNullified_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_branchCouldBeNullified_disassembly(&mut self, param: i64) {
+    fn write_branchCouldBeNullified_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchCouldBeNullified_raw(param as u8)
     }
-    fn read_branchCouldBeNullified_execution(&self) -> u8 {
+    fn read_branchCouldBeNullified_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_branchCouldBeNullified_raw()
     }
-    fn write_branchCouldBeNullified_execution(&mut self, param: u8) {
+    fn write_branchCouldBeNullified_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchCouldBeNullified_raw(param)
     }
-    fn branchCouldBeNullified_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_branchCouldBeNullified_raw())
+    fn branchCouldBeNullified_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(
+            true,
+            self.read_branchCouldBeNullified_raw()?,
+        ))
     }
-    fn read_branchEnable_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(11u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_branchEnable_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(11, 6, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_branchEnable_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(11u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 6u64 as usize, 1u64 as usize);
-        self.write(11u64 as u32, &mem[0..1]);
+    fn write_branchEnable_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 11, 6, 1)
     }
-    fn read_branchEnable_disassembly(&self) -> i64 {
-        i64::try_from(self.read_branchEnable_raw()).unwrap()
+    fn read_branchEnable_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_branchEnable_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_branchEnable_disassembly(&mut self, param: i64) {
+    fn write_branchEnable_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchEnable_raw(param as u8)
     }
-    fn read_branchEnable_execution(&self) -> u8 {
+    fn read_branchEnable_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_branchEnable_raw()
     }
-    fn write_branchEnable_execution(&mut self, param: u8) {
+    fn write_branchEnable_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchEnable_raw(param)
     }
-    fn branchEnable_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_branchEnable_raw())
+    fn branchEnable_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_branchEnable_raw()?))
     }
-    fn read_branchType_raw(&self) -> u8 {
-        let mut work_value = [0u8; 2u64 as usize];
-        self.read(10u64 as u32, &mut work_value[0..2]);
-        let value = read_u16::<true>(work_value, 7u64 as usize, 3u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_branchType_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u16::<true>(10, 7, 3)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_branchType_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 2];
-        self.read(10u64 as u32, &mut mem[0..2]);
-        let mem = u16::from_be_bytes(mem);
-        let mem =
-            write_u16::<true>(param as u16, mem, 7u64 as usize, 3u64 as usize);
-        self.write(10u64 as u32, &mem[0..2]);
+    fn write_branchType_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u16::<true>(u16::from(param), 10, 7, 3)
     }
-    fn read_branchType_disassembly(&self) -> i64 {
-        i64::try_from(self.read_branchType_raw()).unwrap()
+    fn read_branchType_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_branchType_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_branchType_disassembly(&mut self, param: i64) {
+    fn write_branchType_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchType_raw(param as u8)
     }
-    fn read_branchType_execution(&self) -> u8 {
+    fn read_branchType_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_branchType_raw()
     }
-    fn write_branchType_execution(&mut self, param: u8) {
+    fn write_branchType_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchType_raw(param)
     }
-    fn branchType_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_branchType_raw())
+    fn branchType_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_branchType_raw()?))
     }
-    fn read_branchIsReturn_raw(&self) -> u8 {
-        let mut work_value = [0u8; 1u64 as usize];
-        self.read(10u64 as u32, &mut work_value[0..1]);
-        let value = read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-        u8::try_from(value).unwrap()
+    fn read_branchIsReturn_raw(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u8::<true>(10, 2, 1)?;
+        Ok(u8::try_from(work_value).unwrap())
     }
-    fn write_branchIsReturn_raw(&mut self, param: u8) {
-        let mut mem = [0u8; 1];
-        self.read(10u64 as u32, &mut mem[0..1]);
-        let mem = u8::from_be_bytes(mem);
-        let mem =
-            write_u8::<true>(param as u8, mem, 2u64 as usize, 1u64 as usize);
-        self.write(10u64 as u32, &mem[0..1]);
+    fn write_branchIsReturn_raw(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u8::<true>(u8::from(param), 10, 2, 1)
     }
-    fn read_branchIsReturn_disassembly(&self) -> i64 {
-        i64::try_from(self.read_branchIsReturn_raw()).unwrap()
+    fn read_branchIsReturn_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_branchIsReturn_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_branchIsReturn_disassembly(&mut self, param: i64) {
+    fn write_branchIsReturn_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchIsReturn_raw(param as u8)
     }
-    fn read_branchIsReturn_execution(&self) -> u8 {
+    fn read_branchIsReturn_execution(
+        &self,
+    ) -> Result<u8, MemoryReadError<Self::AddressType>> {
         self.read_branchIsReturn_raw()
     }
-    fn write_branchIsReturn_execution(&mut self, param: u8) {
+    fn write_branchIsReturn_execution(
+        &mut self,
+        param: u8,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchIsReturn_raw(param)
     }
-    fn branchIsReturn_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_branchIsReturn_raw())
+    fn branchIsReturn_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_branchIsReturn_raw()?))
     }
-    fn read_padding_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(8u64 as u32, &mut work_value[1..4]);
-        let value = read_u32::<true>(work_value, 2u64 as usize, 22u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_padding_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(8, 2, 22)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_padding_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(8u64 as u32, &mut mem[1..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 2u64 as usize, 22u64 as usize);
-        self.write(8u64 as u32, &mem[1..4]);
+    fn write_padding_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 8, 2, 22)
     }
-    fn read_padding_disassembly(&self) -> i64 {
-        i64::try_from(self.read_padding_raw()).unwrap()
+    fn read_padding_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_padding_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_padding_disassembly(&mut self, param: i64) {
+    fn write_padding_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_padding_raw(param as u32)
     }
-    fn read_padding_execution(&self) -> u32 {
+    fn read_padding_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_padding_raw()
     }
-    fn write_padding_execution(&mut self, param: u32) {
+    fn write_padding_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_padding_raw(param)
     }
-    fn padding_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_padding_raw())
+    fn padding_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_padding_raw()?))
     }
-    fn read_branchImmDest_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(4u64 as u32, &mut work_value[0..4]);
-        let value = read_u32::<true>(work_value, 0u64 as usize, 32u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_branchImmDest_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(4, 0, 32)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_branchImmDest_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(4u64 as u32, &mut mem[0..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 0u64 as usize, 32u64 as usize);
-        self.write(4u64 as u32, &mem[0..4]);
+    fn write_branchImmDest_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 4, 0, 32)
     }
-    fn read_branchImmDest_disassembly(&self) -> i64 {
-        i64::try_from(self.read_branchImmDest_raw()).unwrap()
+    fn read_branchImmDest_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_branchImmDest_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_branchImmDest_disassembly(&mut self, param: i64) {
+    fn write_branchImmDest_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchImmDest_raw(param as u32)
     }
-    fn read_branchImmDest_execution(&self) -> u32 {
+    fn read_branchImmDest_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_branchImmDest_raw()
     }
-    fn write_branchImmDest_execution(&mut self, param: u32) {
+    fn write_branchImmDest_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_branchImmDest_raw(param)
     }
-    fn branchImmDest_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_branchImmDest_raw())
+    fn branchImmDest_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_branchImmDest_raw()?))
     }
-    fn read_temp32_raw(&self) -> u32 {
-        let mut work_value = [0u8; 4u64 as usize];
-        self.read(0u64 as u32, &mut work_value[0..4]);
-        let value = read_u32::<true>(work_value, 0u64 as usize, 32u64 as usize);
-        u32::try_from(value).unwrap()
+    fn read_temp32_raw(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
+        let work_value = self.read_u32::<true>(0, 0, 32)?;
+        Ok(u32::try_from(work_value).unwrap())
     }
-    fn write_temp32_raw(&mut self, param: u32) {
-        let mut mem = [0u8; 4];
-        self.read(0u64 as u32, &mut mem[0..4]);
-        let mem = u32::from_be_bytes(mem);
-        let mem =
-            write_u32::<true>(param as u32, mem, 0u64 as usize, 32u64 as usize);
-        self.write(0u64 as u32, &mem[0..4]);
+    fn write_temp32_raw(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
+        self.write_u32::<true>(u32::from(param), 0, 0, 32)
     }
-    fn read_temp32_disassembly(&self) -> i64 {
-        i64::try_from(self.read_temp32_raw()).unwrap()
+    fn read_temp32_disassembly(
+        &self,
+    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+        let raw_value = self.read_temp32_raw()?;
+        Ok(i64::try_from(raw_value).unwrap())
     }
-    fn write_temp32_disassembly(&mut self, param: i64) {
+    fn write_temp32_disassembly(
+        &mut self,
+        param: i64,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_temp32_raw(param as u32)
     }
-    fn read_temp32_execution(&self) -> u32 {
+    fn read_temp32_execution(
+        &self,
+    ) -> Result<u32, MemoryReadError<Self::AddressType>> {
         self.read_temp32_raw()
     }
-    fn write_temp32_execution(&mut self, param: u32) {
+    fn write_temp32_execution(
+        &mut self,
+        param: u32,
+    ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_temp32_raw(param)
     }
-    fn temp32_display(&self) -> DisplayElement {
-        meaning_number(true, self.read_temp32_raw())
+    fn temp32_display(
+        &self,
+    ) -> Result<DisplayElement, MemoryReadError<Self::AddressType>> {
+        Ok(meaning_number(true, self.read_temp32_raw()?))
     }
 }
-pub trait ContextTrait {
+pub trait ContextTrait: Default {
     type Typeregister: ContextregisterTrait;
     fn register(&self) -> &Self::Typeregister;
     fn register_mut(&mut self) -> &mut Self::Typeregister;
 }
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ContextregisterStruct {
-    pub chunk_0x0: [u8; 12u64 as usize],
+#[derive(Debug, Clone, Copy)]
+pub struct ContextregisterStructDebug {
+    pub chunk_0x0: [Option<bool>; 96],
 }
-impl ContextregisterTrait for ContextregisterStruct {}
-impl MemoryRead for ContextregisterStruct {
-    type AddressType = u32;
-    fn read(&self, addr: Self::AddressType, buf: &mut [u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
-        match (addr, addr_end) {
-            (0u64..=11u64, 0u64..=12u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                buf.copy_from_slice(&self.chunk_0x0[start..end]);
-            }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+impl Default for ContextregisterStructDebug {
+    fn default() -> Self {
+        Self {
+            chunk_0x0: [None; 96],
         }
     }
 }
-impl MemoryWrite for ContextregisterStruct {
-    type AddressType = u32;
-    fn write(&mut self, addr: Self::AddressType, buf: &[u8]) {
-        let addr = <u64>::try_from(addr).unwrap();
-        let buf_len = <u64>::try_from(buf.len()).unwrap();
-        let addr_end = addr + buf_len;
+impl ContextregisterStructDebug {
+    fn read_bits(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
-            (0u64..=11u64, 0u64..=12u64) => {
-                let start = addr - 0u64;
-                let end = usize::try_from(start + buf_len).unwrap();
-                let start = usize::try_from(start).unwrap();
-                self.chunk_0x0[start..end].copy_from_slice(buf);
+            (0..=11, 0..=12) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                            as u8)
+                            << bit;
+                    }
+                }
             }
-            _ => panic!("undefined mem {}:{}", addr, buf.len()),
+            (addr_start, addr_end) => {
+                return Err(MemoryReadError::UnableToReadMemory(
+                    addr_start, addr_end,
+                ))
+            }
         }
+        Ok(())
+    }
+    fn write_bits(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+        mask: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        assert_eq!(buf.len(), mask.len());
+        let buf_len =
+            <<Self as MemoryRead>::AddressType>::try_from(buf.len()).unwrap();
+        let addr_end = addr + ((buf_len + 7) / 8);
+        match (addr, addr_end) {
+            (0..=11, 0..=12) => {
+                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
+                for ((buf_byte, mask_byte), chunk_index) in
+                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                {
+                    for bit in (0..8)
+                        .into_iter()
+                        .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
+                    {
+                        self.chunk_0x0[chunk_index + bit] =
+                            Some(*buf_byte & (1 << bit) != 0);
+                    }
+                }
+            }
+            (addr_start, addr_end) => {
+                return Err(MemoryWriteError::UnableToWriteMemory(
+                    addr_start, addr_end,
+                ))
+            }
+        }
+        Ok(())
+    }
+}
+impl ContextregisterTrait for ContextregisterStructDebug {}
+impl MemoryRead for ContextregisterStructDebug {
+    type AddressType = u32;
+    fn read(
+        &self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.read_bits(addr, buf, &mut inner_buf)
+    }
+    fn read_u8<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u8, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u8>::from_be_bytes(data)
+        } else {
+            <u8>::from_le_bytes(data)
+        };
+        let value_mask = <u8>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u16<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u16, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u16>::from_be_bytes(data)
+        } else {
+            <u16>::from_le_bytes(data)
+        };
+        let value_mask = <u16>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u32<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u32, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u32>::from_be_bytes(data)
+        } else {
+            <u32>::from_le_bytes(data)
+        };
+        let value_mask = <u32>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u64<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u64, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u64>::from_be_bytes(data)
+        } else {
+            <u64>::from_le_bytes(data)
+        };
+        let value_mask = <u64>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+    fn read_u128<const BIG_ENDIAN: bool>(
+        &self,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<u128, MemoryReadError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let mut data = [0u8; TYPE_BYTES];
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        self.read_bits(
+            data_addr,
+            &mut data[data_start..data_end],
+            &mask[data_start..data_end],
+        )?;
+        let data = if BIG_ENDIAN {
+            <u128>::from_be_bytes(data)
+        } else {
+            <u128>::from_le_bytes(data)
+        };
+        let value_mask = <u128>::MAX >> (TYPE_BITS - data_bits);
+        Ok((data >> data_lsb) & value_mask)
+    }
+}
+impl MemoryWrite for ContextregisterStructDebug {
+    fn write(
+        &mut self,
+        addr: <Self as MemoryRead>::AddressType,
+        buf: &[u8],
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        let mut inner_buf = vec![0xFF; buf.len()];
+        self.write_bits(addr, buf, &inner_buf)
+    }
+    fn write_u8<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u8,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u8>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u8>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u16<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u16,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u16>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u16>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u32<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u32,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u32>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u32>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u64<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u64,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u64>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u64>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
+    }
+    fn write_u128<const BIG_ENDIAN: bool>(
+        &mut self,
+        value: u128,
+        data_addr: <Self as MemoryRead>::AddressType,
+        varnode_lsb: usize,
+        data_bits: usize,
+    ) -> Result<(), MemoryWriteError<<Self as MemoryRead>::AddressType>> {
+        const TYPE_BITS: usize = <u128>::BITS as usize;
+        const TYPE_BYTES: usize = TYPE_BITS / 8;
+        assert!(data_bits > 0);
+        let data_lsb = varnode_lsb % 8;
+        let read_bytes = (data_bits + data_lsb + 7) / 8;
+        assert!(read_bytes <= TYPE_BYTES);
+        let mask = (<u128>::MAX >> (TYPE_BITS - data_bits)) << data_lsb;
+        let mask_raw = if BIG_ENDIAN {
+            mask.to_be_bytes()
+        } else {
+            mask.to_le_bytes()
+        };
+        let data_start = if BIG_ENDIAN {
+            TYPE_BYTES - read_bytes
+        } else {
+            0
+        };
+        let data_end = data_start + read_bytes;
+        let value = (value << data_lsb) & mask;
+        let final_mem = if BIG_ENDIAN {
+            value.to_be_bytes()
+        } else {
+            value.to_le_bytes()
+        };
+        self.write_bits(
+            data_addr,
+            &final_mem[data_start..data_end],
+            &mask_raw[data_start..data_end],
+        )
     }
 }
 #[derive(Debug, Clone, Copy, Default)]
 pub struct SpacesStruct {
-    pub register: ContextregisterStruct,
+    pub register: ContextregisterStructDebug,
 }
 impl ContextTrait for SpacesStruct {
-    type Typeregister = ContextregisterStruct;
+    type Typeregister = ContextregisterStructDebug;
     fn register(&self) -> &Self::Typeregister {
         &self.register
     }
@@ -2682,6 +3233,20 @@ impl TokenField_w {
     }
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
+impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
+    type AddressType = usize;
+    fn read(
+        &self,
+        addr: Self::AddressType,
+        buf: &mut [u8],
+    ) -> Result<(), MemoryReadError<Self::AddressType>> {
+        let end = addr + buf.len();
+        self.0
+            .get(addr..end)
+            .map(|src| buf.copy_from_slice(src))
+            .ok_or(MemoryReadError::UnableToReadMemory(addr, end))
+    }
+}
 impl<const LEN: usize> TokenParser<LEN> {
     fn new(data: &[u8]) -> Option<Self> {
         let token_slice: &[u8] = data.get(..LEN)?;
@@ -2689,1924 +3254,516 @@ impl<const LEN: usize> TokenParser<LEN> {
         Some(Self(token_data))
     }
     fn TokenFieldopfam(&self) -> TokenField_opfam {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 1u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_opfam(inner_value)
+        let inner_value = self.read_u8::<true>(0, 2, 6).unwrap();
+        TokenField_opfam(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcr(&self) -> TokenField_cr {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_cr(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_cr(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcrname2(&self) -> TokenField_crname2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_crname2(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_crname2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfreg2(&self) -> TokenField_freg2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_freg2(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_freg2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfreg2sgl(&self) -> TokenField_freg2sgl {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_freg2sgl(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_freg2sgl(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfr2half(&self) -> TokenField_fr2half {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fr2half(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_fr2half(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedr2(&self) -> TokenField_fusedr2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedr2(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_fusedr2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldreg2(&self) -> TokenField_reg2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_reg2(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_reg2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldb(&self) -> TokenField_b {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_b(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_b(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbboffset(&self) -> TokenField_bboffset {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bboffset(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_bboffset(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcrname1(&self) -> TokenField_crname1 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_crname1(inner_value)
+        let inner_value = self.read_u16::<true>(0, 5, 5).unwrap();
+        TokenField_crname1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit20(&self) -> TokenField_bit20 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_bit20(inner_value)
+        let inner_value = self.read_i8::<true>(1, 4, 1).unwrap();
+        TokenField_bit20(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpc1sub2(&self) -> TokenField_fpc1sub2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpc1sub2(inner_value)
+        let inner_value = self.read_u8::<true>(1, 1, 4).unwrap();
+        TokenField_fpc1sub2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighIm10(&self) -> TokenField_highIm10 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 10u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_highIm10(inner_value)
+        let inner_value = self.read_u16::<true>(0, 0, 10).unwrap();
+        TokenField_highIm10(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldreg1(&self) -> TokenField_reg1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_reg1(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_reg1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedr1(&self) -> TokenField_fusedr1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedr1(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_fusedr1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfreg1(&self) -> TokenField_freg1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_freg1(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_freg1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfreg1sgl(&self) -> TokenField_freg1sgl {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_freg1sgl(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_freg1sgl(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfr1half(&self) -> TokenField_fr1half {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fr1half(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_fr1half(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldr(&self) -> TokenField_r {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_r(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_r(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighIm5(&self) -> TokenField_highIm5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_highIm5(inner_value)
+        let inner_value = self.read_i8::<true>(1, 0, 5).unwrap();
+        TokenField_highIm5(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldhighIm5less16(&self) -> TokenField_highIm5less16 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_highIm5less16(inner_value)
+        let inner_value = self.read_u8::<true>(1, 1, 4).unwrap();
+        TokenField_highIm5less16(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldtr(&self) -> TokenField_tr {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_tr(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_tr(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldx(&self) -> TokenField_x {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_x(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_x(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldw1(&self) -> TokenField_w1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_w1(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_w1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit16(&self) -> TokenField_bit16 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit16(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 1).unwrap();
+        TokenField_bit16(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpc1sub(&self) -> TokenField_fpc1sub {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 7u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpc1sub(inner_value)
+        let inner_value = self.read_u16::<true>(1, 7, 2).unwrap();
+        TokenField_fpc1sub(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsrbit1(&self) -> TokenField_srbit1 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_srbit1(inner_value)
+        let inner_value = self.read_u8::<true>(2, 7, 1).unwrap();
+        TokenField_srbit1(u8::try_from(inner_value).unwrap())
     }
     fn TokenFields(&self) -> TokenField_s {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_s(inner_value)
+        let inner_value = self.read_u8::<true>(2, 6, 2).unwrap();
+        TokenField_s(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsrbit0(&self) -> TokenField_srbit0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_srbit0(inner_value)
+        let inner_value = self.read_u8::<true>(2, 6, 1).unwrap();
+        TokenField_srbit0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim13(&self) -> TokenField_im13 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i32::<true>(work_value, 5u64 as usize, 13u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_im13(inner_value)
+        let inner_value = self.read_i32::<true>(0, 5, 13).unwrap();
+        TokenField_im13(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldSEDCondSym(&self) -> TokenField_SEDCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_SEDCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_SEDCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRegUnitCondSym(&self) -> TokenField_RegUnitCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_RegUnitCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_RegUnitCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldInvUnitCondSym(&self) -> TokenField_InvUnitCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_InvUnitCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_InvUnitCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRegLogicCondSym(&self) -> TokenField_RegLogicCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_RegLogicCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_RegLogicCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldInvLogicCondSym(&self) -> TokenField_InvLogicCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_InvLogicCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_InvLogicCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRegAddCondSym(&self) -> TokenField_RegAddCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_RegAddCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_RegAddCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldInvAddCondSym(&self) -> TokenField_InvAddCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_InvAddCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_InvAddCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldRegCSCondSym(&self) -> TokenField_RegCSCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_RegCSCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_RegCSCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldInvCSCondSym(&self) -> TokenField_InvCSCondSym {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_InvCSCondSym(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_InvCSCondSym(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldc(&self) -> TokenField_c {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_c(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_c(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpsub(&self) -> TokenField_fpsub {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpsub(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 3).unwrap();
+        TokenField_fpsub(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsrbit2(&self) -> TokenField_srbit2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_srbit2(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 1).unwrap();
+        TokenField_srbit2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpdf(&self) -> TokenField_fpdf {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpdf(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 2).unwrap();
+        TokenField_fpdf(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfixeddf(&self) -> TokenField_fixeddf {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fixeddf(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 2).unwrap();
+        TokenField_fixeddf(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpdfraw(&self) -> TokenField_fpdfraw {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpdfraw(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 2).unwrap();
+        TokenField_fpdfraw(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfixedsf(&self) -> TokenField_fixedsf {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fixedsf(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 2).unwrap();
+        TokenField_fixedsf(u8::try_from(inner_value).unwrap())
     }
     fn TokenFielda(&self) -> TokenField_a {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_a(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 1).unwrap();
+        TokenField_a(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldu(&self) -> TokenField_u {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_u(inner_value)
+        let inner_value = self.read_u8::<true>(2, 5, 1).unwrap();
+        TokenField_u(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpr1x(&self) -> TokenField_fpr1x {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpr1x(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 1).unwrap();
+        TokenField_fpr1x(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldf(&self) -> TokenField_f {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_f(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 1).unwrap();
+        TokenField_f(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfv(&self) -> TokenField_fv {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fv(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 1).unwrap();
+        TokenField_fv(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldzero(&self) -> TokenField_zero {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_zero(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 1).unwrap();
+        TokenField_zero(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldone(&self) -> TokenField_one {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_one(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 1).unwrap();
+        TokenField_one(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsubop1012(&self) -> TokenField_subop1012 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_subop1012(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 3).unwrap();
+        TokenField_subop1012(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim15(&self) -> TokenField_im15 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u32::<true>(work_value, 3u64 as usize, 15u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_im15(inner_value)
+        let inner_value = self.read_u32::<true>(0, 3, 15).unwrap();
+        TokenField_im15(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsopim10(&self) -> TokenField_sopim10 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<true>(work_value, 3u64 as usize, 10u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_sopim10(inner_value)
+        let inner_value = self.read_i16::<true>(1, 3, 10).unwrap();
+        TokenField_sopim10(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsopim5(&self) -> TokenField_sopim5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 3u64 as usize, 5u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sopim5(inner_value)
+        let inner_value = self.read_i8::<true>(2, 3, 5).unwrap();
+        TokenField_sopim5(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpta(&self) -> TokenField_fpta {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpta(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 5).unwrap();
+        TokenField_fpta(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedta(&self) -> TokenField_fusedta {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedta(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 5).unwrap();
+        TokenField_fusedta(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpsf(&self) -> TokenField_fpsf {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpsf(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 2).unwrap();
+        TokenField_fpsf(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpsfraw(&self) -> TokenField_fpsfraw {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpsfraw(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 2).unwrap();
+        TokenField_fpsfraw(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpfmt(&self) -> TokenField_fpfmt {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpfmt(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 2).unwrap();
+        TokenField_fpfmt(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpfmt1bit(&self) -> TokenField_fpfmt1bit {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpfmt1bit(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 1).unwrap();
+        TokenField_fpfmt1bit(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit11(&self) -> TokenField_bit11 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 3u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit11(inner_value)
+        let inner_value = self.read_u8::<true>(2, 3, 1).unwrap();
+        TokenField_bit11(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcc(&self) -> TokenField_cc {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_cc(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 2).unwrap();
+        TokenField_cc(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldldcc(&self) -> TokenField_ldcc {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ldcc(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 2).unwrap();
+        TokenField_ldcc(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldstcc(&self) -> TokenField_stcc {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_stcc(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 2).unwrap();
+        TokenField_stcc(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldldcwcc(&self) -> TokenField_ldcwcc {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ldcwcc(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 2).unwrap();
+        TokenField_ldcwcc(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit10(&self) -> TokenField_bit10 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit10(inner_value)
+        let inner_value = self.read_u8::<true>(2, 2, 1).unwrap();
+        TokenField_bit10(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsopim17(&self) -> TokenField_sopim17 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u32::<true>(work_value, 1u64 as usize, 17u64 as usize);
-            u32::try_from(value).unwrap()
-        };
-        TokenField_sopim17(inner_value)
+        let inner_value = self.read_u32::<true>(0, 1, 17).unwrap();
+        TokenField_sopim17(u32::try_from(inner_value).unwrap())
     }
     fn TokenFieldpmuop(&self) -> TokenField_pmuop {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_pmuop(inner_value)
+        let inner_value = self.read_u8::<true>(2, 1, 5).unwrap();
+        TokenField_pmuop(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldspecop(&self) -> TokenField_specop {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_specop(inner_value)
+        let inner_value = self.read_u8::<true>(2, 1, 2).unwrap();
+        TokenField_specop(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpclass(&self) -> TokenField_fpclass {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpclass(inner_value)
+        let inner_value = self.read_u8::<true>(2, 1, 2).unwrap();
+        TokenField_fpclass(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit9(&self) -> TokenField_bit9 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit9(inner_value)
+        let inner_value = self.read_u8::<true>(2, 1, 1).unwrap();
+        TokenField_bit9(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit8(&self) -> TokenField_bit8 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit8(inner_value)
+        let inner_value = self.read_u8::<true>(2, 0, 1).unwrap();
+        TokenField_bit8(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpx(&self) -> TokenField_fpx {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpx(inner_value)
+        let inner_value = self.read_u8::<true>(2, 0, 1).unwrap();
+        TokenField_fpx(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbits78(&self) -> TokenField_bits78 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 7u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bits78(inner_value)
+        let inner_value = self.read_u16::<true>(2, 7, 2).unwrap();
+        TokenField_bits78(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpr2x(&self) -> TokenField_fpr2x {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 7u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpr2x(inner_value)
+        let inner_value = self.read_u8::<true>(3, 7, 1).unwrap();
+        TokenField_fpr2x(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpra(&self) -> TokenField_fpra {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpra(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 5).unwrap();
+        TokenField_fpra(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedra(&self) -> TokenField_fusedra {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedra(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 5).unwrap();
+        TokenField_fusedra(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldext4(&self) -> TokenField_ext4 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_ext4(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 4).unwrap();
+        TokenField_ext4(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldC(&self) -> TokenField_C {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_C(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 4).unwrap();
+        TokenField_C(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsubop(&self) -> TokenField_subop {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_subop(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 4).unwrap();
+        TokenField_subop(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsysopshifted(&self) -> TokenField_sysopshifted {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sysopshifted(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 8).unwrap();
+        TokenField_sysopshifted(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsysopshiftedshort(&self) -> TokenField_sysopshiftedshort {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sysopshiftedshort(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 7).unwrap();
+        TokenField_sysopshiftedshort(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldop(&self) -> TokenField_op {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 6u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_op(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 6).unwrap();
+        TokenField_op(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsfu(&self) -> TokenField_sfu {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sfu(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 3).unwrap();
+        TokenField_sfu(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfp0czero(&self) -> TokenField_fp0czero {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 6u64 as usize, 3u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fp0czero(inner_value)
+        let inner_value = self.read_u16::<true>(2, 6, 3).unwrap();
+        TokenField_fp0czero(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfptx(&self) -> TokenField_fptx {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fptx(inner_value)
+        let inner_value = self.read_u8::<true>(3, 6, 1).unwrap();
+        TokenField_fptx(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit6(&self) -> TokenField_bit6 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit6(inner_value)
+        let inner_value = self.read_u8::<true>(3, 6, 1).unwrap();
+        TokenField_bit6(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldsysop(&self) -> TokenField_sysop {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 8u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_sysop(inner_value)
+        let inner_value = self.read_u16::<true>(2, 5, 8).unwrap();
+        TokenField_sysop(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldi2(&self) -> TokenField_i2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 7u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_i2(inner_value)
+        let inner_value = self.read_u16::<true>(2, 5, 7).unwrap();
+        TokenField_i2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbits59(&self) -> TokenField_bits59 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bits59(inner_value)
+        let inner_value = self.read_u16::<true>(2, 5, 5).unwrap();
+        TokenField_bits59(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcp(&self) -> TokenField_cp {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 5u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_cp(inner_value)
+        let inner_value = self.read_u16::<true>(2, 5, 5).unwrap();
+        TokenField_cp(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedfmt(&self) -> TokenField_fusedfmt {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedfmt(inner_value)
+        let inner_value = self.read_u8::<true>(3, 5, 1).unwrap();
+        TokenField_fusedfmt(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit5(&self) -> TokenField_bit5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit5(inner_value)
+        let inner_value = self.read_u8::<true>(3, 5, 1).unwrap();
+        TokenField_bit5(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldm(&self) -> TokenField_m {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_m(inner_value)
+        let inner_value = self.read_u8::<true>(3, 5, 1).unwrap();
+        TokenField_m(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldspn(&self) -> TokenField_spn {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 5u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_spn(inner_value)
+        let inner_value = self.read_u8::<true>(3, 5, 1).unwrap();
+        TokenField_spn(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldw2(&self) -> TokenField_w2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 2u64 as usize, 11u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_w2(inner_value)
+        let inner_value = self.read_u16::<true>(2, 2, 11).unwrap();
+        TokenField_w2(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldw2_2(&self) -> TokenField_w2_2 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 2u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_w2_2(inner_value)
+        let inner_value = self.read_u8::<true>(3, 2, 1).unwrap();
+        TokenField_w2_2(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldw2less2(&self) -> TokenField_w2less2 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 3u64 as usize, 10u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_w2less2(inner_value)
+        let inner_value = self.read_u16::<true>(2, 3, 10).unwrap();
+        TokenField_w2less2(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldn(&self) -> TokenField_n {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_n(inner_value)
+        let inner_value = self.read_u8::<true>(3, 1, 1).unwrap();
+        TokenField_n(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim26(&self) -> TokenField_im26 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 0u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i32::<true>(work_value, 0u64 as usize, 26u64 as usize);
-            i32::try_from(value).unwrap()
-        };
-        TokenField_im26(inner_value)
+        let inner_value = self.read_i32::<true>(0, 0, 26).unwrap();
+        TokenField_im26(i32::try_from(inner_value).unwrap())
     }
     fn TokenFieldsim21(&self) -> TokenField_sim21 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i32::<true>(work_value, 0u64 as usize, 21u64 as usize);
-            i32::try_from(value).unwrap()
-        };
-        TokenField_sim21(inner_value)
+        let inner_value = self.read_i32::<true>(1, 0, 21).unwrap();
+        TokenField_sim21(i32::try_from(inner_value).unwrap())
     }
     fn TokenFieldsim14(&self) -> TokenField_sim14 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<true>(work_value, 0u64 as usize, 14u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_sim14(inner_value)
+        let inner_value = self.read_i16::<true>(2, 0, 14).unwrap();
+        TokenField_sim14(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldim21less0(&self) -> TokenField_im21less0 {
-        let inner_value = {
-            let mut work_value = [0u8; 4u64 as usize];
-            let work_start = 1u64 as usize;
-            let work_end = 4u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u32::<true>(work_value, 1u64 as usize, 20u64 as usize);
-            u32::try_from(value).unwrap()
-        };
-        TokenField_im21less0(inner_value)
+        let inner_value = self.read_u32::<true>(1, 1, 20).unwrap();
+        TokenField_im21less0(u32::try_from(inner_value).unwrap())
     }
     fn TokenFieldim21_1_12(&self) -> TokenField_im21_1_12 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 1u64 as usize, 11u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_im21_1_12(inner_value)
+        let inner_value = self.read_u16::<true>(2, 1, 11).unwrap();
+        TokenField_im21_1_12(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldim21_12_14(&self) -> TokenField_im21_12_14 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 4u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_im21_12_14(inner_value)
+        let inner_value = self.read_u8::<true>(2, 4, 2).unwrap();
+        TokenField_im21_12_14(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim21_14_16(&self) -> TokenField_im21_14_16 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 3u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 6u64 as usize, 2u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_im21_14_16(inner_value)
+        let inner_value = self.read_u8::<true>(2, 6, 2).unwrap();
+        TokenField_im21_14_16(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim21_16_21(&self) -> TokenField_im21_16_21 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 1u64 as usize;
-            let token_end = 2u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_im21_16_21(inner_value)
+        let inner_value = self.read_u8::<true>(1, 0, 5).unwrap();
+        TokenField_im21_16_21(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim14(&self) -> TokenField_im14 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 0u64 as usize, 14u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_im14(inner_value)
+        let inner_value = self.read_u16::<true>(2, 0, 14).unwrap();
+        TokenField_im14(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldim14less0(&self) -> TokenField_im14less0 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 1u64 as usize, 13u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_im14less0(inner_value)
+        let inner_value = self.read_u16::<true>(2, 1, 13).unwrap();
+        TokenField_im14less0(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldim11(&self) -> TokenField_im11 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i16::<true>(work_value, 0u64 as usize, 11u64 as usize);
-            i16::try_from(value).unwrap()
-        };
-        TokenField_im11(inner_value)
+        let inner_value = self.read_i16::<true>(2, 0, 11).unwrap();
+        TokenField_im11(i16::try_from(inner_value).unwrap())
     }
     fn TokenFieldim11less0(&self) -> TokenField_im11less0 {
-        let inner_value = {
-            let mut work_value = [0u8; 2u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 2u64 as usize;
-            let token_start = 2u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u16::<true>(work_value, 1u64 as usize, 11u64 as usize);
-            u16::try_from(value).unwrap()
-        };
-        TokenField_im11less0(inner_value)
+        let inner_value = self.read_u16::<true>(2, 1, 11).unwrap();
+        TokenField_im11less0(u16::try_from(inner_value).unwrap())
     }
     fn TokenFieldsim5(&self) -> TokenField_sim5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_i8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            i8::try_from(value).unwrap()
-        };
-        TokenField_sim5(inner_value)
+        let inner_value = self.read_i8::<true>(3, 0, 5).unwrap();
+        TokenField_sim5(i8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim5(&self) -> TokenField_im5 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_im5(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_im5(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldim5less0(&self) -> TokenField_im5less0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 1u64 as usize, 4u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_im5less0(inner_value)
+        let inner_value = self.read_u8::<true>(3, 1, 4).unwrap();
+        TokenField_im5less0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpcond(&self) -> TokenField_fpcond {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpcond(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fpcond(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfptest(&self) -> TokenField_fptest {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fptest(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fptest(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpt(&self) -> TokenField_fpt {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpt(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fpt(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfptsgl(&self) -> TokenField_fptsgl {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fptsgl(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fptsgl(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfusedrt(&self) -> TokenField_fusedrt {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fusedrt(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fusedrt(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldfpthalf(&self) -> TokenField_fpthalf {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_fpthalf(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_fpthalf(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldcrnamet(&self) -> TokenField_crnamet {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_crnamet(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_crnamet(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldt(&self) -> TokenField_t {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 5u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_t(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 5).unwrap();
+        TokenField_t(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldbit0(&self) -> TokenField_bit0 {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_bit0(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 1).unwrap();
+        TokenField_bit0(u8::try_from(inner_value).unwrap())
     }
     fn TokenFieldw(&self) -> TokenField_w {
-        let inner_value = {
-            let mut work_value = [0u8; 1u64 as usize];
-            let work_start = 0u64 as usize;
-            let work_end = 1u64 as usize;
-            let token_start = 3u64 as usize;
-            let token_end = 4u64 as usize;
-            work_value[work_start..work_end]
-                .copy_from_slice(&self.0[token_start..token_end]);
-            let value =
-                read_u8::<true>(work_value, 0u64 as usize, 1u64 as usize);
-            u8::try_from(value).unwrap()
-        };
-        TokenField_w(inner_value)
+        let inner_value = self.read_u8::<true>(3, 0, 1).unwrap();
+        TokenField_w(u8::try_from(inner_value).unwrap())
     }
 }
 #[derive(Clone, Copy, Debug)]
@@ -5086,18 +4243,35 @@ impl instructionVar0 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_branchEnable_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5146,18 +4320,35 @@ impl instructionVar1 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_branchEnable_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5207,28 +4398,51 @@ impl instructionVar2 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5295,28 +4509,51 @@ impl instructionVar3 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5383,28 +4620,51 @@ impl instructionVar4 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5471,28 +4731,51 @@ impl instructionVar5 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5559,28 +4842,51 @@ impl instructionVar6 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5647,28 +4953,51 @@ impl instructionVar7 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5735,28 +5064,51 @@ impl instructionVar8 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5823,28 +5175,51 @@ impl instructionVar9 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5910,28 +5285,51 @@ impl instructionVar10 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 4i64 {
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 4i64
+        {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -5980,35 +5378,59 @@ impl instructionVar11 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 4i64 {
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 4i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchIsReturn_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6057,35 +5479,59 @@ impl instructionVar12 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 4i64 {
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 4i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchIsReturn_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6134,28 +5580,51 @@ impl instructionVar13 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 5i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 5i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6204,28 +5673,51 @@ impl instructionVar14 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 5i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 5i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6274,28 +5766,51 @@ impl instructionVar15 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 6i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 6i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6344,28 +5859,51 @@ impl instructionVar16 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 6i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 6i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6414,28 +5952,51 @@ impl instructionVar17 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 7i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 7i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6484,28 +6045,51 @@ impl instructionVar18 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 0i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 7i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 0i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 7i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6555,28 +6139,51 @@ impl instructionVar19 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6643,28 +6250,51 @@ impl instructionVar20 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 0i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 0i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6731,28 +6361,51 @@ impl instructionVar21 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6819,28 +6472,51 @@ impl instructionVar22 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6907,28 +6583,51 @@ impl instructionVar23 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -6995,28 +6694,51 @@ impl instructionVar24 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 2i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 2i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7083,28 +6805,51 @@ impl instructionVar25 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7171,28 +6916,51 @@ impl instructionVar26 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 3i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 3i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7258,28 +7026,51 @@ impl instructionVar27 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 4i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 4i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7328,28 +7119,51 @@ impl instructionVar28 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 4i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 4i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7398,28 +7212,51 @@ impl instructionVar29 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 5i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 5i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7468,28 +7305,51 @@ impl instructionVar30 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 5i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 5i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7538,28 +7398,51 @@ impl instructionVar31 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 6i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 6i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7608,28 +7491,51 @@ impl instructionVar32 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 6i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 6i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7678,28 +7584,51 @@ impl instructionVar33 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 7i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 7i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 1i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7748,28 +7677,51 @@ impl instructionVar34 {
         let mut pattern_len = 0 as u32;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u32;
-        if context_instance.register().read_phase_disassembly() != 0i64 {
-            return None;
-        }
-        if context_instance.register().read_branchEnable_disassembly() != 1i64 {
-            return None;
-        }
-        if context_instance.register().read_nullifyEnable_disassembly() != 1i64
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 0i64
         {
             return None;
         }
-        if context_instance.register().read_branchType_disassembly() != 7i64 {
+        if context_instance
+            .register()
+            .read_branchEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_nullifyEnable_disassembly()
+            .unwrap()
+            != 1i64
+        {
+            return None;
+        }
+        if context_instance
+            .register()
+            .read_branchType_disassembly()
+            .unwrap()
+            != 7i64
+        {
             return None;
         }
         if context_instance
             .register()
             .read_branchCouldBeNullified_disassembly()
+            .unwrap()
             != 0i64
         {
             return None;
         }
         let tmp = 1i64;
-        context_instance.register_mut().write_phase_disassembly(tmp);
+        context_instance
+            .register_mut()
+            .write_phase_disassembly(tmp)
+            .unwrap();
         let instruction = if let Some((len, table)) = Tableinstruction::parse(
             tokens_current,
             &mut context_instance,
@@ -7816,7 +7768,12 @@ impl instructionVar35 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -7880,7 +7837,12 @@ impl instructionVar36 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -7939,7 +7901,12 @@ impl instructionVar37 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -8013,7 +7980,12 @@ impl instructionVar38 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -8068,7 +8040,12 @@ impl instructionVar39 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -8130,7 +8107,12 @@ impl instructionVar40 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -8203,7 +8185,12 @@ impl instructionVar41 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -8284,7 +8271,12 @@ impl instructionVar42 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -8352,7 +8344,12 @@ impl instructionVar43 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -8427,7 +8424,12 @@ impl instructionVar44 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -8537,7 +8539,12 @@ impl instructionVar45 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -8647,7 +8654,12 @@ impl instructionVar46 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -8757,7 +8769,12 @@ impl instructionVar47 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -8878,7 +8895,12 @@ impl instructionVar48 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -9006,7 +9028,12 @@ impl instructionVar49 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 13i64 {
@@ -9082,7 +9109,12 @@ impl instructionVar50 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9174,7 +9206,12 @@ impl instructionVar51 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9267,7 +9304,12 @@ impl instructionVar52 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9380,7 +9422,12 @@ impl instructionVar53 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9501,7 +9548,12 @@ impl instructionVar54 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -9610,7 +9662,12 @@ impl instructionVar55 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9720,7 +9777,12 @@ impl instructionVar56 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9824,7 +9886,12 @@ impl instructionVar57 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -9934,7 +10001,12 @@ impl instructionVar58 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10034,7 +10106,12 @@ impl instructionVar59 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10141,7 +10218,12 @@ impl instructionVar60 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10253,7 +10335,12 @@ impl instructionVar61 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10373,7 +10460,12 @@ impl instructionVar62 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10485,7 +10577,12 @@ impl instructionVar63 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10605,7 +10702,12 @@ impl instructionVar64 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10717,7 +10819,12 @@ impl instructionVar65 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10837,7 +10944,12 @@ impl instructionVar66 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -10949,7 +11061,12 @@ impl instructionVar67 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11068,7 +11185,12 @@ impl instructionVar68 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11178,7 +11300,12 @@ impl instructionVar69 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11297,7 +11424,12 @@ impl instructionVar70 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11408,7 +11540,12 @@ impl instructionVar71 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11511,7 +11648,12 @@ impl instructionVar72 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -11563,7 +11705,12 @@ impl instructionVar73 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -11636,7 +11783,12 @@ impl instructionVar74 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -11761,7 +11913,12 @@ impl instructionVar75 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -11912,7 +12069,12 @@ impl instructionVar76 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12064,7 +12226,12 @@ impl instructionVar77 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12225,7 +12392,12 @@ impl instructionVar78 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12386,7 +12558,12 @@ impl instructionVar79 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12552,7 +12729,12 @@ impl instructionVar80 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12718,7 +12900,12 @@ impl instructionVar81 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -12884,7 +13071,12 @@ impl instructionVar82 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -13048,7 +13240,12 @@ impl instructionVar83 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -13179,7 +13376,12 @@ impl instructionVar84 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -13292,7 +13494,12 @@ impl instructionVar85 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13352,7 +13559,12 @@ impl instructionVar86 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13403,7 +13615,12 @@ impl instructionVar87 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13465,7 +13682,12 @@ impl instructionVar88 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13543,7 +13765,12 @@ impl instructionVar89 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13619,7 +13846,12 @@ impl instructionVar90 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -13729,7 +13961,12 @@ impl instructionVar91 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -13835,7 +14072,12 @@ impl instructionVar92 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13912,7 +14154,12 @@ impl instructionVar93 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -13978,7 +14225,12 @@ impl instructionVar94 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -14056,7 +14308,12 @@ impl instructionVar95 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -14155,7 +14412,12 @@ impl instructionVar96 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -14261,7 +14523,12 @@ impl instructionVar97 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -14393,7 +14660,12 @@ impl instructionVar98 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -14527,7 +14799,12 @@ impl instructionVar99 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -14661,7 +14938,12 @@ impl instructionVar100 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -14804,7 +15086,12 @@ impl instructionVar101 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -14950,7 +15237,12 @@ impl instructionVar102 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -15093,7 +15385,12 @@ impl instructionVar103 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -15208,7 +15505,12 @@ impl instructionVar104 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 0i64 {
@@ -15280,7 +15582,12 @@ impl instructionVar105 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -15398,7 +15705,12 @@ impl instructionVar106 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -15517,7 +15829,12 @@ impl instructionVar107 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -15636,7 +15953,12 @@ impl instructionVar108 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 1i64 {
@@ -15756,7 +16078,12 @@ impl instructionVar109 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -15909,7 +16236,12 @@ impl instructionVar110 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -16053,7 +16385,12 @@ impl instructionVar111 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -16160,7 +16497,12 @@ impl instructionVar112 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -16267,7 +16609,12 @@ impl instructionVar113 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -16375,7 +16722,12 @@ impl instructionVar114 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -16490,7 +16842,12 @@ impl instructionVar115 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -16617,7 +16974,12 @@ impl instructionVar116 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -16744,7 +17106,12 @@ impl instructionVar117 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -16872,7 +17239,12 @@ impl instructionVar118 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -16999,7 +17371,12 @@ impl instructionVar119 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17128,7 +17505,12 @@ impl instructionVar120 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17257,7 +17639,12 @@ impl instructionVar121 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17386,7 +17773,12 @@ impl instructionVar122 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17513,7 +17905,12 @@ impl instructionVar123 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17640,7 +18037,12 @@ impl instructionVar124 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17770,7 +18172,12 @@ impl instructionVar125 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -17900,7 +18307,12 @@ impl instructionVar126 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -18034,7 +18446,12 @@ impl instructionVar127 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 3i64 {
@@ -18126,15 +18543,18 @@ impl instructionVar128 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("B")];
         display.extend_from_slice(&extend);
@@ -18159,7 +18579,12 @@ impl instructionVar128 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18174,13 +18599,19 @@ impl instructionVar128 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -18256,7 +18687,12 @@ impl instructionVar129 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18271,7 +18707,12 @@ impl instructionVar129 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let nullifySymForBranch = if let Some((len, table)) =
@@ -18350,7 +18791,12 @@ impl instructionVar130 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 13i64 {
@@ -18402,19 +18848,25 @@ impl instructionVar131 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchIsReturn(
             Some(inst_next),
-            context.register().read_branchIsReturn_disassembly(),
+            context
+                .register()
+                .read_branchIsReturn_disassembly()
+                .unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("BV")];
         display.extend_from_slice(&extend);
@@ -18441,7 +18893,12 @@ impl instructionVar131 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18459,13 +18916,19 @@ impl instructionVar131 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let RB = if let Some((len, table)) =
             TableRB::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -18552,7 +19015,12 @@ impl instructionVar132 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18570,7 +19038,12 @@ impl instructionVar132 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let RB = if let Some((len, table)) =
@@ -18637,15 +19110,18 @@ impl instructionVar133 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("BV")];
         display.extend_from_slice(&extend);
@@ -18677,7 +19153,12 @@ impl instructionVar133 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18692,13 +19173,19 @@ impl instructionVar133 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let RB = if let Some((len, table)) =
             TableRB::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -18801,7 +19288,12 @@ impl instructionVar134 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18816,7 +19308,12 @@ impl instructionVar134 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let RB = if let Some((len, table)) =
@@ -18892,15 +19389,18 @@ impl instructionVar135 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("B"), DisplayElement::Literal(",L")];
@@ -18931,7 +19431,12 @@ impl instructionVar135 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -18943,13 +19448,19 @@ impl instructionVar135 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19041,7 +19552,12 @@ impl instructionVar136 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -19053,7 +19569,12 @@ impl instructionVar136 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let R2dst = if let Some((len, table)) =
@@ -19121,15 +19642,18 @@ impl instructionVar137 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("BLR")];
         display.extend_from_slice(&extend);
@@ -19159,7 +19683,12 @@ impl instructionVar137 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -19171,13 +19700,19 @@ impl instructionVar137 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19278,7 +19813,12 @@ impl instructionVar138 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -19290,7 +19830,12 @@ impl instructionVar138 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let R2dst = if let Some((len, table)) =
@@ -19366,15 +19911,18 @@ impl instructionVar139 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("B"),
@@ -19407,7 +19955,12 @@ impl instructionVar139 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -19419,13 +19972,19 @@ impl instructionVar139 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19519,7 +20078,12 @@ impl instructionVar140 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 58i64 {
@@ -19531,7 +20095,12 @@ impl instructionVar140 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let R2dst = if let Some((len, table)) =
@@ -19601,15 +20170,18 @@ impl instructionVar141 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPBT"),
@@ -19647,7 +20219,12 @@ impl instructionVar141 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 32i64 {
@@ -19656,13 +20233,19 @@ impl instructionVar141 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19753,15 +20336,18 @@ impl instructionVar142 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPBT"),
@@ -19799,7 +20385,12 @@ impl instructionVar142 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 32i64 {
@@ -19808,13 +20399,19 @@ impl instructionVar142 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -19916,15 +20513,18 @@ impl instructionVar143 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPBF"),
@@ -19962,7 +20562,12 @@ impl instructionVar143 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 34i64 {
@@ -19971,13 +20576,19 @@ impl instructionVar143 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -20068,15 +20679,18 @@ impl instructionVar144 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPBF"),
@@ -20114,7 +20728,12 @@ impl instructionVar144 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 34i64 {
@@ -20123,13 +20742,19 @@ impl instructionVar144 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -20231,15 +20856,18 @@ impl instructionVar145 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPIBT"),
@@ -20277,7 +20905,12 @@ impl instructionVar145 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 33i64 {
@@ -20286,13 +20919,19 @@ impl instructionVar145 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20385,15 +21024,18 @@ impl instructionVar146 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPIBT"),
@@ -20431,7 +21073,12 @@ impl instructionVar146 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 33i64 {
@@ -20440,13 +21087,19 @@ impl instructionVar146 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20550,15 +21203,18 @@ impl instructionVar147 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPIBF"),
@@ -20596,7 +21252,12 @@ impl instructionVar147 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 35i64 {
@@ -20605,13 +21266,19 @@ impl instructionVar147 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20704,15 +21371,18 @@ impl instructionVar148 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("CMPIBF"),
@@ -20750,7 +21420,12 @@ impl instructionVar148 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 35i64 {
@@ -20759,13 +21434,19 @@ impl instructionVar148 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -20869,15 +21550,18 @@ impl instructionVar149 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("MOVB"), self.SEDCondSym.display()];
@@ -20913,7 +21597,12 @@ impl instructionVar149 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 50i64 {
@@ -20922,13 +21611,19 @@ impl instructionVar149 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21019,15 +21714,18 @@ impl instructionVar150 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("MOVB"), self.SEDCondSym.display()];
@@ -21063,7 +21761,12 @@ impl instructionVar150 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 50i64 {
@@ -21072,13 +21775,19 @@ impl instructionVar150 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21180,15 +21889,18 @@ impl instructionVar151 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("MOVIB"), self.SEDCondSym.display()];
@@ -21223,7 +21935,12 @@ impl instructionVar151 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 51i64 {
@@ -21232,13 +21949,19 @@ impl instructionVar151 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21322,15 +22045,18 @@ impl instructionVar152 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("MOVIB"), self.SEDCondSym.display()];
@@ -21365,7 +22091,12 @@ impl instructionVar152 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 51i64 {
@@ -21374,13 +22105,19 @@ impl instructionVar152 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R2dst = if let Some((len, table)) =
             TableR2dst::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21476,15 +22213,18 @@ impl instructionVar153 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDBT"),
@@ -21522,7 +22262,12 @@ impl instructionVar153 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 40i64 {
@@ -21531,13 +22276,19 @@ impl instructionVar153 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21638,15 +22389,18 @@ impl instructionVar154 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDBT"),
@@ -21684,7 +22438,12 @@ impl instructionVar154 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 40i64 {
@@ -21693,13 +22452,19 @@ impl instructionVar154 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21811,15 +22576,18 @@ impl instructionVar155 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDBF"),
@@ -21857,7 +22625,12 @@ impl instructionVar155 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 42i64 {
@@ -21866,13 +22639,19 @@ impl instructionVar155 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -21973,15 +22752,18 @@ impl instructionVar156 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDBF"),
@@ -22019,7 +22801,12 @@ impl instructionVar156 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 42i64 {
@@ -22028,13 +22815,19 @@ impl instructionVar156 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let R1 = if let Some((len, table)) =
             TableR1::parse(tokens_current, &mut context_instance, inst_start)
         {
@@ -22146,15 +22939,18 @@ impl instructionVar157 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDIBT"),
@@ -22192,7 +22988,12 @@ impl instructionVar157 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 41i64 {
@@ -22201,13 +23002,19 @@ impl instructionVar157 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22310,15 +23117,18 @@ impl instructionVar158 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDIBT"),
@@ -22356,7 +23166,12 @@ impl instructionVar158 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 41i64 {
@@ -22365,13 +23180,19 @@ impl instructionVar158 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22485,15 +23306,18 @@ impl instructionVar159 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDIBF"),
@@ -22531,7 +23355,12 @@ impl instructionVar159 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 43i64 {
@@ -22540,13 +23369,19 @@ impl instructionVar159 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22649,15 +23484,18 @@ impl instructionVar160 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] = [
             DisplayElement::Literal("ADDIBF"),
@@ -22695,7 +23533,12 @@ impl instructionVar160 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 43i64 {
@@ -22704,13 +23547,19 @@ impl instructionVar160 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let highlse5 = if let Some((len, table)) = Tablehighlse5::parse(
             tokens_current,
             &mut context_instance,
@@ -22823,15 +23672,18 @@ impl instructionVar161 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("BB"), self.SEDCondSym.display()];
@@ -22867,7 +23719,12 @@ impl instructionVar161 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 48i64 {
@@ -22876,13 +23733,19 @@ impl instructionVar161 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -22973,15 +23836,18 @@ impl instructionVar162 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("BB"), self.SEDCondSym.display()];
@@ -23017,7 +23883,12 @@ impl instructionVar162 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 48i64 {
@@ -23026,13 +23897,19 @@ impl instructionVar162 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23134,15 +24011,18 @@ impl instructionVar163 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("BB"), self.SEDCondSym.display()];
@@ -23177,7 +24057,12 @@ impl instructionVar163 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 49i64 {
@@ -23186,13 +24071,19 @@ impl instructionVar163 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23276,15 +24167,18 @@ impl instructionVar164 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("BB"), self.SEDCondSym.display()];
@@ -23319,7 +24213,12 @@ impl instructionVar164 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 49i64 {
@@ -23328,13 +24227,19 @@ impl instructionVar164 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let branchTarget2W = if let Some((len, table)) =
             TablebranchTarget2W::parse(
                 tokens_current,
@@ -23426,15 +24331,18 @@ impl instructionVar165 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal("BE")];
         display.extend_from_slice(&extend);
@@ -23459,7 +24367,12 @@ impl instructionVar165 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 56i64 {
@@ -23468,13 +24381,19 @@ impl instructionVar165 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -23562,7 +24481,12 @@ impl instructionVar166 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 56i64 {
@@ -23571,7 +24495,12 @@ impl instructionVar166 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let nullifyForBranch = if let Some((len, table)) =
@@ -23642,15 +24571,18 @@ impl instructionVar167 {
     {
         global_set.set_branchEnable(
             Some(inst_next),
-            context.register().read_branchEnable_disassembly(),
+            context.register().read_branchEnable_disassembly().unwrap(),
         );
         global_set.set_branchType(
             Some(inst_next),
-            context.register().read_branchType_disassembly(),
+            context.register().read_branchType_disassembly().unwrap(),
         );
         global_set.set_branchCouldBeNullified(
             Some(inst_next),
-            context.register().read_branchCouldBeNullified_disassembly(),
+            context
+                .register()
+                .read_branchCouldBeNullified_disassembly()
+                .unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("BE"), DisplayElement::Literal(",L")];
@@ -23686,7 +24618,12 @@ impl instructionVar167 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 57i64 {
@@ -23695,13 +24632,19 @@ impl instructionVar167 {
         if token_parser.TokenFieldn().disassembly() != 0i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_branchEnable_disassembly(tmp);
+            .write_branchEnable_disassembly(tmp)
+            .unwrap();
         let nullifyForBranch = if let Some((len, table)) =
             TablenullifyForBranch::parse(
                 tokens_current,
@@ -23820,7 +24763,12 @@ impl instructionVar168 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 57i64 {
@@ -23829,7 +24777,12 @@ impl instructionVar168 {
         if token_parser.TokenFieldn().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let nullifyForBranch = if let Some((len, table)) =
@@ -23949,7 +24902,12 @@ impl instructionVar169 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24078,7 +25036,12 @@ impl instructionVar170 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24205,7 +25168,12 @@ impl instructionVar171 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24334,7 +25302,12 @@ impl instructionVar172 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24463,7 +25436,12 @@ impl instructionVar173 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24591,7 +25569,12 @@ impl instructionVar174 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24729,7 +25712,12 @@ impl instructionVar175 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24854,7 +25842,12 @@ impl instructionVar176 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -24970,7 +25963,12 @@ impl instructionVar177 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25088,7 +26086,12 @@ impl instructionVar178 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25215,7 +26218,12 @@ impl instructionVar179 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25342,7 +26350,12 @@ impl instructionVar180 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25469,7 +26482,12 @@ impl instructionVar181 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25596,7 +26614,12 @@ impl instructionVar182 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25722,7 +26745,12 @@ impl instructionVar183 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25851,7 +26879,12 @@ impl instructionVar184 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -25980,7 +27013,12 @@ impl instructionVar185 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26109,7 +27147,12 @@ impl instructionVar186 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26238,7 +27281,12 @@ impl instructionVar187 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26366,7 +27414,12 @@ impl instructionVar188 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26491,7 +27544,12 @@ impl instructionVar189 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26618,7 +27676,12 @@ impl instructionVar190 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26744,7 +27807,12 @@ impl instructionVar191 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26870,7 +27938,12 @@ impl instructionVar192 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -26996,7 +28069,12 @@ impl instructionVar193 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -27123,7 +28201,12 @@ impl instructionVar194 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -27250,7 +28333,12 @@ impl instructionVar195 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -27377,7 +28465,12 @@ impl instructionVar196 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -27504,7 +28597,12 @@ impl instructionVar197 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -27621,7 +28719,12 @@ impl instructionVar198 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -27721,7 +28824,12 @@ impl instructionVar199 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -27827,7 +28935,12 @@ impl instructionVar200 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -27945,7 +29058,12 @@ impl instructionVar201 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28063,7 +29181,12 @@ impl instructionVar202 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28178,7 +29301,12 @@ impl instructionVar203 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28293,7 +29421,12 @@ impl instructionVar204 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28408,7 +29541,12 @@ impl instructionVar205 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28523,7 +29661,12 @@ impl instructionVar206 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28638,7 +29781,12 @@ impl instructionVar207 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28750,7 +29898,12 @@ impl instructionVar208 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28857,7 +30010,12 @@ impl instructionVar209 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -28976,7 +30134,12 @@ impl instructionVar210 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -29107,7 +30270,12 @@ impl instructionVar211 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -29242,7 +30410,12 @@ impl instructionVar212 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 52i64 {
@@ -29377,7 +30550,12 @@ impl instructionVar213 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -29520,7 +30698,12 @@ impl instructionVar214 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -29666,7 +30849,12 @@ impl instructionVar215 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -29809,7 +30997,12 @@ impl instructionVar216 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 53i64 {
@@ -29934,7 +31127,12 @@ impl instructionVar217 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -30045,7 +31243,12 @@ impl instructionVar218 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 2i64 {
@@ -30156,7 +31359,12 @@ impl instructionVar219 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -30263,7 +31471,12 @@ impl instructionVar220 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -30378,7 +31591,12 @@ impl instructionVar221 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 45i64 {
@@ -30504,7 +31722,12 @@ impl instructionVar222 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 45i64 {
@@ -30630,7 +31853,12 @@ impl instructionVar223 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 44i64 {
@@ -30755,7 +31983,12 @@ impl instructionVar224 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 44i64 {
@@ -30878,7 +32111,12 @@ impl instructionVar225 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 37i64 {
@@ -31005,7 +32243,12 @@ impl instructionVar226 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 37i64 {
@@ -31140,7 +32383,12 @@ impl instructionVar227 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 36i64 {
@@ -31255,7 +32503,12 @@ impl instructionVar228 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -31356,7 +32609,12 @@ impl instructionVar229 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -31457,7 +32715,12 @@ impl instructionVar230 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -31552,7 +32815,12 @@ impl instructionVar231 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -31647,7 +32915,12 @@ impl instructionVar232 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -31744,7 +33017,12 @@ impl instructionVar233 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -31843,7 +33121,12 @@ impl instructionVar234 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -31942,7 +33225,12 @@ impl instructionVar235 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32041,7 +33329,12 @@ impl instructionVar236 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32144,7 +33437,12 @@ impl instructionVar237 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32256,7 +33554,12 @@ impl instructionVar238 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32363,7 +33666,12 @@ impl instructionVar239 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32455,7 +33763,12 @@ impl instructionVar240 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -32553,7 +33866,12 @@ impl instructionVar241 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32662,7 +33980,12 @@ impl instructionVar242 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32771,7 +34094,12 @@ impl instructionVar243 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 14i64 {
@@ -32847,7 +34175,7 @@ impl instructionVar244 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
         let extend: [DisplayElement; 2usize] =
             [DisplayElement::Literal("FTEST"), self.fptest.display()];
@@ -32865,7 +34193,12 @@ impl instructionVar244 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -32877,13 +34210,19 @@ impl instructionVar244 {
         if token_parser.TokenFieldfpsub().disassembly() != 1i64 {
             return None;
         }
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let fptest = token_parser.TokenFieldfptest();
         pattern_len += block_0_len;
         tokens_current =
@@ -32948,7 +34287,12 @@ impl instructionVar245 {
         let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 4i64 {
@@ -33055,7 +34399,12 @@ impl instructionVar246 {
         let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 4i64 {
@@ -33167,7 +34516,12 @@ impl instructionVar247 {
         let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 4i64 {
@@ -33294,7 +34648,12 @@ impl instructionVar248 {
         let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 4i64 {
@@ -33419,7 +34778,12 @@ impl instructionVar249 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -33570,7 +34934,12 @@ impl instructionVar250 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -33722,7 +35091,12 @@ impl instructionVar251 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -33883,7 +35257,12 @@ impl instructionVar252 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -34043,7 +35422,12 @@ impl instructionVar253 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -34194,7 +35578,12 @@ impl instructionVar254 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -34346,7 +35735,12 @@ impl instructionVar255 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -34507,7 +35901,12 @@ impl instructionVar256 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -34667,7 +36066,12 @@ impl instructionVar257 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -34818,7 +36222,12 @@ impl instructionVar258 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -34970,7 +36379,12 @@ impl instructionVar259 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -35131,7 +36545,12 @@ impl instructionVar260 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -35292,7 +36711,12 @@ impl instructionVar261 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -35455,7 +36879,12 @@ impl instructionVar262 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -35618,7 +37047,12 @@ impl instructionVar263 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -35781,7 +37215,12 @@ impl instructionVar264 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -35943,7 +37382,12 @@ impl instructionVar265 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -36093,7 +37537,12 @@ impl instructionVar266 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -36248,7 +37697,12 @@ impl instructionVar267 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -36391,7 +37845,12 @@ impl instructionVar268 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -36534,7 +37993,12 @@ impl instructionVar269 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -36677,7 +38141,12 @@ impl instructionVar270 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -36820,7 +38289,12 @@ impl instructionVar271 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -36965,7 +38439,12 @@ impl instructionVar272 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -37110,7 +38589,12 @@ impl instructionVar273 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 9i64 {
@@ -37255,7 +38739,12 @@ impl instructionVar274 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 11i64 {
@@ -37399,7 +38888,12 @@ impl instructionVar275 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 6i64 {
@@ -37521,7 +39015,12 @@ impl instructionVar276 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 6i64 {
@@ -37658,7 +39157,12 @@ impl instructionVar277 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 38i64 {
@@ -37780,7 +39284,12 @@ impl instructionVar278 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 38i64 {
@@ -37898,7 +39407,12 @@ impl instructionVar279 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 18i64 {
@@ -37970,7 +39484,12 @@ impl instructionVar280 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 17i64 {
@@ -38042,7 +39561,12 @@ impl instructionVar281 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 16i64 {
@@ -38114,7 +39638,12 @@ impl instructionVar282 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 26i64 {
@@ -38186,7 +39715,12 @@ impl instructionVar283 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 25i64 {
@@ -38258,7 +39792,12 @@ impl instructionVar284 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 24i64 {
@@ -38336,7 +39875,12 @@ impl instructionVar285 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 19i64 {
@@ -38449,7 +39993,12 @@ impl instructionVar286 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 27i64 {
@@ -38562,7 +40111,12 @@ impl instructionVar287 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 13i64 {
@@ -38642,7 +40196,12 @@ impl instructionVar288 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 8i64 {
@@ -38719,7 +40278,12 @@ impl instructionVar289 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 10i64 {
@@ -38783,7 +40347,12 @@ impl instructionVar290 {
         let mut context_instance = context.clone();
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 5i64 {
@@ -38853,7 +40422,12 @@ impl instructionVar291 {
         let mut calc_sop: i64 = 0;
         let mut block_0_len = 4u64 as u32;
         let token_parser = <TokenParser<4usize>>::new(tokens_current)?;
-        if context_instance.register().read_phase_disassembly() != 1i64 {
+        if context_instance
+            .register()
+            .read_phase_disassembly()
+            .unwrap()
+            != 1i64
+        {
             return None;
         }
         if token_parser.TokenFieldopfam().disassembly() != 12i64 {
@@ -63250,7 +64824,7 @@ impl branchTarget2WVar0 {
             );
         global_set.set_branchImmDest(
             Some(inst_next),
-            context.register().read_branchImmDest_disassembly(),
+            context.register().read_branchImmDest_disassembly().unwrap(),
         );
         let extend: [DisplayElement; 1usize] =
             [DisplayElement::Number(true, calc_target)];
@@ -63286,14 +64860,19 @@ impl branchTarget2WVar0 {
                         | token_parser.TokenFieldw2less2().disassembly()),
                 ),
             );
-        let tmp = context_instance.register().read_branchImmDest_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_branchImmDest_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_temp32_disassembly(tmp);
+            .write_temp32_disassembly(tmp)
+            .unwrap();
         let tmp = calc_target;
         context_instance
             .register_mut()
-            .write_branchImmDest_disassembly(tmp);
+            .write_branchImmDest_disassembly(tmp)
+            .unwrap();
         let w = token_parser.TokenFieldw();
         let w2less2 = token_parser.TokenFieldw2less2();
         let w2_2 = token_parser.TokenFieldw2_2();
@@ -63528,7 +65107,7 @@ impl branchTarget3WVar0 {
             );
         global_set.set_branchImmDest(
             Some(inst_next),
-            context.register().read_branchImmDest_disassembly(),
+            context.register().read_branchImmDest_disassembly().unwrap(),
         );
         let extend: [DisplayElement; 1usize] =
             [DisplayElement::Number(true, calc_target)];
@@ -63569,14 +65148,19 @@ impl branchTarget3WVar0 {
                         | token_parser.TokenFieldw2less2().disassembly()),
                 ),
             );
-        let tmp = context_instance.register().read_branchImmDest_disassembly();
+        let tmp = context_instance
+            .register()
+            .read_branchImmDest_disassembly()
+            .unwrap();
         context_instance
             .register_mut()
-            .write_temp32_disassembly(tmp);
+            .write_temp32_disassembly(tmp)
+            .unwrap();
         let tmp = calc_target;
         context_instance
             .register_mut()
-            .write_branchImmDest_disassembly(tmp);
+            .write_branchImmDest_disassembly(tmp)
+            .unwrap();
         let w = token_parser.TokenFieldw();
         let w1 = token_parser.TokenFieldw1();
         let w2less2 = token_parser.TokenFieldw2less2();
@@ -64706,7 +66290,8 @@ impl lse11Var0 {
         let tmp = calc_immed;
         context_instance
             .register_mut()
-            .write_temp32_disassembly(tmp);
+            .write_temp32_disassembly(tmp)
+            .unwrap();
         let im11less0 = token_parser.TokenFieldim11less0();
         let bit0 = token_parser.TokenFieldbit0();
         pattern_len += block_0_len;
@@ -65432,7 +67017,7 @@ impl ShiftCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -65449,7 +67034,8 @@ impl ShiftCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let ShiftCond = if let Some((len, table)) = TableShiftCond::parse(
             tokens_current,
             &mut context_instance,
@@ -66020,7 +67606,7 @@ impl DepCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -66037,7 +67623,8 @@ impl DepCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let DepCond = if let Some((len, table)) = TableDepCond::parse(
             tokens_current,
             &mut context_instance,
@@ -66608,7 +68195,7 @@ impl ExtrCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -66625,7 +68212,8 @@ impl ExtrCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let ExtrCond = if let Some((len, table)) = TableExtrCond::parse(
             tokens_current,
             &mut context_instance,
@@ -67594,7 +69182,7 @@ impl UnitCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -67611,7 +69199,8 @@ impl UnitCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let UnitCond = if let Some((len, table)) = TableUnitCond::parse(
             tokens_current,
             &mut context_instance,
@@ -68634,7 +70223,7 @@ impl AddCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -68651,7 +70240,8 @@ impl AddCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let AddCond = if let Some((len, table)) = TableAddCond::parse(
             tokens_current,
             &mut context_instance,
@@ -70280,7 +71870,7 @@ impl AddCondI11NullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -70297,7 +71887,8 @@ impl AddCondI11NullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let AddCondI11 = if let Some((len, table)) = TableAddCondI11::parse(
             tokens_current,
             &mut context_instance,
@@ -71178,7 +72769,7 @@ impl CSCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -71195,7 +72786,8 @@ impl CSCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let CSCond = if let Some((len, table)) = TableCSCond::parse(
             tokens_current,
             &mut context_instance,
@@ -72854,7 +74446,7 @@ impl CSCondI11NullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -72871,7 +74463,8 @@ impl CSCondI11NullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let CSCondI11 = if let Some((len, table)) = TableCSCondI11::parse(
             tokens_current,
             &mut context_instance,
@@ -73642,7 +75235,7 @@ impl LogicCondNullifyVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
     }
     fn parse<T>(
@@ -73659,7 +75252,8 @@ impl LogicCondNullifyVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         let LogicCond = if let Some((len, table)) = TableLogicCond::parse(
             tokens_current,
             &mut context_instance,
@@ -76825,7 +78419,7 @@ impl nullifyForBranchVar1 {
     {
         global_set.set_nullifyEnable(
             Some(inst_next),
-            context.register().read_nullifyEnable_disassembly(),
+            context.register().read_nullifyEnable_disassembly().unwrap(),
         );
         let extend: [DisplayElement; 1usize] = [DisplayElement::Literal(",N")];
         display.extend_from_slice(&extend);
@@ -76848,7 +78442,8 @@ impl nullifyForBranchVar1 {
         let tmp = 1i64;
         context_instance
             .register_mut()
-            .write_nullifyEnable_disassembly(tmp);
+            .write_nullifyEnable_disassembly(tmp)
+            .unwrap();
         pattern_len += block_0_len;
         tokens_current =
             &tokens_current[usize::try_from(block_0_len).unwrap()..];

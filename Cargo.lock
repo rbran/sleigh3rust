@@ -7,6 +7,7 @@ name = "aarch64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -14,6 +15,7 @@ name = "aarch64_applesilicon"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -21,6 +23,7 @@ name = "aarch64be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -37,6 +40,7 @@ name = "arm4_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -44,6 +48,7 @@ name = "arm4_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -51,6 +56,7 @@ name = "arm4t_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -58,6 +64,7 @@ name = "arm4t_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -65,6 +72,7 @@ name = "arm5_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -72,6 +80,7 @@ name = "arm5_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -79,6 +88,7 @@ name = "arm5t_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -86,6 +96,7 @@ name = "arm5t_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -93,6 +104,7 @@ name = "arm6_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -100,6 +112,7 @@ name = "arm6_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -107,6 +120,7 @@ name = "arm7_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -114,6 +128,7 @@ name = "arm7_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -121,6 +136,7 @@ name = "arm8_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -128,6 +144,7 @@ name = "arm8_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -135,6 +152,7 @@ name = "avr8"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -142,6 +160,7 @@ name = "avr8e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -155,6 +174,7 @@ name = "cp1600"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -162,6 +182,7 @@ name = "cr16b"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -169,6 +190,7 @@ name = "cr16c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -176,6 +198,7 @@ name = "dalvik_base"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -183,6 +206,7 @@ name = "dalvik_dex_android10"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -190,6 +214,7 @@ name = "dalvik_dex_android11"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -197,6 +222,7 @@ name = "dalvik_dex_android12"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -204,6 +230,7 @@ name = "dalvik_dex_kitkat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -211,6 +238,7 @@ name = "dalvik_dex_lollipop"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -218,6 +246,7 @@ name = "dalvik_dex_marshmallow"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -225,6 +254,7 @@ name = "dalvik_dex_nougat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -232,6 +262,7 @@ name = "dalvik_dex_oreo"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -239,6 +270,7 @@ name = "dalvik_dex_pie"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -246,6 +278,7 @@ name = "dalvik_odex_kitkat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -253,6 +286,7 @@ name = "data_be_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -260,6 +294,7 @@ name = "data_le_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -267,6 +302,7 @@ name = "dspic30f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -274,6 +310,7 @@ name = "dspic33c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -281,6 +318,7 @@ name = "dspic33e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -288,6 +326,7 @@ name = "dspic33f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -295,6 +334,7 @@ name = "dylib_65c02"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -302,6 +342,7 @@ name = "dylib_6805"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -309,6 +350,7 @@ name = "dylib_6809"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -316,6 +358,7 @@ name = "dylib_80251"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -323,6 +366,7 @@ name = "dylib_80390"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -330,6 +374,7 @@ name = "dylib_8051"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -337,6 +382,7 @@ name = "dylib_8085"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -359,6 +405,7 @@ name = "h6309"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -366,6 +413,7 @@ name = "hc05"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -373,6 +421,7 @@ name = "hc08"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -380,6 +429,7 @@ name = "hcs08"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -387,6 +437,7 @@ name = "hcs12"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -394,6 +445,7 @@ name = "jvm"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -417,6 +469,7 @@ name = "m8c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -424,6 +477,7 @@ name = "mcs96"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -437,6 +491,7 @@ name = "mips32be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -444,6 +499,7 @@ name = "mips32le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -451,6 +507,7 @@ name = "mips32r6be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -458,6 +515,7 @@ name = "mips32r6le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -465,6 +523,7 @@ name = "mips64be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -472,6 +531,7 @@ name = "mips64le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -479,6 +539,7 @@ name = "mx51"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -486,6 +547,7 @@ name = "pa_risc32be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -493,6 +555,7 @@ name = "pic12c5xx"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -500,6 +563,7 @@ name = "pic16"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -507,6 +571,7 @@ name = "pic16c5x"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -514,6 +579,7 @@ name = "pic16f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -521,6 +587,7 @@ name = "pic17c7xx"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -528,6 +595,7 @@ name = "pic18"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -535,6 +603,7 @@ name = "pic24e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -542,6 +611,7 @@ name = "pic24f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -549,6 +619,7 @@ name = "pic24h"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -556,6 +627,7 @@ name = "ppc_32_4xx_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -563,6 +635,7 @@ name = "ppc_32_4xx_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -570,6 +643,7 @@ name = "ppc_32_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -577,6 +651,7 @@ name = "ppc_32_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -584,6 +659,7 @@ name = "ppc_32_quicciii_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -591,6 +667,7 @@ name = "ppc_32_quicciii_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -598,6 +675,7 @@ name = "ppc_64_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -605,6 +683,7 @@ name = "ppc_64_isa_altivec_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -612,6 +691,7 @@ name = "ppc_64_isa_altivec_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -619,6 +699,7 @@ name = "ppc_64_isa_altivec_vle_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -626,6 +707,7 @@ name = "ppc_64_isa_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -633,6 +715,7 @@ name = "ppc_64_isa_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -640,6 +723,7 @@ name = "ppc_64_isa_vle_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -647,6 +731,7 @@ name = "ppc_64_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -671,6 +756,7 @@ name = "riscv_ilp32d"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -678,6 +764,7 @@ name = "riscv_lp64d"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -685,6 +772,7 @@ name = "sh_1"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -692,10 +780,19 @@ name = "sh_2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
 name = "sh_2a"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "sleigh4rust"
 version = "0.1.0"
 dependencies = [
  "ethnum",
@@ -706,6 +803,7 @@ name = "sparcv9_32"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -713,6 +811,7 @@ name = "sparcv9_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -720,6 +819,7 @@ name = "superh4_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -727,6 +827,7 @@ name = "superh4_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -734,6 +835,7 @@ name = "test_6502"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -741,6 +843,7 @@ name = "toy64_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -748,6 +851,7 @@ name = "toy64_be_harvard"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -755,6 +859,7 @@ name = "toy64_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -762,6 +867,7 @@ name = "toy_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -769,6 +875,7 @@ name = "toy_be_posstack"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -776,6 +883,7 @@ name = "toy_builder_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -783,6 +891,7 @@ name = "toy_builder_be_align2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -790,6 +899,7 @@ name = "toy_builder_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -797,6 +907,7 @@ name = "toy_builder_le_align2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -804,6 +915,7 @@ name = "toy_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -811,6 +923,7 @@ name = "toy_wsz_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -818,6 +931,7 @@ name = "toy_wsz_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -825,6 +939,7 @@ name = "tricore"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -832,6 +947,7 @@ name = "v850"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -861,6 +977,7 @@ name = "x86"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -868,6 +985,7 @@ name = "x86_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -875,6 +993,7 @@ name = "z180"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]
 
 [[package]]
@@ -882,4 +1001,5 @@ name = "z80"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh4rust",
 ]

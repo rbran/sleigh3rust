@@ -29,7 +29,7 @@ mod tests {
                 token,
                 &mut context,
                 addr,
-                &mut GlobalSetDummy,
+                &mut GlobalSetDefault::default(),
             );
             match parsed {
                 None => panic!("Instruction invalid"),

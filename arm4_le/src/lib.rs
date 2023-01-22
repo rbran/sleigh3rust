@@ -11,33 +11,21 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 
-pub struct GlobalSetDummy;
-#[allow(non_snake_case)]
-impl GlobalSetTrait for GlobalSetDummy {
-    fn set_reg2Num(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_regNum(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_regInc(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_REToverride(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_counter(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_ARMcond(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_CALLoverride(&mut self, _inst_start: Option<AddrType>, _value: i64) {
-    }
-    fn set_ARMcondCk(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_counter2(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-    fn set_LRset(&mut self, _inst_start: Option<AddrType>, _value: i64) {}
-}
-
 #[no_mangle]
-pub fn parse_default(
+pub fn parse_arm(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
+    context.register_mut().write_LRset_raw(0).unwrap();
+    context.register_mut().write_ARMcondCk_raw(0).unwrap();
+    context.register_mut().write_CALLoverride_raw(0).unwrap();
+    context.register_mut().write_REToverride_raw(0).unwrap();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDummy,
+        &mut GlobalSetDefault::<SpacesStruct>::default(),
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

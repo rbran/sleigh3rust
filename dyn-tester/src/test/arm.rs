@@ -101,6 +101,7 @@ const ARM: &[(fn(ArmVersion) -> bool, &[(Instruction, &'static str)])] = &[
     (Arm(0xda00_0003), "ble 0x14"),
     (Arm(0xe3a0_40f0), "mov r4,#0xf0"),
     (Arm(0xe0a0_0001), "adc r0,r0,r1"),
+    //(Arm(0xea27_c000), "b 0x9f0002"),
     (Thumb16(0xdd08),  "ble 0x14"),
     (Thumb16(0x4700),  "bx r0"),
     (Thumb16(0x4708),  "bx r1"),
@@ -131,6 +132,7 @@ const ARM: &[(fn(ArmVersion) -> bool, &[(Instruction, &'static str)])] = &[
     (Arm(0xe6a0_0012),        "ssat r0, #0x1, r2"),
     (Arm(0xe1c2_00d0),        "ldrd r0,r1,[r2,#0x0]"),
     (Arm(0xf5d0_f008),        "pld [r0,#0x8]"),
+    (Arm(0xf420_060f),        "vld1.8 {d0,d1,d2},[r0]"),
     (Arm(0xecbc_8b10),        "vldmia r12!,{d8,d9,d10,d11,d12,d13,d14,d15}"),
     (Arm(0xf101_0200),        "setend BE"),
     (Arm(0x0000_80f4),        "strdeq r8,r9,[r0],-r4"),
@@ -141,16 +143,13 @@ const ARM: &[(fn(ArmVersion) -> bool, &[(Instruction, &'static str)])] = &[
     //(Thumb32(0xf7ff, 0xfffe),  "bl #0x10000"),
 ]),
 (|v| v >= V7, &[
-    (Arm(0xf460_408f), "vld4.32 {d20,d21,d22,d23},[r0]"),
+    //(Arm(0xf460_408f), "vld4.32 {d20,d21,d22,d23},[r0]"),
     (Arm(0xf284_0650), "vmov.i32 q0,simdExpand(0x0,0x6,0x40)"),
     (Arm(0xf57f_f05b), "dmb ISH"),
 ]),
 (|v| v >= V8, &[
     (Arm(0xf2be_0f11), "vcvt.s32.f32 d0,d1,#0x2"),
 ]),
-//TODO
-//(Arm(0xf420_060f), "vld1.8 {d0,d1,d2},[r0]"),
-//(Arm(0xea27_c000), "b 0x9f0002"),
 ];
 
 #[test]
@@ -166,7 +165,7 @@ fn arm() {
         };
         let parse_arm_fun: libloading::Symbol<
             fn(&'_ [u8], u32) -> Option<(u32, String)>,
-        > = unsafe { ld_lib.get(b"parse_default\0").unwrap() };
+        > = unsafe { ld_lib.get(b"parse_arm\0").unwrap() };
         let parse_thumb_fun: Option<
             libloading::Symbol<fn(&'_ [u8], u32) -> Option<(u32, String)>>,
         > = lib
