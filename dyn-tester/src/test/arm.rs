@@ -19,23 +19,6 @@ struct Lib {
     endian: Endian,
     lib: &'static str,
 }
-#[cfg_attr(rustfmt, rustfmt_skip)]
-const LIBS: &[Lib] = &[
-    Lib { version: V4, thumb: false, endian: Big   , lib: "arm4_be"},
-    Lib { version: V4, thumb: false, endian: Little, lib: "arm4_le"},
-    Lib { version: V4, thumb: true,  endian: Big   , lib: "arm4t_be"},
-    Lib { version: V4, thumb: true,  endian: Little, lib: "arm4t_le"},
-    Lib { version: V5, thumb: false, endian: Big   , lib: "arm5_be"},
-    Lib { version: V5, thumb: false, endian: Little, lib: "arm5_le"},
-    Lib { version: V5, thumb: true,  endian: Big   , lib: "arm5t_be"},
-    Lib { version: V5, thumb: true,  endian: Little, lib: "arm5t_le"},
-    Lib { version: V6, thumb: true,  endian: Big   , lib: "arm6_be"},
-    Lib { version: V6, thumb: true,  endian: Little, lib: "arm6_le"},
-    Lib { version: V7, thumb: true,  endian: Big   , lib: "arm7_be"},
-    Lib { version: V7, thumb: true,  endian: Little, lib: "arm7_le"},
-    Lib { version: V8, thumb: true,  endian: Big   , lib: "arm8_be"},
-    Lib { version: V8, thumb: true,  endian: Little, lib: "arm8_le"},
-];
 
 enum Instruction {
     Arm(u32),
@@ -132,17 +115,16 @@ const ARM: &[(fn(ArmVersion) -> bool, &[(Instruction, &'static str)])] = &[
     (Arm(0xe6a0_0012),        "ssat r0, #0x1, r2"),
     (Arm(0xe1c2_00d0),        "ldrd r0,r1,[r2,#0x0]"),
     (Arm(0xf5d0_f008),        "pld [r0,#0x8]"),
-    (Arm(0xf420_060f),        "vld1.8 {d0,d1,d2},[r0]"),
     (Arm(0xecbc_8b10),        "vldmia r12!,{d8,d9,d10,d11,d12,d13,d14,d15}"),
     (Arm(0xf101_0200),        "setend BE"),
     (Arm(0x0000_80f4),        "strdeq r8,r9,[r0],-r4"),
     (Thumb16(0xbf0a),         "itet eq"),
     (Thumb32(0xeb40, 0x0001), "adc.w r0,r0,r1"),
     (Thumb32(0xf140, 0x0008), "adc r0,r0,#0x8"),
-    //TODO attempt to shift left with overflow
-    //(Thumb32(0xf7ff, 0xfffe),  "bl #0x10000"),
+    (Thumb32(0xf7ff, 0xfffe), "bl 0x0"),
 ]),
 (|v| v >= V7, &[
+    (Arm(0xf420_060f), "vld1.8 {d0,d1,d2},[r0]"),
     //(Arm(0xf460_408f), "vld4.32 {d20,d21,d22,d23},[r0]"),
     (Arm(0xf284_0650), "vmov.i32 q0,simdExpand(0x0,0x6,0x40)"),
     (Arm(0xf57f_f05b), "dmb ISH"),
@@ -152,44 +134,162 @@ const ARM: &[(fn(ArmVersion) -> bool, &[(Instruction, &'static str)])] = &[
 ]),
 ];
 
-#[test]
-fn arm() {
-    for lib in LIBS.iter() {
-        println!("arm {}", &lib.lib);
-        let ld_lib = unsafe {
-            libloading::Library::new(format!(
-                "../target/debug/lib{}.so",
-                &lib.lib
-            ))
+fn test_arm(lib: &Lib) {
+    let ld_lib = unsafe {
+        libloading::Library::new(format!("../target/debug/lib{}.so", &lib.lib))
             .unwrap()
-        };
-        let parse_arm_fun: libloading::Symbol<
-            fn(&'_ [u8], u32) -> Option<(u32, String)>,
-        > = unsafe { ld_lib.get(b"parse_arm\0").unwrap() };
-        let parse_thumb_fun: Option<
-            libloading::Symbol<fn(&'_ [u8], u32) -> Option<(u32, String)>>,
-        > = lib
-            .thumb
-            .then(|| unsafe { ld_lib.get(b"parse_thumb\0").unwrap() });
+    };
+    let parse_arm_fun: libloading::Symbol<
+        fn(&'_ [u8], u32) -> Option<(u32, String)>,
+    > = unsafe { ld_lib.get(b"parse_arm\0").unwrap() };
+    let parse_thumb_fun: Option<
+        libloading::Symbol<fn(&'_ [u8], u32) -> Option<(u32, String)>>,
+    > = lib
+        .thumb
+        .then(|| unsafe { ld_lib.get(b"parse_thumb\0").unwrap() });
 
-        let instruction_and_parser = ARM
-            .iter()
-            .filter(|(check, _)| (check)(lib.version))
-            .map(|(_, instructions)| instructions.iter())
-            .flatten()
-            .filter_map(|(instr, out)| match (instr.thumb_mode(), lib.thumb) {
-                (true, true) => {
-                    Some((parse_thumb_fun.as_ref().unwrap(), instr, out))
-                }
-                (true, false) => None,
-                (false, _) => Some((&parse_arm_fun, instr, out)),
-            });
+    let instruction_and_parser = ARM
+        .iter()
+        .filter(|(check, _)| (check)(lib.version))
+        .map(|(_, instructions)| instructions.iter())
+        .flatten()
+        .filter_map(|(instr, out)| match (instr.thumb_mode(), lib.thumb) {
+            (true, true) => {
+                Some((parse_thumb_fun.as_ref().unwrap(), instr, out))
+            }
+            (true, false) => None,
+            (false, _) => Some((&parse_arm_fun, instr, out)),
+        });
 
-        for (parse_fun, instruction, output) in instruction_and_parser {
-            let token = instruction.to_tokens(lib.endian);
-            let (_next_addr, parsed_output) =
-                parse_fun(&token, 0).expect(&output);
-            assert_eq!(&remove_spaces(&parsed_output), output);
-        }
+    for (parse_fun, instruction, output) in instruction_and_parser {
+        let token = instruction.to_tokens(lib.endian);
+        let (_next_addr, parsed_output) = parse_fun(&token, 0).expect(&output);
+        assert_eq!(&remove_spaces(&parsed_output), output);
     }
+}
+#[test]
+fn v4_be() {
+    test_arm(&Lib {
+        version: V4,
+        thumb: false,
+        endian: Big,
+        lib: "arm4_be",
+    })
+}
+#[test]
+fn v4_le() {
+    test_arm(&Lib {
+        version: V4,
+        thumb: false,
+        endian: Little,
+        lib: "arm4_le",
+    })
+}
+#[test]
+fn v4t_be() {
+    test_arm(&Lib {
+        version: V4,
+        thumb: true,
+        endian: Big,
+        lib: "arm4t_be",
+    })
+}
+#[test]
+fn v4t_le() {
+    test_arm(&Lib {
+        version: V4,
+        thumb: true,
+        endian: Little,
+        lib: "arm4t_le",
+    })
+}
+#[test]
+fn v5_be() {
+    test_arm(&Lib {
+        version: V5,
+        thumb: false,
+        endian: Big,
+        lib: "arm5_be",
+    })
+}
+#[test]
+fn v5_le() {
+    test_arm(&Lib {
+        version: V5,
+        thumb: false,
+        endian: Little,
+        lib: "arm5_le",
+    })
+}
+#[test]
+fn v5t_be() {
+    test_arm(&Lib {
+        version: V5,
+        thumb: true,
+        endian: Big,
+        lib: "arm5t_be",
+    })
+}
+#[test]
+fn v5t_le() {
+    test_arm(&Lib {
+        version: V5,
+        thumb: true,
+        endian: Little,
+        lib: "arm5t_le",
+    })
+}
+#[test]
+fn v6_be() {
+    test_arm(&Lib {
+        version: V6,
+        thumb: true,
+        endian: Big,
+        lib: "arm6_be",
+    })
+}
+#[test]
+fn v6_le() {
+    test_arm(&Lib {
+        version: V6,
+        thumb: true,
+        endian: Little,
+        lib: "arm6_le",
+    })
+}
+#[test]
+fn v7_be() {
+    test_arm(&Lib {
+        version: V7,
+        thumb: true,
+        endian: Big,
+        lib: "arm7_be",
+    })
+}
+#[test]
+fn v7_le() {
+    test_arm(&Lib {
+        version: V7,
+        thumb: true,
+        endian: Little,
+        lib: "arm7_le",
+    })
+}
+#[test]
+fn v8_be() {
+    test_arm(&Lib {
+        version: V8,
+        thumb: true,
+        endian: Big,
+        lib: "arm8_be",
+    })
+}
+#[test]
+fn v8_le() {
+    test_arm(&Lib {
+        version: V8,
+        thumb: true,
+        endian: Little,
+        lib: "arm8_le",
+    })
 }
