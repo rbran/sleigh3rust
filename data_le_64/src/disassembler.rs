@@ -1,14 +1,14 @@
 use sleigh4rust::*;
 pub type AddrType = u64;
 pub trait GlobalSetTrait {
-    fn set_test(&mut self, address: Option<u64>, value: i64);
+    fn set_test(&mut self, address: Option<u64>, value: i128);
 }
 #[derive(Default)]
 pub struct GlobalSetDefault<C: ContextTrait>(
     pub std::collections::HashMap<AddrType, C>,
 );
 impl<C: ContextTrait> GlobalSetTrait for GlobalSetDefault<C> {
-    fn set_test(&mut self, inst_start: Option<AddrType>, value: i64) {
+    fn set_test(&mut self, inst_start: Option<AddrType>, value: i128) {
         let Some (inst_start) = inst_start else { return } ;
         self.0.entry(inst_start).or_insert_with(|| {
             let mut context = C::default();
@@ -35,13 +35,13 @@ pub trait ContextregisterTrait:
     }
     fn read_test_disassembly(
         &self,
-    ) -> Result<i64, MemoryReadError<Self::AddressType>> {
+    ) -> Result<i128, MemoryReadError<Self::AddressType>> {
         let raw_value = self.read_test_raw()?;
-        Ok(i64::try_from(raw_value).unwrap())
+        Ok(i128::try_from(raw_value).unwrap())
     }
     fn write_test_disassembly(
         &mut self,
-        param: i64,
+        param: i128,
     ) -> Result<(), MemoryWriteError<Self::AddressType>> {
         self.write_test_raw(param as u8)
     }
@@ -91,15 +91,15 @@ impl ContextregisterStructDebug {
         let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
             (0..=3, 0..=4) => {
-                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
-                for ((buf_byte, mask_byte), chunk_index) in
-                    buf.iter_mut().zip(mask.iter()).zip(bit_offset..)
+                let byte_offset = usize::try_from(addr - 0).unwrap();
+                for ((buf_byte, mask_byte), byte) in
+                    buf.iter_mut().zip(mask.iter()).zip(byte_offset..)
                 {
                     for bit in (0..8)
                         .into_iter()
                         .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
                     {
-                        *buf_byte |= (self.chunk_0x0[chunk_index + bit].unwrap()
+                        *buf_byte |= (self.chunk_0x0[(byte * 8) + bit].unwrap()
                             as u8)
                             << bit;
                     }
@@ -125,15 +125,15 @@ impl ContextregisterStructDebug {
         let addr_end = addr + ((buf_len + 7) / 8);
         match (addr, addr_end) {
             (0..=3, 0..=4) => {
-                let bit_offset = usize::try_from(addr - 0).unwrap() * 8;
-                for ((buf_byte, mask_byte), chunk_index) in
-                    buf.iter().zip(mask.iter()).zip(bit_offset..)
+                let byte_offset = usize::try_from(addr - 0).unwrap();
+                for ((buf_byte, mask_byte), byte) in
+                    buf.iter().zip(mask.iter()).zip(byte_offset..)
                 {
                     for bit in (0..8)
                         .into_iter()
                         .filter(|bit| ((*mask_byte >> bit) & 1) != 0)
                     {
-                        self.chunk_0x0[chunk_index + bit] =
+                        self.chunk_0x0[(byte * 8) + bit] =
                             Some(*buf_byte & (1 << bit) != 0);
                     }
                 }
@@ -559,10 +559,10 @@ impl ContextTrait for SpacesStruct {
 }
 fn meaning_number<T>(hex: bool, num: T) -> DisplayElement
 where
-    i64: TryFrom<T>,
-    <i64 as TryFrom<T>>::Error: core::fmt::Debug,
+    i128: TryFrom<T>,
+    <i128 as TryFrom<T>>::Error: core::fmt::Debug,
 {
-    DisplayElement::Number(hex, i64::try_from(num).unwrap())
+    DisplayElement::Number(hex, i128::try_from(num).unwrap())
 }
 struct TokenParser<const LEN: usize>([u8; LEN]);
 impl<const LEN: usize> MemoryRead for TokenParser<LEN> {
@@ -605,7 +605,7 @@ impl core::fmt::Display for Register {
 pub enum DisplayElement {
     Literal(&'static str),
     Register(Register),
-    Number(bool, i64),
+    Number(bool, i128),
 }
 impl core::fmt::Display for DisplayElement {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -620,10 +620,10 @@ impl core::fmt::Display for DisplayElement {
         }
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/DATA/data/languages/data.sinc:26:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/DATA/data/languages/data.sinc, start:26:1, end:26:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar0 {}
-impl instructionVar0 {
+struct nop_instructionVar0 {}
+impl nop_instructionVar0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -648,7 +648,7 @@ impl instructionVar0 {
         let mut pattern_len = 0 as u64;
         let mut context_instance = context.clone();
         let mut block_0_len = 0u64 as u64;
-        if context_instance.register().read_test_disassembly().unwrap() != 1i64
+        if context_instance.register().read_test_disassembly().unwrap() != 1i128
         {
             return None;
         }
@@ -661,7 +661,7 @@ impl instructionVar0 {
 }
 #[derive(Clone, Debug)]
 enum Tableinstruction {
-    Var0(instructionVar0),
+    Var0(nop_instructionVar0),
 }
 impl Tableinstruction {
     fn display_extend<T>(
@@ -693,7 +693,7 @@ impl Tableinstruction {
         T: ContextTrait + Clone,
     {
         let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) = instructionVar0::parse(
+        if let Some((inst_len, parsed)) = nop_instructionVar0::parse(
             tokens_param,
             &mut context_current,
             inst_start,

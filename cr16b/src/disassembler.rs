@@ -10,10 +10,10 @@ pub struct SpacesStruct {}
 impl ContextTrait for SpacesStruct {}
 fn meaning_number<T>(hex: bool, num: T) -> DisplayElement
 where
-    i64: TryFrom<T>,
-    <i64 as TryFrom<T>>::Error: core::fmt::Debug,
+    i128: TryFrom<T>,
+    <i128 as TryFrom<T>>::Error: core::fmt::Debug,
 {
-    DisplayElement::Number(hex, i64::try_from(num).unwrap())
+    DisplayElement::Number(hex, i128::try_from(num).unwrap())
 }
 #[derive(Clone, Copy, Debug)]
 struct TokenField_b0(u8);
@@ -21,8 +21,8 @@ impl TokenField_b0 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -34,8 +34,8 @@ impl TokenField_op1 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -47,8 +47,8 @@ impl TokenField_op2 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -60,8 +60,8 @@ impl TokenField_opcode1 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -73,8 +73,8 @@ impl TokenField_i {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -86,8 +86,8 @@ impl TokenField_opcode2 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -99,8 +99,8 @@ impl TokenField_op1_b02 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -112,8 +112,8 @@ impl TokenField_op1_b12 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -125,8 +125,8 @@ impl TokenField_op2_b23 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -138,8 +138,8 @@ impl TokenField_op2_b12 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -151,8 +151,8 @@ impl TokenField_opcode1_b23 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -164,8 +164,8 @@ impl TokenField_opcode1_b13 {
     fn execution(&self) -> u8 {
         self.0
     }
-    fn disassembly(&self) -> i64 {
-        i64::try_from(self.0).unwrap()
+    fn disassembly(&self) -> i128 {
+        i128::try_from(self.0).unwrap()
     }
     fn display(&self) -> DisplayElement {
         meaning_number(true, self.0)
@@ -292,7 +292,7 @@ impl core::fmt::Display for Register {
 pub enum DisplayElement {
     Literal(&'static str),
     Register(Register),
-    Number(bool, i64),
+    Number(bool, i128),
 }
 impl core::fmt::Display for DisplayElement {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -307,10 +307,10 @@ impl core::fmt::Display for DisplayElement {
         }
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:310:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:310:1, end:310:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar0 {}
-impl instructionVar0 {
+struct RETX_instructionVar0 {}
+impl RETX_instructionVar0 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -337,22 +337,22 @@ impl instructionVar0 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 12i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 12i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 15i64 {
+        if token_parser.TokenFieldop2().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -362,10 +362,10 @@ impl instructionVar0 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:379:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:379:1, end:379:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar1 {}
-impl instructionVar1 {
+struct DI_instructionVar1 {}
+impl DI_instructionVar1 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -391,22 +391,22 @@ impl instructionVar1 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 14i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -416,10 +416,10 @@ impl instructionVar1 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:382:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:382:1, end:382:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar2 {}
-impl instructionVar2 {
+struct EI_instructionVar2 {}
+impl EI_instructionVar2 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -445,22 +445,22 @@ impl instructionVar2 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 14i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 15i64 {
+        if token_parser.TokenFieldop2().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -470,10 +470,10 @@ impl instructionVar2 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:385:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:385:1, end:385:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar3 {}
-impl instructionVar3 {
+struct NOP_instructionVar3 {}
+impl NOP_instructionVar3 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -499,22 +499,22 @@ impl instructionVar3 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 0i64 {
+        if token_parser.TokenFieldop1().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -524,10 +524,10 @@ impl instructionVar3 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:388:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:388:1, end:388:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar4 {}
-impl instructionVar4 {
+struct WAIT_instructionVar4 {}
+impl WAIT_instructionVar4 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -554,22 +554,22 @@ impl instructionVar4 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 15i64 {
+        if token_parser.TokenFieldop2().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -579,10 +579,10 @@ impl instructionVar4 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:391:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:391:1, end:391:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar5 {}
-impl instructionVar5 {
+struct EIWAIT_instructionVar5 {}
+impl EIWAIT_instructionVar5 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -609,22 +609,22 @@ impl instructionVar5 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 15i64 {
+        if token_parser.TokenFieldop2().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 3i64 {
+        if token_parser.TokenFieldop1().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -634,10 +634,10 @@ impl instructionVar5 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:278:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:278:1, end:278:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar6 {}
-impl instructionVar6 {
+struct BR_instructionVar6 {}
+impl BR_instructionVar6 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -663,22 +663,22 @@ impl instructionVar6 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldop1_b02().disassembly() != 7i64 {
+        if token_parser.TokenFieldop1_b02().disassembly() != 7i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -688,10 +688,10 @@ impl instructionVar6 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:346:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:346:1, end:346:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar7 {}
-impl instructionVar7 {
+struct LOADM_instructionVar7 {}
+impl LOADM_instructionVar7 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -718,22 +718,22 @@ impl instructionVar7 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 2i64 {
+        if token_parser.TokenFieldop1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -743,10 +743,10 @@ impl instructionVar7 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:372:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:372:1, end:372:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar8 {}
-impl instructionVar8 {
+struct STORM_instructionVar8 {}
+impl STORM_instructionVar8 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -773,22 +773,22 @@ impl instructionVar8 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 2i64 {
+        if token_parser.TokenFieldop1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         pattern_len += block_0_len;
@@ -798,10 +798,10 @@ impl instructionVar8 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:261:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:261:1, end:261:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar9 {}
-impl instructionVar9 {
+struct Bcond_instructionVar9 {}
+impl Bcond_instructionVar9 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -828,19 +828,19 @@ impl instructionVar9 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop1_b02().disassembly() != 7i64 {
+        if token_parser.TokenFieldop1_b02().disassembly() != 7i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -851,10 +851,10 @@ impl instructionVar9 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:268:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:268:1, end:268:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar10 {}
-impl instructionVar10 {
+struct BAL_instructionVar10 {}
+impl BAL_instructionVar10 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -880,19 +880,19 @@ impl instructionVar10 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop1_b02().disassembly() != 7i64 {
+        if token_parser.TokenFieldop1_b02().disassembly() != 7i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -903,10 +903,10 @@ impl instructionVar10 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:124:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:124:1, end:124:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar11 {}
-impl instructionVar11 {
+struct MULUW_instructionVar11 {}
+impl MULUW_instructionVar11 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -933,19 +933,19 @@ impl instructionVar11 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldop1_b12().disassembly() != 0i64 {
+        if token_parser.TokenFieldop1_b12().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -956,10 +956,10 @@ impl instructionVar11 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:281:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:281:1, end:281:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar12 {}
-impl instructionVar12 {
+struct BR_instructionVar12 {}
+impl BR_instructionVar12 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -985,19 +985,19 @@ impl instructionVar12 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1008,10 +1008,10 @@ impl instructionVar12 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:285:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:285:1, end:285:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar13 {}
-impl instructionVar13 {
+struct EXCP_instructionVar13 {}
+impl EXCP_instructionVar13 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1038,19 +1038,19 @@ impl instructionVar13 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 13i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 13i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 15i64 {
+        if token_parser.TokenFieldop2().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1061,10 +1061,10 @@ impl instructionVar13 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:303:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:303:1, end:303:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar14 {}
-impl instructionVar14 {
+struct JUMP_instructionVar14 {}
+impl JUMP_instructionVar14 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1091,19 +1091,19 @@ impl instructionVar14 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1114,10 +1114,10 @@ impl instructionVar14 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:306:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:306:1, end:306:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar15 {}
-impl instructionVar15 {
+struct JUMP_instructionVar15 {}
+impl JUMP_instructionVar15 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1144,19 +1144,19 @@ impl instructionVar15 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1167,10 +1167,10 @@ impl instructionVar15 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:314:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:314:1, end:314:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar16 {}
-impl instructionVar16 {
+struct PUSH_instructionVar16 {}
+impl PUSH_instructionVar16 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1197,19 +1197,19 @@ impl instructionVar16 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1220,10 +1220,10 @@ impl instructionVar16 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:318:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:318:1, end:318:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar17 {}
-impl instructionVar17 {
+struct POP_instructionVar17 {}
+impl POP_instructionVar17 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1249,19 +1249,19 @@ impl instructionVar17 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1272,10 +1272,10 @@ impl instructionVar17 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:322:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:322:1, end:322:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar18 {}
-impl instructionVar18 {
+struct POPRET_instructionVar18 {}
+impl POPRET_instructionVar18 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1302,19 +1302,19 @@ impl instructionVar18 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 2i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1325,10 +1325,10 @@ impl instructionVar18 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:326:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:326:1, end:326:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar19 {}
-impl instructionVar19 {
+struct POPRET_instructionVar19 {}
+impl POPRET_instructionVar19 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1355,19 +1355,19 @@ impl instructionVar19 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b23().disassembly() != 3i64 {
+        if token_parser.TokenFieldop2_b23().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op1 = token_parser.TokenFieldop1();
@@ -1378,10 +1378,10 @@ impl instructionVar19 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:76:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:76:1, end:76:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar20 {}
-impl instructionVar20 {
+struct MOVXB_instructionVar20 {}
+impl MOVXB_instructionVar20 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1408,16 +1408,16 @@ impl instructionVar20 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 4i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 4i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -1429,10 +1429,10 @@ impl instructionVar20 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:79:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:79:1, end:79:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar21 {}
-impl instructionVar21 {
+struct MOVZB_instructionVar21 {}
+impl MOVZB_instructionVar21 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1459,16 +1459,16 @@ impl instructionVar21 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 5i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 5i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -1480,10 +1480,10 @@ impl instructionVar21 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:118:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:118:1, end:118:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar22 {}
-impl instructionVar22 {
+struct MULSB_instructionVar22 {}
+impl MULSB_instructionVar22 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1510,16 +1510,16 @@ impl instructionVar22 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -1531,10 +1531,10 @@ impl instructionVar22 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:121:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:121:1, end:121:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar23 {}
-impl instructionVar23 {
+struct MULSW_instructionVar23 {}
+impl MULSW_instructionVar23 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1561,16 +1561,16 @@ impl instructionVar23 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -1582,10 +1582,10 @@ impl instructionVar23 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:152:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:152:1, end:152:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar24 {}
-impl instructionVar24 {
+struct BEQ0_instructionVar24 {}
+impl BEQ0_instructionVar24 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1612,16 +1612,16 @@ impl instructionVar24 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1633,10 +1633,10 @@ impl instructionVar24 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:156:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:156:1, end:156:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar25 {}
-impl instructionVar25 {
+struct BEQ1_instructionVar25 {}
+impl BEQ1_instructionVar25 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1663,16 +1663,16 @@ impl instructionVar25 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1684,10 +1684,10 @@ impl instructionVar25 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:160:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:160:1, end:160:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar26 {}
-impl instructionVar26 {
+struct BNE0_instructionVar26 {}
+impl BNE0_instructionVar26 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1714,16 +1714,16 @@ impl instructionVar26 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 2i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1735,10 +1735,10 @@ impl instructionVar26 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:164:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:164:1, end:164:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar27 {}
-impl instructionVar27 {
+struct BNE1_instructionVar27 {}
+impl BNE1_instructionVar27 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1765,16 +1765,16 @@ impl instructionVar27 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 3i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1786,10 +1786,10 @@ impl instructionVar27 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:212:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:212:1, end:212:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar28 {}
-impl instructionVar28 {
+struct TBIT_instructionVar28 {}
+impl TBIT_instructionVar28 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1816,16 +1816,16 @@ impl instructionVar28 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -1837,10 +1837,10 @@ impl instructionVar28 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:219:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:219:1, end:219:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar29 {}
-impl instructionVar29 {
+struct TBIT_instructionVar29 {}
+impl TBIT_instructionVar29 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1867,16 +1867,16 @@ impl instructionVar29 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 2i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1888,10 +1888,10 @@ impl instructionVar29 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:222:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:222:1, end:222:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar30 {}
-impl instructionVar30 {
+struct TBIT_instructionVar30 {}
+impl TBIT_instructionVar30 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1918,16 +1918,16 @@ impl instructionVar30 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 2i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1939,10 +1939,10 @@ impl instructionVar30 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:225:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:225:1, end:225:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar31 {}
-impl instructionVar31 {
+struct TBIT_instructionVar31 {}
+impl TBIT_instructionVar31 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -1969,16 +1969,16 @@ impl instructionVar31 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 2i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -1990,10 +1990,10 @@ impl instructionVar31 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:229:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:229:1, end:229:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar32 {}
-impl instructionVar32 {
+struct CBIT_instructionVar32 {}
+impl CBIT_instructionVar32 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2020,16 +2020,16 @@ impl instructionVar32 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2041,10 +2041,10 @@ impl instructionVar32 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:232:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:232:1, end:232:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar33 {}
-impl instructionVar33 {
+struct CBIT_instructionVar33 {}
+impl CBIT_instructionVar33 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2071,16 +2071,16 @@ impl instructionVar33 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2092,10 +2092,10 @@ impl instructionVar33 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:235:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:235:1, end:235:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar34 {}
-impl instructionVar34 {
+struct CBIT_instructionVar34 {}
+impl CBIT_instructionVar34 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2122,16 +2122,16 @@ impl instructionVar34 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 0i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2143,10 +2143,10 @@ impl instructionVar34 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:239:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:239:1, end:239:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar35 {}
-impl instructionVar35 {
+struct SBIT_instructionVar35 {}
+impl SBIT_instructionVar35 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2173,16 +2173,16 @@ impl instructionVar35 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2194,10 +2194,10 @@ impl instructionVar35 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:242:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:242:1, end:242:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar36 {}
-impl instructionVar36 {
+struct SBIT_instructionVar36 {}
+impl SBIT_instructionVar36 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2224,16 +2224,16 @@ impl instructionVar36 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2245,10 +2245,10 @@ impl instructionVar36 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:245:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:245:1, end:245:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar37 {}
-impl instructionVar37 {
+struct SBIT_instructionVar37 {}
+impl SBIT_instructionVar37 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2275,16 +2275,16 @@ impl instructionVar37 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 1i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2296,10 +2296,10 @@ impl instructionVar37 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:250:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:250:1, end:250:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar38 {}
-impl instructionVar38 {
+struct LPR_instructionVar38 {}
+impl LPR_instructionVar38 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2325,16 +2325,16 @@ impl instructionVar38 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 8i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 8i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2346,10 +2346,10 @@ impl instructionVar38 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:253:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:253:1, end:253:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar39 {}
-impl instructionVar39 {
+struct SPR_instructionVar39 {}
+impl SPR_instructionVar39 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2375,16 +2375,16 @@ impl instructionVar39 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 9i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 9i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2396,10 +2396,10 @@ impl instructionVar39 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:264:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:264:1, end:264:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar40 {}
-impl instructionVar40 {
+struct Bcond_instructionVar40 {}
+impl Bcond_instructionVar40 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2426,16 +2426,16 @@ impl instructionVar40 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2447,10 +2447,10 @@ impl instructionVar40 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:271:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:271:1, end:271:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar41 {}
-impl instructionVar41 {
+struct BAL_instructionVar41 {}
+impl BAL_instructionVar41 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2476,16 +2476,16 @@ impl instructionVar41 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2497,10 +2497,10 @@ impl instructionVar41 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:289:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:289:1, end:289:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar42 {}
-impl instructionVar42 {
+struct Jcond_instructionVar42 {}
+impl Jcond_instructionVar42 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2527,16 +2527,16 @@ impl instructionVar42 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2548,10 +2548,10 @@ impl instructionVar42 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:292:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:292:1, end:292:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar43 {}
-impl instructionVar43 {
+struct Jcond_instructionVar43 {}
+impl Jcond_instructionVar43 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2578,16 +2578,16 @@ impl instructionVar43 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2599,10 +2599,10 @@ impl instructionVar43 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:296:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:296:1, end:296:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar44 {}
-impl instructionVar44 {
+struct JAL_instructionVar44 {}
+impl JAL_instructionVar44 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2628,16 +2628,16 @@ impl instructionVar44 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 10i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 10i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2649,10 +2649,10 @@ impl instructionVar44 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:299:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:299:1, end:299:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar45 {}
-impl instructionVar45 {
+struct JAL_instructionVar45 {}
+impl JAL_instructionVar45 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2678,16 +2678,16 @@ impl instructionVar45 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -2699,10 +2699,10 @@ impl instructionVar45 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:362:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:362:1, end:362:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar46 {}
-impl instructionVar46 {
+struct STORE_instructionVar46 {}
+impl STORE_instructionVar46 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2729,16 +2729,16 @@ impl instructionVar46 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 3i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2750,10 +2750,10 @@ impl instructionVar46 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:365:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:365:1, end:365:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar47 {}
-impl instructionVar47 {
+struct STORE_instructionVar47 {}
+impl STORE_instructionVar47 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2780,16 +2780,16 @@ impl instructionVar47 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 3i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2801,10 +2801,10 @@ impl instructionVar47 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:368:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:368:1, end:368:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar48 {}
-impl instructionVar48 {
+struct STORE_instructionVar48 {}
+impl STORE_instructionVar48 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2831,16 +2831,16 @@ impl instructionVar48 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldop2_b12().disassembly() != 3i64 {
+        if token_parser.TokenFieldop2_b12().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2852,10 +2852,10 @@ impl instructionVar48 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:69:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:69:1, end:69:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar49 {}
-impl instructionVar49 {
+struct MOV_instructionVar49 {}
+impl MOV_instructionVar49 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2881,13 +2881,13 @@ impl instructionVar49 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 12i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 12i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2900,10 +2900,10 @@ impl instructionVar49 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:89:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:89:1, end:89:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar50 {}
-impl instructionVar50 {
+struct ADD_instructionVar50 {}
+impl ADD_instructionVar50 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2929,13 +2929,13 @@ impl instructionVar50 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2948,10 +2948,10 @@ impl instructionVar50 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:96:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:96:1, end:96:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar51 {}
-impl instructionVar51 {
+struct ADDU_instructionVar51 {}
+impl ADDU_instructionVar51 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -2978,13 +2978,13 @@ impl instructionVar51 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -2997,10 +2997,10 @@ impl instructionVar51 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:103:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:103:1, end:103:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar52 {}
-impl instructionVar52 {
+struct ADDC_instructionVar52 {}
+impl ADDC_instructionVar52 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3027,13 +3027,13 @@ impl instructionVar52 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 9i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 9i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3046,10 +3046,10 @@ impl instructionVar52 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:111:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:111:1, end:111:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar53 {}
-impl instructionVar53 {
+struct MUL_instructionVar53 {}
+impl MUL_instructionVar53 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3075,13 +3075,13 @@ impl instructionVar53 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3094,10 +3094,10 @@ impl instructionVar53 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:128:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:128:1, end:128:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar54 {}
-impl instructionVar54 {
+struct SUB_instructionVar54 {}
+impl SUB_instructionVar54 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3123,13 +3123,13 @@ impl instructionVar54 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3142,10 +3142,10 @@ impl instructionVar54 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:135:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:135:1, end:135:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar55 {}
-impl instructionVar55 {
+struct SUBC_instructionVar55 {}
+impl SUBC_instructionVar55 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3172,13 +3172,13 @@ impl instructionVar55 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 13i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 13i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3191,10 +3191,10 @@ impl instructionVar55 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:145:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:145:1, end:145:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar56 {}
-impl instructionVar56 {
+struct CMP_instructionVar56 {}
+impl CMP_instructionVar56 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3220,13 +3220,13 @@ impl instructionVar56 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 7i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 7i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3239,10 +3239,10 @@ impl instructionVar56 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:171:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:171:1, end:171:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar57 {}
-impl instructionVar57 {
+struct AND_instructionVar57 {}
+impl AND_instructionVar57 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3268,13 +3268,13 @@ impl instructionVar57 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 8i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 8i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3287,10 +3287,10 @@ impl instructionVar57 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:178:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:178:1, end:178:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar58 {}
-impl instructionVar58 {
+struct OR_instructionVar58 {}
+impl OR_instructionVar58 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3316,13 +3316,13 @@ impl instructionVar58 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 14i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3335,10 +3335,10 @@ impl instructionVar58 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:185:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:185:1, end:185:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar59 {}
-impl instructionVar59 {
+struct S_instructionVar59 {}
+impl S_instructionVar59 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3364,13 +3364,13 @@ impl instructionVar59 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 7i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 7i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3383,10 +3383,10 @@ impl instructionVar59 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:189:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:189:1, end:189:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar60 {}
-impl instructionVar60 {
+struct XOR_instructionVar60 {}
+impl XOR_instructionVar60 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3412,13 +3412,13 @@ impl instructionVar60 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3431,10 +3431,10 @@ impl instructionVar60 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:197:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:197:1, end:197:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar61 {}
-impl instructionVar61 {
+struct ASHU_instructionVar61 {}
+impl ASHU_instructionVar61 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3461,13 +3461,13 @@ impl instructionVar61 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 4i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 4i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3480,10 +3480,10 @@ impl instructionVar61 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:204:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:204:1, end:204:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar62 {}
-impl instructionVar62 {
+struct LSH_instructionVar62 {}
+impl LSH_instructionVar62 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3509,13 +3509,13 @@ impl instructionVar62 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 5i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 5i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3528,10 +3528,10 @@ impl instructionVar62 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:215:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:215:1, end:215:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar63 {}
-impl instructionVar63 {
+struct TBIT_instructionVar63 {}
+impl TBIT_instructionVar63 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3558,13 +3558,13 @@ impl instructionVar63 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 11i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 11i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -3577,10 +3577,10 @@ impl instructionVar63 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:72:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:72:1, end:72:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar64 {}
-impl instructionVar64 {
+struct MOV_instructionVar64 {}
+impl MOV_instructionVar64 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3606,10 +3606,10 @@ impl instructionVar64 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 12i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 12i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3623,10 +3623,10 @@ impl instructionVar64 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:82:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:82:1, end:82:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar65 {}
-impl instructionVar65 {
+struct MOVD_instructionVar65 {}
+impl MOVD_instructionVar65 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3653,16 +3653,16 @@ impl instructionVar65 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 1i64 {
+        if token_parser.TokenFieldi().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b13().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode1_b13().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let op2 = token_parser.TokenFieldop2();
@@ -3674,10 +3674,10 @@ impl instructionVar65 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:92:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:92:1, end:92:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar66 {}
-impl instructionVar66 {
+struct ADD_instructionVar66 {}
+impl ADD_instructionVar66 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3703,10 +3703,10 @@ impl instructionVar66 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 0i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3720,10 +3720,10 @@ impl instructionVar66 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:99:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:99:1, end:99:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar67 {}
-impl instructionVar67 {
+struct ADDU_instructionVar67 {}
+impl ADDU_instructionVar67 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3750,10 +3750,10 @@ impl instructionVar67 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3767,10 +3767,10 @@ impl instructionVar67 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:106:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:106:1, end:106:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar68 {}
-impl instructionVar68 {
+struct ADDC_instructionVar68 {}
+impl ADDC_instructionVar68 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3797,10 +3797,10 @@ impl instructionVar68 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 9i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 9i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3814,10 +3814,10 @@ impl instructionVar68 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:114:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:114:1, end:114:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar69 {}
-impl instructionVar69 {
+struct MUL_instructionVar69 {}
+impl MUL_instructionVar69 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3843,10 +3843,10 @@ impl instructionVar69 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 3i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3860,10 +3860,10 @@ impl instructionVar69 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:131:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:131:1, end:131:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar70 {}
-impl instructionVar70 {
+struct SUB_instructionVar70 {}
+impl SUB_instructionVar70 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3889,10 +3889,10 @@ impl instructionVar70 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 15i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 15i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3906,10 +3906,10 @@ impl instructionVar70 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:138:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:138:1, end:138:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar71 {}
-impl instructionVar71 {
+struct SUBC_instructionVar71 {}
+impl SUBC_instructionVar71 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3936,10 +3936,10 @@ impl instructionVar71 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 13i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 13i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3953,10 +3953,10 @@ impl instructionVar71 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:148:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:148:1, end:148:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar72 {}
-impl instructionVar72 {
+struct CMP_instructionVar72 {}
+impl CMP_instructionVar72 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -3982,10 +3982,10 @@ impl instructionVar72 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 7i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 7i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -3999,10 +3999,10 @@ impl instructionVar72 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:174:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:174:1, end:174:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar73 {}
-impl instructionVar73 {
+struct AND_instructionVar73 {}
+impl AND_instructionVar73 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4028,10 +4028,10 @@ impl instructionVar73 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 8i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 8i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4045,10 +4045,10 @@ impl instructionVar73 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:181:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:181:1, end:181:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar74 {}
-impl instructionVar74 {
+struct OR_instructionVar74 {}
+impl OR_instructionVar74 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4074,10 +4074,10 @@ impl instructionVar74 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 14i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 14i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4091,10 +4091,10 @@ impl instructionVar74 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:192:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:192:1, end:192:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar75 {}
-impl instructionVar75 {
+struct XOR_instructionVar75 {}
+impl XOR_instructionVar75 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4120,10 +4120,10 @@ impl instructionVar75 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 6i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 6i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4137,10 +4137,10 @@ impl instructionVar75 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:200:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:200:1, end:200:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar76 {}
-impl instructionVar76 {
+struct ASHU_instructionVar76 {}
+impl ASHU_instructionVar76 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4167,10 +4167,10 @@ impl instructionVar76 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 4i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 4i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4184,10 +4184,10 @@ impl instructionVar76 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:207:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:207:1, end:207:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar77 {}
-impl instructionVar77 {
+struct LSH_instructionVar77 {}
+impl LSH_instructionVar77 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4213,10 +4213,10 @@ impl instructionVar77 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 0i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1().disassembly() != 5i64 {
+        if token_parser.TokenFieldopcode1().disassembly() != 5i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4230,10 +4230,10 @@ impl instructionVar77 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:275:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:275:1, end:275:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar78 {}
-impl instructionVar78 {
+struct BR_instructionVar78 {}
+impl BR_instructionVar78 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4259,16 +4259,16 @@ impl instructionVar78 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldop2().disassembly() != 14i64 {
+        if token_parser.TokenFieldop2().disassembly() != 14i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let opcode1 = token_parser.TokenFieldopcode1();
@@ -4280,10 +4280,10 @@ impl instructionVar78 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:258:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:258:1, end:258:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar79 {}
-impl instructionVar79 {
+struct Bcond_instructionVar79 {}
+impl Bcond_instructionVar79 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4310,13 +4310,13 @@ impl instructionVar79 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 1i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 1i128 {
             return None;
         }
-        if token_parser.TokenFieldi().disassembly() != 0i64 {
+        if token_parser.TokenFieldi().disassembly() != 0i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 0i64 {
+        if token_parser.TokenFieldb0().disassembly() != 0i128 {
             return None;
         }
         let opcode1 = token_parser.TokenFieldopcode1();
@@ -4329,10 +4329,10 @@ impl instructionVar79 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:342:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:342:1, end:342:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar80 {}
-impl instructionVar80 {
+struct LOAD_instructionVar80 {}
+impl LOAD_instructionVar80 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4359,16 +4359,16 @@ impl instructionVar80 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4380,10 +4380,10 @@ impl instructionVar80 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:359:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:359:1, end:359:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar81 {}
-impl instructionVar81 {
+struct STORE_instructionVar81 {}
+impl STORE_instructionVar81 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4410,16 +4410,16 @@ impl instructionVar81 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldop1().disassembly() != 15i64 {
+        if token_parser.TokenFieldop1().disassembly() != 15i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4431,10 +4431,10 @@ impl instructionVar81 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:336:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:336:1, end:336:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar82 {}
-impl instructionVar82 {
+struct LOAD_instructionVar82 {}
+impl LOAD_instructionVar82 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4461,13 +4461,13 @@ impl instructionVar82 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4480,10 +4480,10 @@ impl instructionVar82 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:339:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:339:1, end:339:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar83 {}
-impl instructionVar83 {
+struct LOAD_instructionVar83 {}
+impl LOAD_instructionVar83 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4510,13 +4510,13 @@ impl instructionVar83 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4529,10 +4529,10 @@ impl instructionVar83 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:353:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:353:1, end:353:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar84 {}
-impl instructionVar84 {
+struct STORE_instructionVar84 {}
+impl STORE_instructionVar84 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4559,13 +4559,13 @@ impl instructionVar84 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 2i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4578,10 +4578,10 @@ impl instructionVar84 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:356:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:356:1, end:356:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar85 {}
-impl instructionVar85 {
+struct STORE_instructionVar85 {}
+impl STORE_instructionVar85 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4608,13 +4608,13 @@ impl instructionVar85 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode1_b23().disassembly() != 3i128 {
             return None;
         }
-        if token_parser.TokenFieldb0().disassembly() != 1i64 {
+        if token_parser.TokenFieldb0().disassembly() != 1i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4627,10 +4627,10 @@ impl instructionVar85 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:333:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:333:1, end:333:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar86 {}
-impl instructionVar86 {
+struct LOAD_instructionVar86 {}
+impl LOAD_instructionVar86 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4657,7 +4657,7 @@ impl instructionVar86 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 2i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 2i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4672,10 +4672,10 @@ impl instructionVar86 {
         Some((pattern_len, Self {}))
     }
 }
-#[doc = "Constructor at /home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc:350:1"]
+#[doc = "Constructor at Location(FileSpan(/home/rbran/src/ghidra/Ghidra/Processors/CR16/data/languages/CR16B.sinc, start:350:1, end:350:2))"]
 #[derive(Clone, Debug)]
-struct instructionVar87 {}
-impl instructionVar87 {
+struct STORE_instructionVar87 {}
+impl STORE_instructionVar87 {
     fn display_extend<T>(
         &self,
         display: &mut Vec<DisplayElement>,
@@ -4702,7 +4702,7 @@ impl instructionVar87 {
         let mut context_instance = context.clone();
         let mut block_0_len = 2u64 as u32;
         let token_parser = <TokenParser<2usize>>::new(tokens_current)?;
-        if token_parser.TokenFieldopcode2().disassembly() != 3i64 {
+        if token_parser.TokenFieldopcode2().disassembly() != 3i128 {
             return None;
         }
         let i = token_parser.TokenFieldi();
@@ -4719,94 +4719,94 @@ impl instructionVar87 {
 }
 #[derive(Clone, Debug)]
 enum Tableinstruction {
-    Var0(instructionVar0),
-    Var1(instructionVar1),
-    Var2(instructionVar2),
-    Var3(instructionVar3),
-    Var4(instructionVar4),
-    Var5(instructionVar5),
-    Var6(instructionVar6),
-    Var7(instructionVar7),
-    Var8(instructionVar8),
-    Var9(instructionVar9),
-    Var10(instructionVar10),
-    Var11(instructionVar11),
-    Var12(instructionVar12),
-    Var13(instructionVar13),
-    Var14(instructionVar14),
-    Var15(instructionVar15),
-    Var16(instructionVar16),
-    Var17(instructionVar17),
-    Var18(instructionVar18),
-    Var19(instructionVar19),
-    Var20(instructionVar20),
-    Var21(instructionVar21),
-    Var22(instructionVar22),
-    Var23(instructionVar23),
-    Var24(instructionVar24),
-    Var25(instructionVar25),
-    Var26(instructionVar26),
-    Var27(instructionVar27),
-    Var28(instructionVar28),
-    Var29(instructionVar29),
-    Var30(instructionVar30),
-    Var31(instructionVar31),
-    Var32(instructionVar32),
-    Var33(instructionVar33),
-    Var34(instructionVar34),
-    Var35(instructionVar35),
-    Var36(instructionVar36),
-    Var37(instructionVar37),
-    Var38(instructionVar38),
-    Var39(instructionVar39),
-    Var40(instructionVar40),
-    Var41(instructionVar41),
-    Var42(instructionVar42),
-    Var43(instructionVar43),
-    Var44(instructionVar44),
-    Var45(instructionVar45),
-    Var46(instructionVar46),
-    Var47(instructionVar47),
-    Var48(instructionVar48),
-    Var49(instructionVar49),
-    Var50(instructionVar50),
-    Var51(instructionVar51),
-    Var52(instructionVar52),
-    Var53(instructionVar53),
-    Var54(instructionVar54),
-    Var55(instructionVar55),
-    Var56(instructionVar56),
-    Var57(instructionVar57),
-    Var58(instructionVar58),
-    Var59(instructionVar59),
-    Var60(instructionVar60),
-    Var61(instructionVar61),
-    Var62(instructionVar62),
-    Var63(instructionVar63),
-    Var64(instructionVar64),
-    Var65(instructionVar65),
-    Var66(instructionVar66),
-    Var67(instructionVar67),
-    Var68(instructionVar68),
-    Var69(instructionVar69),
-    Var70(instructionVar70),
-    Var71(instructionVar71),
-    Var72(instructionVar72),
-    Var73(instructionVar73),
-    Var74(instructionVar74),
-    Var75(instructionVar75),
-    Var76(instructionVar76),
-    Var77(instructionVar77),
-    Var78(instructionVar78),
-    Var79(instructionVar79),
-    Var80(instructionVar80),
-    Var81(instructionVar81),
-    Var82(instructionVar82),
-    Var83(instructionVar83),
-    Var84(instructionVar84),
-    Var85(instructionVar85),
-    Var86(instructionVar86),
-    Var87(instructionVar87),
+    Var0(RETX_instructionVar0),
+    Var1(DI_instructionVar1),
+    Var2(EI_instructionVar2),
+    Var3(NOP_instructionVar3),
+    Var4(WAIT_instructionVar4),
+    Var5(EIWAIT_instructionVar5),
+    Var6(BR_instructionVar6),
+    Var7(LOADM_instructionVar7),
+    Var8(STORM_instructionVar8),
+    Var9(Bcond_instructionVar9),
+    Var10(BAL_instructionVar10),
+    Var11(MULUW_instructionVar11),
+    Var12(BR_instructionVar12),
+    Var13(EXCP_instructionVar13),
+    Var14(JUMP_instructionVar14),
+    Var15(JUMP_instructionVar15),
+    Var16(PUSH_instructionVar16),
+    Var17(POP_instructionVar17),
+    Var18(POPRET_instructionVar18),
+    Var19(POPRET_instructionVar19),
+    Var20(MOVXB_instructionVar20),
+    Var21(MOVZB_instructionVar21),
+    Var22(MULSB_instructionVar22),
+    Var23(MULSW_instructionVar23),
+    Var24(BEQ0_instructionVar24),
+    Var25(BEQ1_instructionVar25),
+    Var26(BNE0_instructionVar26),
+    Var27(BNE1_instructionVar27),
+    Var28(TBIT_instructionVar28),
+    Var29(TBIT_instructionVar29),
+    Var30(TBIT_instructionVar30),
+    Var31(TBIT_instructionVar31),
+    Var32(CBIT_instructionVar32),
+    Var33(CBIT_instructionVar33),
+    Var34(CBIT_instructionVar34),
+    Var35(SBIT_instructionVar35),
+    Var36(SBIT_instructionVar36),
+    Var37(SBIT_instructionVar37),
+    Var38(LPR_instructionVar38),
+    Var39(SPR_instructionVar39),
+    Var40(Bcond_instructionVar40),
+    Var41(BAL_instructionVar41),
+    Var42(Jcond_instructionVar42),
+    Var43(Jcond_instructionVar43),
+    Var44(JAL_instructionVar44),
+    Var45(JAL_instructionVar45),
+    Var46(STORE_instructionVar46),
+    Var47(STORE_instructionVar47),
+    Var48(STORE_instructionVar48),
+    Var49(MOV_instructionVar49),
+    Var50(ADD_instructionVar50),
+    Var51(ADDU_instructionVar51),
+    Var52(ADDC_instructionVar52),
+    Var53(MUL_instructionVar53),
+    Var54(SUB_instructionVar54),
+    Var55(SUBC_instructionVar55),
+    Var56(CMP_instructionVar56),
+    Var57(AND_instructionVar57),
+    Var58(OR_instructionVar58),
+    Var59(S_instructionVar59),
+    Var60(XOR_instructionVar60),
+    Var61(ASHU_instructionVar61),
+    Var62(LSH_instructionVar62),
+    Var63(TBIT_instructionVar63),
+    Var64(MOV_instructionVar64),
+    Var65(MOVD_instructionVar65),
+    Var66(ADD_instructionVar66),
+    Var67(ADDU_instructionVar67),
+    Var68(ADDC_instructionVar68),
+    Var69(MUL_instructionVar69),
+    Var70(SUB_instructionVar70),
+    Var71(SUBC_instructionVar71),
+    Var72(CMP_instructionVar72),
+    Var73(AND_instructionVar73),
+    Var74(OR_instructionVar74),
+    Var75(XOR_instructionVar75),
+    Var76(ASHU_instructionVar76),
+    Var77(LSH_instructionVar77),
+    Var78(BR_instructionVar78),
+    Var79(Bcond_instructionVar79),
+    Var80(LOAD_instructionVar80),
+    Var81(STORE_instructionVar81),
+    Var82(LOAD_instructionVar82),
+    Var83(LOAD_instructionVar83),
+    Var84(STORE_instructionVar84),
+    Var85(STORE_instructionVar85),
+    Var86(LOAD_instructionVar86),
+    Var87(STORE_instructionVar87),
 }
 impl Tableinstruction {
     fn display_extend<T>(
@@ -5447,7 +5447,7 @@ impl Tableinstruction {
         T: ContextTrait + Clone,
     {
         let mut context_current = context_param.clone();
-        if let Some((inst_len, parsed)) = instructionVar0::parse(
+        if let Some((inst_len, parsed)) = RETX_instructionVar0::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5455,7 +5455,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var0(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar1::parse(
+        if let Some((inst_len, parsed)) = DI_instructionVar1::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5463,7 +5463,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var1(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar2::parse(
+        if let Some((inst_len, parsed)) = EI_instructionVar2::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5471,7 +5471,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var2(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar3::parse(
+        if let Some((inst_len, parsed)) = NOP_instructionVar3::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5479,7 +5479,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var3(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar4::parse(
+        if let Some((inst_len, parsed)) = WAIT_instructionVar4::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5487,7 +5487,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var4(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar5::parse(
+        if let Some((inst_len, parsed)) = EIWAIT_instructionVar5::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5495,7 +5495,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var5(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar6::parse(
+        if let Some((inst_len, parsed)) = BR_instructionVar6::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5503,7 +5503,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var6(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar7::parse(
+        if let Some((inst_len, parsed)) = LOADM_instructionVar7::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5511,7 +5511,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var7(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar8::parse(
+        if let Some((inst_len, parsed)) = STORM_instructionVar8::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5519,7 +5519,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var8(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar9::parse(
+        if let Some((inst_len, parsed)) = Bcond_instructionVar9::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5527,7 +5527,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var9(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar10::parse(
+        if let Some((inst_len, parsed)) = BAL_instructionVar10::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5535,7 +5535,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var10(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar11::parse(
+        if let Some((inst_len, parsed)) = MULUW_instructionVar11::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5543,7 +5543,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var11(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar12::parse(
+        if let Some((inst_len, parsed)) = BR_instructionVar12::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5551,7 +5551,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var12(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar13::parse(
+        if let Some((inst_len, parsed)) = EXCP_instructionVar13::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5559,7 +5559,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var13(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar14::parse(
+        if let Some((inst_len, parsed)) = JUMP_instructionVar14::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5567,7 +5567,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var14(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar15::parse(
+        if let Some((inst_len, parsed)) = JUMP_instructionVar15::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5575,7 +5575,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var15(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar16::parse(
+        if let Some((inst_len, parsed)) = PUSH_instructionVar16::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5583,7 +5583,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var16(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar17::parse(
+        if let Some((inst_len, parsed)) = POP_instructionVar17::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5591,7 +5591,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var17(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar18::parse(
+        if let Some((inst_len, parsed)) = POPRET_instructionVar18::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5599,7 +5599,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var18(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar19::parse(
+        if let Some((inst_len, parsed)) = POPRET_instructionVar19::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5607,7 +5607,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var19(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar20::parse(
+        if let Some((inst_len, parsed)) = MOVXB_instructionVar20::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5615,7 +5615,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var20(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar21::parse(
+        if let Some((inst_len, parsed)) = MOVZB_instructionVar21::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5623,7 +5623,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var21(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar22::parse(
+        if let Some((inst_len, parsed)) = MULSB_instructionVar22::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5631,7 +5631,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var22(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar23::parse(
+        if let Some((inst_len, parsed)) = MULSW_instructionVar23::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5639,7 +5639,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var23(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar24::parse(
+        if let Some((inst_len, parsed)) = BEQ0_instructionVar24::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5647,7 +5647,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var24(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar25::parse(
+        if let Some((inst_len, parsed)) = BEQ1_instructionVar25::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5655,7 +5655,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var25(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar26::parse(
+        if let Some((inst_len, parsed)) = BNE0_instructionVar26::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5663,7 +5663,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var26(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar27::parse(
+        if let Some((inst_len, parsed)) = BNE1_instructionVar27::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5671,7 +5671,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var27(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar28::parse(
+        if let Some((inst_len, parsed)) = TBIT_instructionVar28::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5679,7 +5679,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var28(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar29::parse(
+        if let Some((inst_len, parsed)) = TBIT_instructionVar29::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5687,7 +5687,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var29(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar30::parse(
+        if let Some((inst_len, parsed)) = TBIT_instructionVar30::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5695,7 +5695,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var30(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar31::parse(
+        if let Some((inst_len, parsed)) = TBIT_instructionVar31::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5703,7 +5703,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var31(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar32::parse(
+        if let Some((inst_len, parsed)) = CBIT_instructionVar32::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5711,7 +5711,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var32(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar33::parse(
+        if let Some((inst_len, parsed)) = CBIT_instructionVar33::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5719,7 +5719,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var33(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar34::parse(
+        if let Some((inst_len, parsed)) = CBIT_instructionVar34::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5727,7 +5727,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var34(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar35::parse(
+        if let Some((inst_len, parsed)) = SBIT_instructionVar35::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5735,7 +5735,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var35(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar36::parse(
+        if let Some((inst_len, parsed)) = SBIT_instructionVar36::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5743,7 +5743,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var36(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar37::parse(
+        if let Some((inst_len, parsed)) = SBIT_instructionVar37::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5751,7 +5751,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var37(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar38::parse(
+        if let Some((inst_len, parsed)) = LPR_instructionVar38::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5759,7 +5759,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var38(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar39::parse(
+        if let Some((inst_len, parsed)) = SPR_instructionVar39::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5767,7 +5767,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var39(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar40::parse(
+        if let Some((inst_len, parsed)) = Bcond_instructionVar40::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5775,7 +5775,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var40(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar41::parse(
+        if let Some((inst_len, parsed)) = BAL_instructionVar41::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5783,7 +5783,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var41(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar42::parse(
+        if let Some((inst_len, parsed)) = Jcond_instructionVar42::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5791,7 +5791,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var42(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar43::parse(
+        if let Some((inst_len, parsed)) = Jcond_instructionVar43::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5799,7 +5799,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var43(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar44::parse(
+        if let Some((inst_len, parsed)) = JAL_instructionVar44::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5807,7 +5807,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var44(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar45::parse(
+        if let Some((inst_len, parsed)) = JAL_instructionVar45::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5815,7 +5815,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var45(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar46::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar46::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5823,7 +5823,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var46(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar47::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar47::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5831,7 +5831,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var47(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar48::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar48::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5839,7 +5839,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var48(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar49::parse(
+        if let Some((inst_len, parsed)) = MOV_instructionVar49::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5847,7 +5847,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var49(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar50::parse(
+        if let Some((inst_len, parsed)) = ADD_instructionVar50::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5855,7 +5855,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var50(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar51::parse(
+        if let Some((inst_len, parsed)) = ADDU_instructionVar51::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5863,7 +5863,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var51(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar52::parse(
+        if let Some((inst_len, parsed)) = ADDC_instructionVar52::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5871,7 +5871,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var52(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar53::parse(
+        if let Some((inst_len, parsed)) = MUL_instructionVar53::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5879,7 +5879,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var53(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar54::parse(
+        if let Some((inst_len, parsed)) = SUB_instructionVar54::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5887,7 +5887,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var54(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar55::parse(
+        if let Some((inst_len, parsed)) = SUBC_instructionVar55::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5895,7 +5895,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var55(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar56::parse(
+        if let Some((inst_len, parsed)) = CMP_instructionVar56::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5903,7 +5903,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var56(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar57::parse(
+        if let Some((inst_len, parsed)) = AND_instructionVar57::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5911,7 +5911,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var57(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar58::parse(
+        if let Some((inst_len, parsed)) = OR_instructionVar58::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5919,7 +5919,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var58(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar59::parse(
+        if let Some((inst_len, parsed)) = S_instructionVar59::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5927,7 +5927,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var59(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar60::parse(
+        if let Some((inst_len, parsed)) = XOR_instructionVar60::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5935,7 +5935,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var60(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar61::parse(
+        if let Some((inst_len, parsed)) = ASHU_instructionVar61::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5943,7 +5943,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var61(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar62::parse(
+        if let Some((inst_len, parsed)) = LSH_instructionVar62::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5951,7 +5951,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var62(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar63::parse(
+        if let Some((inst_len, parsed)) = TBIT_instructionVar63::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5959,7 +5959,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var63(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar64::parse(
+        if let Some((inst_len, parsed)) = MOV_instructionVar64::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5967,7 +5967,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var64(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar65::parse(
+        if let Some((inst_len, parsed)) = MOVD_instructionVar65::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5975,7 +5975,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var65(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar66::parse(
+        if let Some((inst_len, parsed)) = ADD_instructionVar66::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5983,7 +5983,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var66(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar67::parse(
+        if let Some((inst_len, parsed)) = ADDU_instructionVar67::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5991,7 +5991,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var67(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar68::parse(
+        if let Some((inst_len, parsed)) = ADDC_instructionVar68::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -5999,7 +5999,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var68(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar69::parse(
+        if let Some((inst_len, parsed)) = MUL_instructionVar69::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6007,7 +6007,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var69(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar70::parse(
+        if let Some((inst_len, parsed)) = SUB_instructionVar70::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6015,7 +6015,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var70(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar71::parse(
+        if let Some((inst_len, parsed)) = SUBC_instructionVar71::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6023,7 +6023,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var71(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar72::parse(
+        if let Some((inst_len, parsed)) = CMP_instructionVar72::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6031,7 +6031,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var72(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar73::parse(
+        if let Some((inst_len, parsed)) = AND_instructionVar73::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6039,7 +6039,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var73(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar74::parse(
+        if let Some((inst_len, parsed)) = OR_instructionVar74::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6047,7 +6047,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var74(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar75::parse(
+        if let Some((inst_len, parsed)) = XOR_instructionVar75::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6055,7 +6055,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var75(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar76::parse(
+        if let Some((inst_len, parsed)) = ASHU_instructionVar76::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6063,7 +6063,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var76(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar77::parse(
+        if let Some((inst_len, parsed)) = LSH_instructionVar77::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6071,7 +6071,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var77(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar78::parse(
+        if let Some((inst_len, parsed)) = BR_instructionVar78::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6079,7 +6079,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var78(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar79::parse(
+        if let Some((inst_len, parsed)) = Bcond_instructionVar79::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6087,7 +6087,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var79(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar80::parse(
+        if let Some((inst_len, parsed)) = LOAD_instructionVar80::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6095,7 +6095,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var80(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar81::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar81::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6103,7 +6103,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var81(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar82::parse(
+        if let Some((inst_len, parsed)) = LOAD_instructionVar82::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6111,7 +6111,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var82(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar83::parse(
+        if let Some((inst_len, parsed)) = LOAD_instructionVar83::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6119,7 +6119,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var83(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar84::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar84::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6127,7 +6127,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var84(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar85::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar85::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6135,7 +6135,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var85(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar86::parse(
+        if let Some((inst_len, parsed)) = LOAD_instructionVar86::parse(
             tokens_param,
             &mut context_current,
             inst_start,
@@ -6143,7 +6143,7 @@ impl Tableinstruction {
             *context_param = context_current;
             return Some((inst_len, Self::Var86(parsed)));
         }
-        if let Some((inst_len, parsed)) = instructionVar87::parse(
+        if let Some((inst_len, parsed)) = STORE_instructionVar87::parse(
             tokens_param,
             &mut context_current,
             inst_start,

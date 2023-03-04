@@ -1,5 +1,8 @@
 [workspace]
 
+exclude = [
+    "dyn-tester",
+]
 members = [
     "65c02",
     "6502",
@@ -31,7 +34,6 @@ members = [
     "arm5_le",
     "arm7_be",
     "arm8_le",
-    "dyn-tester",
     "superh4_be",
     "toy64_be_harvard",
     "toy_be_posstack",

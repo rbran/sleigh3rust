@@ -24,8 +24,8 @@ const STRLEN_64: &[(u64, &[u8], &str)] = &[
     (0x9d098, &[0x89, 0xce], "MOV ESI,ECX"),
     (0x9d09a, &[0x81, 0xe6, 0x28, 0x01, 0x00, 0x00], "AND ESI,0x128"),
     (0x9d0a0, &[0x81, 0xfe, 0x28, 0x01, 0x00, 0x00], "CMP ESI,0x128"),
-    (0x9d0a6, &[0x74, 0x08], "JZ 0x19d0b0"),
-    (0x9d0a8, &[0x48, 0x89, 0xd0], "MOV RAX"),
+    (0x9d0a6, &[0x74, 0x08], "JZ 0x9d0b0"),
+    (0x9d0a8, &[0x48, 0x89, 0xd0], "MOV RAX,RDX"),
     (0x9d0ab, &[0xc3], "RET"),
 ];
 
@@ -38,8 +38,9 @@ fn x86() {
         fn(&'_ [u8], u32) -> Option<(u32, String)>,
     > = unsafe { ld_lib.get(b"parse_32bits\0").unwrap() };
     for (addr, instruction, output) in STRLEN_32 {
-        let (_next_addr, parsed_output) =
+        let (next_addr, parsed_output) =
             parse_fun(instruction, *addr).expect(&output);
+        assert_eq!(next_addr, *addr + instruction.len() as u32);
         assert_eq!(&remove_spaces(&parsed_output), output);
     }
 }
@@ -56,13 +57,15 @@ fn x86_64() {
         fn(&'_ [u8], u64) -> Option<(u64, String)>,
     > = unsafe { ld_lib.get(b"parse_64bits\0").unwrap() };
     for (addr, instruction, output) in STRLEN_32 {
-        let (_next_addr, parsed_output) =
+        let (next_addr, parsed_output) =
             parse_32(instruction, *addr as u64).expect(&output);
+        assert_eq!(next_addr, *addr as u64 + instruction.len() as u64);
         assert_eq!(&remove_spaces(&parsed_output), output);
     }
     for (addr, instruction, output) in STRLEN_64 {
-        let (_next_addr, parsed_output) =
+        let (next_addr, parsed_output) =
             parse_64(instruction, *addr).expect(&output);
+        assert_eq!(next_addr, *addr + instruction.len() as u64);
         assert_eq!(&remove_spaces(&parsed_output), output);
     }
 }
