@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("Processors/MIPS/data/languages/mips32be.slaspec");
+    parse!("../Processors/MIPS/data/languages/mips32be.slaspec");
 }
 use crate::disassembler::*;
 

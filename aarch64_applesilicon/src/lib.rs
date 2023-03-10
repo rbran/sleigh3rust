@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("Processors/AARCH64/data/languages/AARCH64_AppleSilicon.slaspec");
+    parse!("../Processors/AARCH64/data/languages/AARCH64_AppleSilicon.slaspec");
 }
 use crate::disassembler::*;
 

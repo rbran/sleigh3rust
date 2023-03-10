@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("Processors/Atmel/data/languages/avr8.slaspec");
+    parse!("../Processors/Atmel/data/languages/avr8.slaspec");
 }
 use crate::disassembler::*;
 

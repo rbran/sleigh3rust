@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("Processors/PA-RISC/data/languages/pa-risc32be.slaspec");
+    parse!("../Processors/PA-RISC/data/languages/pa-risc32be.slaspec");
 }
 use crate::disassembler::*;
 
