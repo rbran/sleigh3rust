@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/x86/data/languages/x86-64.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;
@@ -67,9 +70,9 @@ pub fn parse_32bits(
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
     context.register_mut().write_longMode_raw(0).unwrap();
+    context.register_mut().write_bit64_raw(0).unwrap();
     context.register_mut().write_addrsize_raw(1).unwrap();
 
-    context.register_mut().write_bit64_raw(0).unwrap();
     context.register_mut().write_opsize_raw(0).unwrap();
     context.register_mut().write_segover_raw(0).unwrap();
     context.register_mut().write_protectedMode_raw(0).unwrap();
@@ -98,9 +101,9 @@ pub fn parse_64bits_emu32(
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
     context.register_mut().write_longMode_raw(0).unwrap();
+    context.register_mut().write_bit64_raw(1).unwrap();
     context.register_mut().write_addrsize_raw(1).unwrap();
 
-    context.register_mut().write_bit64_raw(1).unwrap();
     context.register_mut().write_opsize_raw(1).unwrap();
     context.register_mut().write_segover_raw(0).unwrap();
     context.register_mut().write_protectedMode_raw(0).unwrap();
@@ -129,9 +132,9 @@ pub fn parse_64bits(
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
     context.register_mut().write_longMode_raw(1).unwrap();
+    context.register_mut().write_bit64_raw(1).unwrap();
     context.register_mut().write_addrsize_raw(2).unwrap();
 
-    context.register_mut().write_bit64_raw(1).unwrap();
     context.register_mut().write_opsize_raw(1).unwrap();
     context.register_mut().write_segover_raw(0).unwrap();
     context.register_mut().write_protectedMode_raw(0).unwrap();

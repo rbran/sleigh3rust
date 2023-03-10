@@ -7,6 +7,7 @@ name = "aarch64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -15,6 +16,7 @@ name = "aarch64_applesilicon"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -23,6 +25,7 @@ name = "aarch64be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -31,6 +34,7 @@ name = "arm4_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -39,6 +43,7 @@ name = "arm4_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -47,6 +52,7 @@ name = "arm4t_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -55,6 +61,7 @@ name = "arm4t_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -63,6 +70,7 @@ name = "arm5_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -71,6 +79,7 @@ name = "arm5_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -79,6 +88,7 @@ name = "arm5t_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -87,6 +97,7 @@ name = "arm5t_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -95,6 +106,7 @@ name = "arm6_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -103,6 +115,7 @@ name = "arm6_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -111,6 +124,7 @@ name = "arm7_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -119,6 +133,7 @@ name = "arm7_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -127,6 +142,7 @@ name = "arm8_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -135,14 +151,22 @@ name = "arm8_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
+
+[[package]]
+name = "autocfg"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "avr8"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -151,7 +175,20 @@ name = "avr8e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
+]
+
+[[package]]
+name = "bitvec"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1bc2832c24239b0141d5674bb9174f9d68a8b5b3f2753311927c172ca46f7e9c"
+dependencies = [
+ "funty",
+ "radium",
+ "tap",
+ "wyz",
 ]
 
 [[package]]
@@ -159,6 +196,79 @@ name = "cp1600"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_6502"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_65c02"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_6805"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_6809"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_80251"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_80390"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_8051"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "cpu_8085"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -167,6 +277,7 @@ name = "cr16b"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -175,6 +286,7 @@ name = "cr16c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -183,6 +295,7 @@ name = "dalvik_base"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -191,6 +304,7 @@ name = "dalvik_dex_android10"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -199,6 +313,7 @@ name = "dalvik_dex_android11"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -207,6 +322,7 @@ name = "dalvik_dex_android12"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -215,6 +331,7 @@ name = "dalvik_dex_kitkat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -223,6 +340,7 @@ name = "dalvik_dex_lollipop"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -231,6 +349,7 @@ name = "dalvik_dex_marshmallow"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -239,6 +358,7 @@ name = "dalvik_dex_nougat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -247,6 +367,7 @@ name = "dalvik_dex_oreo"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -255,6 +376,7 @@ name = "dalvik_dex_pie"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -263,6 +385,7 @@ name = "dalvik_odex_kitkat"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -271,6 +394,7 @@ name = "data_be_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -279,6 +403,7 @@ name = "data_le_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -287,6 +412,7 @@ name = "dspic30f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -295,6 +421,7 @@ name = "dspic33c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -303,6 +430,7 @@ name = "dspic33e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -311,62 +439,7 @@ name = "dspic33f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_65c02"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_6805"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_6809"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_80251"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_80390"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_8051"
-version = "0.1.0"
-dependencies = [
- "ethnum",
- "sleigh4rust",
-]
-
-[[package]]
-name = "dylib_8085"
-version = "0.1.0"
-dependencies = [
- "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -377,18 +450,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0198b9d0078e0f30dedc7acbb21c974e838fc8fae3ee170128658a98cb2c1c04"
 
 [[package]]
+name = "funty"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
+
+[[package]]
 name = "h6309"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
+
+[[package]]
+name = "hashbrown"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hc05"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -397,6 +484,7 @@ name = "hc08"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -405,6 +493,7 @@ name = "hcs08"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -413,7 +502,18 @@ name = "hcs12"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
+]
+
+[[package]]
+name = "indexmap"
+version = "1.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
+dependencies = [
+ "autocfg",
+ "hashbrown",
 ]
 
 [[package]]
@@ -421,7 +521,17 @@ name = "jvm"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
+]
+
+[[package]]
+name = "litrs"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f17c3668f3cc1132437cdadc93dab05e52d592f06948d3f64828430c36e4a70"
+dependencies = [
+ "proc-macro2",
 ]
 
 [[package]]
@@ -429,6 +539,7 @@ name = "m8c"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -437,14 +548,28 @@ name = "mcs96"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
+
+[[package]]
+name = "memchr"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
+
+[[package]]
+name = "minimal-lexical"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
 name = "mips32be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -453,6 +578,7 @@ name = "mips32le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -461,6 +587,7 @@ name = "mips32r6be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -469,6 +596,7 @@ name = "mips32r6le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -477,6 +605,7 @@ name = "mips64be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -485,6 +614,7 @@ name = "mips64le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -493,7 +623,18 @@ name = "mx51"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
+]
+
+[[package]]
+name = "nom"
+version = "7.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
+dependencies = [
+ "memchr",
+ "minimal-lexical",
 ]
 
 [[package]]
@@ -501,6 +642,7 @@ name = "pa_risc32be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -509,6 +651,7 @@ name = "pic12c5xx"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -517,6 +660,7 @@ name = "pic16"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -525,6 +669,7 @@ name = "pic16c5x"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -533,6 +678,7 @@ name = "pic16f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -541,6 +687,7 @@ name = "pic17c7xx"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -549,6 +696,7 @@ name = "pic18"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -557,6 +705,7 @@ name = "pic24e"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -565,6 +714,7 @@ name = "pic24f"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -573,6 +723,7 @@ name = "pic24h"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -581,6 +732,7 @@ name = "ppc_32_4xx_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -589,6 +741,7 @@ name = "ppc_32_4xx_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -597,6 +750,7 @@ name = "ppc_32_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -605,6 +759,7 @@ name = "ppc_32_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -613,6 +768,7 @@ name = "ppc_32_quicciii_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -621,6 +777,7 @@ name = "ppc_32_quicciii_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -629,6 +786,7 @@ name = "ppc_64_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -637,6 +795,7 @@ name = "ppc_64_isa_altivec_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -645,6 +804,7 @@ name = "ppc_64_isa_altivec_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -653,6 +813,7 @@ name = "ppc_64_isa_altivec_vle_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -661,6 +822,7 @@ name = "ppc_64_isa_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -669,6 +831,7 @@ name = "ppc_64_isa_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -677,6 +840,7 @@ name = "ppc_64_isa_vle_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -685,14 +849,40 @@ name = "ppc_64_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.51"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d727cae5b39d21da60fa540906919ad737832fe0b1c165da3a34d6548c849d6"
+dependencies = [
+ "unicode-ident",
+]
+
+[[package]]
+name = "quote"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8856d8364d252a14d474036ea1358d63c9e6965c8e5c1885c18f73d70bff9c7b"
+dependencies = [
+ "proc-macro2",
+]
+
+[[package]]
+name = "radium"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
 
 [[package]]
 name = "riscv_ilp32d"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -701,6 +891,7 @@ name = "riscv_lp64d"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -709,6 +900,7 @@ name = "sh_1"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -717,6 +909,7 @@ name = "sh_2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -725,12 +918,54 @@ name = "sh_2a"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
+name = "sleigh-rs"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f20d588f29a69034ce5bc336464c661c409f693d1413392e29f8990cbf88a1b"
+dependencies = [
+ "indexmap",
+ "nom",
+ "sleigh4rust",
+ "thiserror",
+]
+
+[[package]]
+name = "sleigh2macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "460d2b92232e00c9ee53793b5f184af32e6df65ad02d61664382ebe493e735a8"
+dependencies = [
+ "litrs",
+ "proc-macro2",
+ "quote",
+ "sleigh2rust",
+]
+
+[[package]]
+name = "sleigh2rust"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e6caecc3bb624158c61b6967a2acddaafdfc29a554945c974cf5f893dbecb20"
+dependencies = [
+ "bitvec",
+ "ethnum",
+ "indexmap",
+ "proc-macro2",
+ "quote",
+ "sleigh-rs",
  "sleigh4rust",
 ]
 
 [[package]]
 name = "sleigh4rust"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ec3bfb702b453ed705eb4113d39caef5be0c21f3f15f033b08ea0f6268113da"
 dependencies = [
  "ethnum",
 ]
@@ -740,6 +975,7 @@ name = "sparcv9_32"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -748,6 +984,7 @@ name = "sparcv9_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -756,6 +993,7 @@ name = "superh4_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -764,15 +1002,45 @@ name = "superh4_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
 [[package]]
-name = "test_6502"
-version = "0.1.0"
+name = "syn"
+version = "1.0.109"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
 dependencies = [
- "ethnum",
- "sleigh4rust",
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
+name = "tap"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+
+[[package]]
+name = "thiserror"
+version = "1.0.39"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5ab016db510546d856297882807df8da66a16fb8c4101cb8b30054b0d5b2d9c"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.39"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5420d42e90af0c38c3290abcca25b9b3bdf379fc9f55c528f53a269d9c9a267e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -780,6 +1048,7 @@ name = "toy64_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -788,6 +1057,7 @@ name = "toy64_be_harvard"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -796,6 +1066,7 @@ name = "toy64_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -804,6 +1075,7 @@ name = "toy_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -812,6 +1084,7 @@ name = "toy_be_posstack"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -820,6 +1093,7 @@ name = "toy_builder_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -828,6 +1102,7 @@ name = "toy_builder_be_align2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -836,6 +1111,7 @@ name = "toy_builder_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -844,6 +1120,7 @@ name = "toy_builder_le_align2"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -852,6 +1129,7 @@ name = "toy_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -860,6 +1138,7 @@ name = "toy_wsz_be"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -868,6 +1147,7 @@ name = "toy_wsz_le"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -876,15 +1156,32 @@ name = "tricore"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
+
+[[package]]
+name = "unicode-ident"
+version = "1.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5464a87b239f13a63a501f2701565754bae92d243d4bb7eb12f6d57d2269bf4"
 
 [[package]]
 name = "v850"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
+]
+
+[[package]]
+name = "wyz"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
+dependencies = [
+ "tap",
 ]
 
 [[package]]
@@ -892,6 +1189,7 @@ name = "x86"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -900,6 +1198,7 @@ name = "x86_64"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -908,6 +1207,7 @@ name = "z180"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]
 
@@ -916,5 +1216,6 @@ name = "z80"
 version = "0.1.0"
 dependencies = [
  "ethnum",
+ "sleigh2macro",
  "sleigh4rust",
 ]

@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-pub mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/ARM/data/languages/ARM8_le.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;

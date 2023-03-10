@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/tricore/data/languages/tricore.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;

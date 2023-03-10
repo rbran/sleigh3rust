@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/Atmel/data/languages/avr8e.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;

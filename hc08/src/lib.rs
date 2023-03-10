@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/HCS08/data/languages/HC08.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;

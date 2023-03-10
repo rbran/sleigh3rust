@@ -6,7 +6,10 @@
 #[allow(unused_mut)]
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
-mod disassembler;
+mod disassembler {
+    use sleigh2macro::parse;
+    parse!("Processors/AARCH64/data/languages/AARCH64_AppleSilicon.slaspec");
+}
 use crate::disassembler::*;
 
 use std::fmt::Write;

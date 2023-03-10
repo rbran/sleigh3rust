@@ -1,5 +1,5 @@
 [package]
-name = "test_6502"
+name = "cpu_6502"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,8 +7,6 @@ edition = "2021"
 
 [dependencies]
 ethnum = "1"
-sleigh4rust = { "path" = "../../sleigh4rust"}
-
-[lib]
-crate-type = ["dylib"]
+sleigh2macro = "0.1"
+sleigh4rust = "0.1"
 
