@@ -1,0 +1,12 @@
+[package]
+name = "ti_msp430x"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ethnum = "1"
+sleigh2macro = "0.1"
+sleigh4rust = "0.1"
+

@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/Dalvik/data/languages/Dalvik_Base.slaspec");
+    parse!("Processors/Dalvik/data/languages/Dalvik_Base.slaspec");
 }
 use crate::disassembler::*;
 

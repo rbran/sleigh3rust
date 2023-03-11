@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/RISCV/data/languages/riscv.ilp32d.slaspec");
+    parse!("Processors/RISCV/data/languages/riscv.ilp32d.slaspec");
 }
 use crate::disassembler::*;
 

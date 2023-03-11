@@ -1,12 +1,32 @@
 [workspace]
 
-exclude = [
-    "dyn-tester",
-]
 members = [
+    # TODO What is `export 0:0;`?
+    # Family 68000
+    #"68040",
+    #"68030",
+    #"coldfire",
+    #"68020",
+
+    # TODO: disassembly pointing to non context varnode?
+    # Family 8048
+    #"8048",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family AVR
+    "avr8",
+    "avr8e",
+    # TODO: disassembly pointing to non context varnode?
+    #"avr8eind",
+    #"avr8xmega",
+    #"avr32a",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family 6502
     "65c02",
     "6502",
 
+    # Family ARM
     "arm4_be",
     "arm4_le",
     "arm4t_be",
@@ -22,39 +42,39 @@ members = [
     "arm8_be",
     "arm8_le",
 
+    # Family DATA, not a real CPU, just GHIDRA stuff
     "data_be_64",
-    "pic12c5xx",
-    "superh4_le",
-    "toy64_le",
-    "toy_builder_be",
-    "toy_builder_le_align2",
-    "toy_wsz_le",
     "data_le_64",
-    "pic16c5x",
-    "toy64_be",
-    "toy_be",
-    "toy_builder_be_align2",
-    "toy_le",
+
+    # Family SuperH4
     "superh4_be",
-    "toy64_be_harvard",
-    "toy_be_posstack",
-    "toy_builder_le",
-    "toy_wsz_be",
-    "6805",
-    "6809",
-    "80251",
-    "80390",
-    "8051",
+    "superh4_le",
+
+    # TODO: jmp into 16/8bit address
+    # Family 8085
     "8085",
+
+    # TODO: re-export from a table that also export const
+    # Family AARCH64
     "aarch64",
     "aarch64_applesilicon",
     "aarch64be",
-    "avr8",
-    "avr8e",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family CP1600
     "cp1600",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family CR16
     "cr16b",
     "cr16c",
+
+    # TODO: Cpool
+    # Family JVM
     "jvm",
+
+    # TODO: Cpool
+    # Family Dalvik
     "dalvik_base",
     "dalvik_dex_android10",
     "dalvik_dex_android11",
@@ -66,25 +86,60 @@ members = [
     "dalvik_dex_oreo",
     "dalvik_dex_pie",
     "dalvik_odex_kitkat",
-    "dspic30f",
-    "dspic33c",
-    "dspic33e",
-    "dspic33f",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family MC6800
+    "6805",
+    "6809",
     "h6309",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family HCS08
     "hc05",
     "hc08",
     "hcs08",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family HCS12
     "hcs12",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family M8C
     "m8c",
-    "mcs96",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family 8051
+    "80251",
+    "80390",
+    "8051",
     "mx51",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family MCS96
+    "mcs96",
+
+    # TODO use value from non export table
+    # Family MIPS
     "mips32be",
     "mips32le",
     "mips32r6be",
     "mips32r6le",
     "mips64be",
     "mips64le",
+
+    # TODO: jmp into 16/8bit address
+    # Family PA-RISC
     "pa_risc32be",
+
+    # TODO: try to assign a 32bits value into a 64bits varnode
+    # Family RISCV
+    "riscv.ilp32d",
+    "riscv.lp64d",
+
+    # Family PIC
+    "pic12c5xx",
+    "pic16c5x",
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
     "pic16",
     "pic16f",
     "pic17c7xx",
@@ -92,6 +147,12 @@ members = [
     "pic24e",
     "pic24f",
     "pic24h",
+    "dspic30f",
+    "dspic33c",
+    "dspic33e",
+    "dspic33f",
+
+    # Family PowerPC
     "ppc_32_4xx_be",
     "ppc_32_4xx_le",
     "ppc_32_be",
@@ -106,17 +167,53 @@ members = [
     "ppc_64_isa_le",
     "ppc_64_isa_vle_be",
     "ppc_64_le",
-    "riscv.ilp32d",
-    "riscv.lp64d",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family SuperH
     "sh_1",
     "sh_2",
     "sh_2a",
+
+    # TODO: Op 32bits value with Int greater then 32bits
+    # Family Sparc
     "sparcv9_32",
     "sparcv9_64",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # TODO: Unrestricted TokenField in Or pattern
+    # Family TI_MSP430
+    #"ti_msp430",
+    #"ti_msp430x",
+
+    # Family Toy
+    "toy_be",
+    "toy_be_posstack",
+    "toy_le",
+    "toy_builder_be",
+    "toy_builder_le",
+    "toy_builder_be_align2",
+    "toy_builder_le_align2",
+    "toy_wsz_be",
+    "toy_wsz_le",
+    "toy64_be",
+    "toy64_be_harvard",
+    "toy64_le",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family tricore
     "tricore",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family V850
     "v850",
+
+    # TODO: jmp into 16bits address
+    # Family x86
     "x86",
     "x86_64",
+
+    # TODO: Assign values with diferent sizes, eg 8bit value into 16bit variable
+    # Family Z80
     "z180",
     "z80",
 ]

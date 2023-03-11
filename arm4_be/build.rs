@@ -4,4 +4,3 @@ fn main() {
     let filename = std::path::Path::new(&local).join("../Processors/ARM");
     println!("cargo:rerun-if-changed={}", filename.to_str().unwrap());
 }
-

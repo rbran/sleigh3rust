@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/Z80/data/languages/z180.slaspec");
+    parse!("Processors/Z80/data/languages/z180.slaspec");
 }
 use crate::disassembler::*;
 
@@ -20,7 +20,10 @@ pub fn parse_default(
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
-    context.register_mut().write_assume8bitIOSpace_raw(0).unwrap();
+    context
+        .register_mut()
+        .write_assume8bitIOSpace_raw(0)
+        .unwrap();
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,

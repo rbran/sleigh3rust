@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/Toy/data/languages/toy_builder_be.slaspec");
+    parse!("Processors/Toy/data/languages/toy_builder_be.slaspec");
 }
 use crate::disassembler::*;
 

@@ -8,7 +8,9 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/PowerPC/data/languages/ppc_64_isa_altivec_be.slaspec");
+    parse!(
+        "Processors/PowerPC/data/languages/ppc_64_isa_altivec_be.slaspec"
+    );
 }
 use crate::disassembler::*;
 

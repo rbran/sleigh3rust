@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/tricore/data/languages/tricore.slaspec");
+    parse!("Processors/tricore/data/languages/tricore.slaspec");
 }
 use crate::disassembler::*;
 

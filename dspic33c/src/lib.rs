@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/PIC/data/languages/dsPIC33C.slaspec");
+    parse!("Processors/PIC/data/languages/dsPIC33C.slaspec");
 }
 use crate::disassembler::*;
 

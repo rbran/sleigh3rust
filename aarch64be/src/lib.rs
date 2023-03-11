@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/AARCH64/data/languages/AARCH64BE.slaspec");
+    parse!("Processors/AARCH64/data/languages/AARCH64BE.slaspec");
 }
 use crate::disassembler::*;
 
@@ -20,10 +20,16 @@ pub fn parse_default(
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
     let mut context = SpacesStruct::default();
-    context.register_mut().write_ImmS_ImmR_TestSet_raw(0).unwrap();
+    context
+        .register_mut()
+        .write_ImmS_ImmR_TestSet_raw(0)
+        .unwrap();
     context.register_mut().write_ImmS_LT_ImmR_raw(0).unwrap();
     context.register_mut().write_ImmS_EQ_ImmR_raw(0).unwrap();
-    context.register_mut().write_ImmS_LT_ImmR_minus_1_raw(0).unwrap();
+    context
+        .register_mut()
+        .write_ImmS_LT_ImmR_minus_1_raw(0)
+        .unwrap();
     context.register_mut().write_ImmS_ne_1f_raw(0).unwrap();
     context.register_mut().write_ImmS_ne_3f_raw(0).unwrap();
     context.register_mut().write_ShowMemTag_raw(0).unwrap();

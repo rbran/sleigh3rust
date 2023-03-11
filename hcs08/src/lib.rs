@@ -8,7 +8,7 @@
 #[allow(dead_code)]
 mod disassembler {
     use sleigh2macro::parse;
-    parse!("../Processors/HCS08/data/languages/HCS08.slaspec");
+    parse!("Processors/HCS08/data/languages/HCS08.slaspec");
 }
 use crate::disassembler::*;
 

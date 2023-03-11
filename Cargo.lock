@@ -1044,6 +1044,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ti_msp430"
+version = "0.1.0"
+dependencies = [
+ "ethnum",
+ "sleigh2macro",
+ "sleigh4rust",
+]
+
+[[package]]
 name = "toy64_be"
 version = "0.1.0"
 dependencies = [
