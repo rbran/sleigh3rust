@@ -7,8 +7,8 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 mod disassembler {
-    use sleigh2macro::parse;
-    parse!("Processors/Z80/data/languages/z80.slaspec");
+    use sleigh2macro::generate_disasembler;
+    generate_disasembler!("../Processors/Z80/data/languages/z80.slaspec");
 }
 use crate::disassembler::*;
 

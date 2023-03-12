@@ -7,9 +7,9 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 mod disassembler {
-    use sleigh2macro::parse;
-    parse!(
-        "Processors/PowerPC/data/languages/ppc_64_isa_altivec_be.slaspec"
+    use sleigh2macro::generate_disasembler;
+    generate_disasembler!(
+        "../Processors/PowerPC/data/languages/ppc_64_isa_altivec_be.slaspec"
     );
 }
 use crate::disassembler::*;

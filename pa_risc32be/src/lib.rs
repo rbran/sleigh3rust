@@ -7,8 +7,8 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 mod disassembler {
-    use sleigh2macro::parse;
-    parse!("Processors/PA-RISC/data/languages/pa-risc32be.slaspec");
+    use sleigh2macro::generate_disasembler;
+    generate_disasembler!("../Processors/PA-RISC/data/languages/pa-risc32be.slaspec");
 }
 use crate::disassembler::*;
 

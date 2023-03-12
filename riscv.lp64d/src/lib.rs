@@ -7,8 +7,8 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 mod disassembler {
-    use sleigh2macro::parse;
-    parse!("Processors/RISCV/data/languages/riscv.lp64d.slaspec");
+    use sleigh2macro::generate_disasembler;
+    generate_disasembler!("../Processors/RISCV/data/languages/riscv.lp64d.slaspec");
 }
 use crate::disassembler::*;
 

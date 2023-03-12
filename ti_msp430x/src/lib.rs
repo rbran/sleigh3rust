@@ -7,8 +7,8 @@
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
 mod disassembler {
-    use sleigh2macro::parse;
-    parse!("Processors/TI_MSP430/data/languages/TI_MSP430X.slaspec");
+    use sleigh2macro::generate_disasembler;
+    generate_disasembler!("../Processors/TI_MSP430/data/languages/TI_MSP430X.slaspec");
 }
 use crate::disassembler::*;
 
