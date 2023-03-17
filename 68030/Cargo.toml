@@ -1,0 +1,12 @@
+[package]
+name = "cpu_68030"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ethnum = "1"
+sleigh2macro = { path = "../../sleigh2macro", version = "0.1" }
+sleigh4rust = { path = "../../sleigh4rust", version = "0.1" }
+

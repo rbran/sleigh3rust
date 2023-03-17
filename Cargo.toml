@@ -1,12 +1,11 @@
 [workspace]
 
 members = [
-    # TODO What is `export 0:0;`?
     # Family 68000
-    #"68040",
-    #"68030",
-    #"coldfire",
-    #"68020",
+    "68020",
+    "68030",
+    "68040",
+    "coldfire",
 
     # TODO: disassembly pointing to non context varnode?
     # Family 8048
