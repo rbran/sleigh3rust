@@ -25,14 +25,14 @@ mod tests {
         let tokens: &[(u64, &str, &[u8])] = &[
             //TODO: bin code
         ];
-        let context = SpacesStruct::default();
+        let context = ContextMemory::default();
         for &(addr, output, token) in tokens.iter() {
             let mut context = context.clone();
             let parsed = parse_instruction(
                 token,
                 &mut context,
                 addr,
-                &mut GlobalSetDefault::default(),
+                &mut globalset,
             );
             match parsed {
                 None => panic!("Instruction invalid"),

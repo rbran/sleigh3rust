@@ -14,15 +14,16 @@ use crate::disassembler::*;
 
 use std::fmt::Write;
 fn parse(
-    context: &mut SpacesStruct,
+    context: &mut ContextMemory,
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
+    let mut globalset = GlobalSet::new(context.clone());
     let (addr, parsed) = parse_instruction(
         tokens,
         context,
         inst_start,
-        &mut GlobalSetDefault::<SpacesStruct>::default(),
+        &mut globalset,
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {
@@ -36,28 +37,28 @@ pub fn parse_16bits(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_addrsize_raw(0).unwrap();
+    let mut context = ContextMemory::default();
+    context.write_addrsize(0);
 
-    context.register_mut().write_bit64_raw(0).unwrap();
-    context.register_mut().write_opsize_raw(0).unwrap();
-    context.register_mut().write_segover_raw(0).unwrap();
-    context.register_mut().write_protectedMode_raw(0).unwrap();
+    context.write_bit64(0);
+    context.write_opsize(0);
+    context.write_segover(0);
+    context.write_protectedMode(0);
 
-    context.register_mut().write_mandover_raw(0).unwrap();
+    context.write_mandover(0);
 
-    context.register_mut().write_rexWprefix_raw(0).unwrap();
-    context.register_mut().write_rexRprefix_raw(0).unwrap();
-    context.register_mut().write_rexXprefix_raw(0).unwrap();
-    context.register_mut().write_rexBprefix_raw(0).unwrap();
-    context.register_mut().write_rexprefix_raw(0).unwrap();
+    context.write_rexWprefix(0);
+    context.write_rexRprefix(0);
+    context.write_rexXprefix(0);
+    context.write_rexBprefix(0);
+    context.write_rexprefix(0);
 
-    context.register_mut().write_vexMode_raw(0).unwrap();
-    context.register_mut().write_vexL_raw(0).unwrap();
-    context.register_mut().write_vexVVVV_raw(0).unwrap();
-    context.register_mut().write_vexMMMMM_raw(0).unwrap();
+    context.write_vexMode(0);
+    context.write_vexL(0);
+    context.write_vexVVVV(0);
+    context.write_vexMMMMM(0);
 
-    context.register_mut().write_instrPhase_raw(0).unwrap();
+    context.write_instrPhase(0);
     parse(&mut context, tokens, inst_start)
 }
 
@@ -66,27 +67,27 @@ pub fn parse_32bits(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_addrsize_raw(1).unwrap();
+    let mut context = ContextMemory(0);
+    context.write_addrsize(1);
 
-    context.register_mut().write_bit64_raw(0).unwrap();
-    context.register_mut().write_opsize_raw(1).unwrap();
-    context.register_mut().write_segover_raw(0).unwrap();
-    context.register_mut().write_protectedMode_raw(0).unwrap();
+    context.write_bit64(0);
+    context.write_opsize(1);
+    context.write_segover(0);
+    context.write_protectedMode(0);
 
-    context.register_mut().write_mandover_raw(0).unwrap();
+    context.write_mandover(0);
 
-    context.register_mut().write_rexWprefix_raw(0).unwrap();
-    context.register_mut().write_rexRprefix_raw(0).unwrap();
-    context.register_mut().write_rexXprefix_raw(0).unwrap();
-    context.register_mut().write_rexBprefix_raw(0).unwrap();
-    context.register_mut().write_rexprefix_raw(0).unwrap();
+    context.write_rexWprefix(0);
+    context.write_rexRprefix(0);
+    context.write_rexXprefix(0);
+    context.write_rexBprefix(0);
+    context.write_rexprefix(0);
 
-    context.register_mut().write_vexMode_raw(0).unwrap();
-    context.register_mut().write_vexL_raw(0).unwrap();
-    context.register_mut().write_vexVVVV_raw(0).unwrap();
-    context.register_mut().write_vexMMMMM_raw(0).unwrap();
+    context.write_vexMode(0);
+    context.write_vexL(0);
+    context.write_vexVVVV(0);
+    context.write_vexMMMMM(0);
 
-    context.register_mut().write_instrPhase_raw(0).unwrap();
+    context.write_instrPhase(0);
     parse(&mut context, tokens, inst_start)
 }

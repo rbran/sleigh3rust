@@ -21,12 +21,13 @@ pub fn parse_default(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
+    let mut context = ContextMemory::default();
+    let mut globalset = GlobalSet::new(context.clone());
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDefault::<SpacesStruct>::default(),
+        &mut globalset,
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

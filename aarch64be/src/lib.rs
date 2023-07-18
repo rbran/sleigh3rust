@@ -19,25 +19,20 @@ pub fn parse_default(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context
-        .register_mut()
-        .write_ImmS_ImmR_TestSet_raw(0)
-        .unwrap();
-    context.register_mut().write_ImmS_LT_ImmR_raw(0).unwrap();
-    context.register_mut().write_ImmS_EQ_ImmR_raw(0).unwrap();
-    context
-        .register_mut()
-        .write_ImmS_LT_ImmR_minus_1_raw(0)
-        .unwrap();
-    context.register_mut().write_ImmS_ne_1f_raw(0).unwrap();
-    context.register_mut().write_ImmS_ne_3f_raw(0).unwrap();
-    context.register_mut().write_ShowMemTag_raw(0).unwrap();
+    let mut context = ContextMemory::default();
+    context.write_ImmS_ImmR_TestSet(0);
+    context.write_ImmS_LT_ImmR(0);
+    context.write_ImmS_EQ_ImmR(0);
+    context.write_ImmS_LT_ImmR_minus_1(0);
+    context.write_ImmS_ne_1f(0);
+    context.write_ImmS_ne_3f(0);
+    context.write_ShowMemTag(0);
+    let mut globalset = GlobalSet::new(context.clone());
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDefault::<SpacesStruct>::default(),
+        &mut globalset,
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {

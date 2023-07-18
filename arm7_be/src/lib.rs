@@ -16,15 +16,16 @@ use std::fmt::Write;
 
 #[no_mangle]
 pub fn parse(
-    context: &mut SpacesStruct,
+    context: &mut ContextMemory,
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
+    let mut globalset = GlobalSet::new(context.clone());
     let (addr, parsed) = parse_instruction(
         tokens,
         context,
         inst_start,
-        &mut GlobalSetDefault::<SpacesStruct>::default(),
+        &mut globalset,
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {
@@ -38,14 +39,14 @@ pub fn parse_thumb(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_TMode_raw(1).unwrap();
-    context.register_mut().write_LRset_raw(0).unwrap();
-    context.register_mut().write_ARMcondCk_raw(0).unwrap();
-    context.register_mut().write_CALLoverride_raw(0).unwrap();
-    context.register_mut().write_REToverride_raw(0).unwrap();
-    context.register_mut().write_itmode_raw(0).unwrap();
-    context.register_mut().write_TEEMode_raw(0).unwrap();
+    let mut context = ContextMemory::default();
+    context.write_TMode(1);
+    context.write_LRset(0);
+    context.write_ARMcondCk(0);
+    context.write_CALLoverride(0);
+    context.write_REToverride(0);
+    context.write_itmode(0);
+    context.write_TEEMode(0);
     parse(&mut context, tokens, inst_start)
 }
 
@@ -54,12 +55,12 @@ pub fn parse_arm(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_TMode_raw(0).unwrap();
-    context.register_mut().write_LRset_raw(0).unwrap();
-    context.register_mut().write_ARMcondCk_raw(0).unwrap();
-    context.register_mut().write_CALLoverride_raw(0).unwrap();
-    context.register_mut().write_REToverride_raw(0).unwrap();
-    context.register_mut().write_itmode_raw(0).unwrap();
+    let mut context = ContextMemory(0);
+    context.write_TMode(0);
+    context.write_LRset(0);
+    context.write_ARMcondCk(0);
+    context.write_CALLoverride(0);
+    context.write_REToverride(0);
+    context.write_itmode(0);
     parse(&mut context, tokens, inst_start)
 }

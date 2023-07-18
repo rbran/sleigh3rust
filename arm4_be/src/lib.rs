@@ -19,16 +19,17 @@ pub fn parse_arm(
     tokens: &[u8],
     inst_start: AddrType,
 ) -> Option<(AddrType, String)> {
-    let mut context = SpacesStruct::default();
-    context.register_mut().write_LRset_raw(0).unwrap();
-    context.register_mut().write_ARMcondCk_raw(0).unwrap();
-    context.register_mut().write_CALLoverride_raw(0).unwrap();
-    context.register_mut().write_REToverride_raw(0).unwrap();
+    let mut context = ContextMemory::default();
+    context.write_LRset(0);
+    context.write_ARMcondCk(0);
+    context.write_CALLoverride(0);
+    context.write_REToverride(0);
+    let mut globalset = GlobalSet::new(context.clone());
     let (addr, parsed) = parse_instruction(
         tokens,
         &mut context,
         inst_start,
-        &mut GlobalSetDefault::<SpacesStruct>::default(),
+        &mut globalset,
     )?;
     let mut output = String::new();
     for ele in parsed.into_iter() {
